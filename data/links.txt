@@ -1,0 +1,25 @@
+Scam Detection Datasets and Resources:
+
+1. PhishTank - A collaborative clearing house for data and information about phishing on the Internet.
+   Link: https://www.phishtank.com/
+
+2. OpenPhish - Phishing Intelligence.
+   Link: https://openphish.com/
+
+3. Kaggle Phishing Website Dataset
+   Link: https://www.kaggle.com/datasets/eswarchanduv/phishing-website-dataset
+
+4. UCI Machine Learning Repository - Phishing Websites Data Set
+   Link: https://archive.ics.uci.edu/ml/datasets/Phishing+Websites
+
+5. SpamAssassin Public Corpus
+   Link: https://spamassassin.apache.org/old/publiccorpus/
+
+6. Anti-Phishing Working Group (APWG)
+   Link: https://apwg.org/
+
+7. Google Safe Browsing API
+   Link: https://developers.google.com/safe-browsing
+
+8. VirusTotal API
+   Link: https://www.virustotal.com/

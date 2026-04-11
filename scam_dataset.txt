@@ -1,0 +1,111 @@
+SCAM_DATASET:
+================================================================================
+LABEL: scam
+Congratulations! You have won a $1000 Walmart gift card. Click here to claim your prize now before it expires.
+URGENT: Your bank account has been suspended. Verify your details immediately at http://secure-bank-update.com
+Your PayPal account is limited. Please confirm your identity by logging in here: http://paypal-security.tk
+You've been selected for a FREE iPhone 14! Just pay shipping of $4.99. Limited offer expires today!
+FINAL NOTICE: Your Netflix subscription will be cancelled. Update your payment info now to continue streaming.
+IRS Notice: You owe $2,400 in back taxes. Call 1-800-555-FAKE within 24 hours or face arrest.
+Hi, I am the CEO of Microsoft and I need your help transferring $500,000 out of the country secretly.
+BITCOIN INVESTMENT OPPORTUNITY: Turn $100 into $10,000 in 7 days! Guaranteed returns! Act now!
+Your Amazon package could not be delivered. Update your address here: amaz0n-delivery-confirm.com
+You are a winner! Send your bank details and social security number to claim your $50,000 lottery prize.
+CRYPTO AIRDROP: Connect your MetaMask wallet to claim 500 ETH. Limited time! Visit: claimairdrop.io
+Dear customer, your account has been hacked. Reset your password via this secure link immediately.
+You have been pre-approved for a $50,000 loan with NO credit check! Call us now to get your money.
+ALERT: Suspicious login detected on your account. Verify identity at: accountverify-secure.net/login
+Hi, this is Apple Support. Your iCloud account is about to be deleted. Call us now: 1-888-555-0199
+Send $500 in Google Play gift cards to reinstate your account. Our agents are waiting for your call.
+DEAR BENEFICIARY: You have been selected to receive a $4.5 million inheritance. Send processing fee now.
+FBI CYBER DIVISION: Your IP address has been flagged for illegal activity. Pay $300 fine immediately.
+Donate your seed phrase to verify your wallet and receive 2x the crypto back. Limited time promotion.
+Your Venmo payment of $847 has failed. Update your billing info here or your account will be closed.
+Nigerian Prince: I need to transfer 10 million dollars and need your bank account details to do so.
+You won the UK lottery! Ref: UKL/2024/WIN. Contact our agent to process your prize of 800,000 GBP.
+Work from home and earn $5000 weekly! No experience needed. Join our exclusive program today!
+URGENT WARNING: Your computer has been infected with a virus. Call Microsoft support immediately.
+Your Zelle transfer of $1200 has been declined. Verify your account to complete the transaction.
+Hot singles in your area want to meet you tonight! Click here to see their photos and messages.
+You qualify for a government stimulus check of $2,000. Claim your money at: stimulus-relief-2024.com
+Limited time: Get 90% off luxury watches from Switzerland. Authentic Rolex for only $199!
+ACCOUNT SUSPENDED: Your PayPal account has been permanently limited due to suspicious activity.
+Homeland Security Department: You must pay $900 or face deportation. Call immediately.
+pharmacy rx meds online no prescription needed cheap pills buy now discount offer
+click here to verify your account credentials email password login expired update now urgent
+FREE money cash prize winner selected today claim your reward before midnight expires soon
+Refund $4000 overpayment from IRS contact agent now wire transfer required immediately sensitive
+Your invoice #4821 is overdue. Pay now to avoid service interruption. Wire to account 98732847.
+romance scam hi beautiful i am american soldier stationed overseas need money to fly home love
+investment fraud guaranteed 300 percent returns monthly passive income bitcoin crypto no risk
+phishing verify your credentials account suspended unauthorized access detected login immediately
+tech support your computer has virus remote access needed call 1800 fix now microsoft certified
+advance fee fraud release of funds require processing fee confidential transfer offshore account
+Urgent: Your social security number has been used in a crime. Call us to avoid immediate arrest.
+Free government grants for everyone! No payback required. Fill out the application at our web link.
+Your car insurance is expiring. Save 50% by renewing today at our exclusive partner site.
+Earn money by testing products at home! High pay, free products. Sign up at the link.
+Your Chase account has suspicious activity. Secure your funds here: chase-secure-access.com
+Netflix payment failed. We will close your account unless you update your info within 12 hours.
+Claim your $100 Shell gift card. Just answer this 30-second survey to qualify.
+Your FedEx delivery is on hold. Pay a $2 re-delivery fee at this link to receive your box.
+A relative in another country has left you millions. Contact the lawyer at this Gmail address.
+Get rich quick with our new AI trading bot! No experience needed, 100% success rate.
+Your student loan forgiveness has been approved! Call us to finalize the documents and clear your debt.
+Discord Nitro for free! Just click this link and sign in with your Discord account to claim.
+Get 10,000 TikTok followers in one hour! Best price and instant delivery at our site.
+Your Bank of America card has been blocked. Unblock it now by providing your PIN at the link.
+Urgent: Your Apple ID is being used in Russia. If this is not you, click here to lock your account.
+================================================================================
+LABEL: safe
+Hi John, just wanted to confirm our meeting tomorrow at 3pm. Let me know if that still works for you.
+The quarterly report has been attached for your review. Please provide your feedback by Friday.
+Your order #12345 has been shipped! Expected delivery: April 15. Track at amazon.com/orders
+Reminder: Your doctor's appointment is scheduled for tomorrow at 10:30 AM at City Medical Center.
+The team lunch is happening this Thursday at noon. We'll be going to the Italian place on Main St.
+Please find attached the invoice for the web design services provided in March 2024.
+Happy Birthday! Hope you have a wonderful day filled with joy and celebration.
+Your GitHub pull request has been approved and merged into the main branch successfully.
+Meeting notes from today's standup: sprint velocity is on track, no blockers reported.
+The new library update is available. Check the changelog at github.com/repo for details.
+Course material for Module 3 has been uploaded to the student portal. Please review before Monday.
+Your flight AA1234 departs at 6:45 AM from Terminal B. Check-in opens 24 hours before departure.
+Congratulations on completing the certification! Your certificate will be emailed within 48 hours.
+The package you ordered from Shop.com has been delivered to your front door.
+Monthly newsletter: Read about our latest product updates and community highlights.
+Your subscription renews on May 1st for $9.99. Manage your plan at netflix.com/account.
+Research results are in! The new algorithm reduces processing time by 40%.
+Please complete the employee satisfaction survey by end of week. Your feedback matters.
+The conference registration is confirmed. We look forward to seeing you in San Francisco.
+Thanks for reporting that bug. We've opened ticket #5521 and will address it in the next patch.
+Hey, can we reschedule our call to 4pm? Something came up at work this afternoon.
+The project deadline has been extended to April 30th based on stakeholder feedback.
+Your password was changed successfully. If you didn't make this change, contact support.
+Weekly digest: Here are the top stories in technology from the past week.
+Your tax documents are ready to download in your account dashboard.
+The new office policy on remote work has been posted to the company intranet.
+Please review and sign the employment contract attached before your start date.
+A new comment was posted on your article about machine learning algorithms.
+The library book you requested is now available for pickup at the main branch.
+Reminder: Your parking permit expires on June 30th. Renew at city.gov/parking.
+Your git commit has passed all CI/CD checks and is ready for code review.
+We have received your support ticket and will respond within 24 business hours.
+The annual performance review cycle begins next Monday. Your manager will reach out to schedule.
+Inventory alert: Item SKU-4892 is running low. Current stock: 12 units remaining.
+Your appointment with Dr. Smith has been rescheduled to April 22 at 2:30 PM.
+The new employee handbook has been updated. Please read the section on remote work policies.
+Hi, I forgot to ask if you're coming to the soccer game this weekend. Let me know!
+Meeting agenda for Monday: 1. Budget review 2. Team expansion 3. Marketing strategy.
+Can you please check the syntax in the attached Python script? I'm getting an error on line 42.
+The results of the focus group were positive overall, but we need to tweak the UI colors.
+Is the office open on Monday due to the public holiday? I need to know for my commute.
+Please RSVP for the company holiday party by December 1st so we can get an accurate head count.
+Your grocery delivery is outside. Thank you for shopping with us!
+Can we hop on a quick 5-minute call to discuss the logo options?
+Attached is the final version of the presentation for the client. I've incorporated all your edits.
+The server maintenance is scheduled for Sunday from 2 AM to 4 AM. Expect brief downtime.
+Please remember to submit your expense reports by the 15th of the month.
+Great job on the presentation! The client was very impressed with the data you provided.
+Check out this interesting article on the future of renewable energy in our industry.
+Hi, I noticed some broken links on the website. I've listed them in the attached doc for you to fix.
+================================================================================
