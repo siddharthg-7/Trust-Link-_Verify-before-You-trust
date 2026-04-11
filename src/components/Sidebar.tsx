@@ -1,20 +1,41 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import {
-  Home, MessageSquare, Users, LayoutDashboard, Shield, LogOut, ChevronRight
-} from "lucide-react";
+import { FiHome as FiHomeRaw, FiLogOut as FiLogOutRaw, FiChevronRight as FiChevronRightRaw } from "react-icons/fi";
+import { HiOutlineChatAlt2 as HiOutlineChatAlt2Raw } from "react-icons/hi";
+import { RiTeamLine as RiTeamLineRaw } from "react-icons/ri";
+import { BiGridAlt as BiGridAltRaw } from "react-icons/bi";
+import { MdOutlineAdminPanelSettings as MdOutlineAdminPanelSettingsRaw } from "react-icons/md";
+import { BsShieldLock as BsShieldLockRaw } from "react-icons/bs";
+import { IconType } from "react-icons";
 import { cn } from "../lib/utils";
+
+// ── Icons as any ──
+const FiHome = FiHomeRaw as any;
+const FiLogOut = FiLogOutRaw as any;
+const FiChevronRight = FiChevronRightRaw as any;
+const HiOutlineChatAlt2 = HiOutlineChatAlt2Raw as any;
+const RiTeamLine = RiTeamLineRaw as any;
+const BiGridAlt = BiGridAltRaw as any;
+const MdOutlineAdminPanelSettings = MdOutlineAdminPanelSettingsRaw as any;
+const BsShieldLock = BsShieldLockRaw as any;
 
 interface SidebarProps {
   onLogout: () => void;
   isAdmin?: boolean;
 }
 
-const MENU = [
-  { id: "home",      path: "/app/home",      label: "Home",      icon: Home },
-  { id: "responses", path: "/app/responses", label: "Responses", icon: MessageSquare },
-  { id: "community", path: "/app/community", label: "Community", icon: Users },
-  { id: "dashboard", path: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
+interface MenuItem {
+  id: string;
+  path: string;
+  label: string;
+  icon: any;
+}
+
+const MENU: MenuItem[] = [
+  { id: "home",      path: "/app/home",      label: "Home",      icon: FiHome },
+  { id: "responses", path: "/app/responses", label: "Responses", icon: HiOutlineChatAlt2 },
+  { id: "community", path: "/app/community", label: "Community", icon: RiTeamLine },
+  { id: "dashboard", path: "/app/dashboard", label: "Dashboard", icon: BiGridAlt },
 ];
 
 export function Sidebar({ onLogout, isAdmin }: SidebarProps) {
@@ -25,10 +46,10 @@ export function Sidebar({ onLogout, isAdmin }: SidebarProps) {
       {/* Logo */}
       <div className="flex items-center gap-3 mb-10">
         <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/40">
-          <Shield className="w-5 h-5 text-white" />
+          <BsShieldLock size={20} className="text-white" />
         </div>
         <div>
-          <h1 className="text-base font-black tracking-tight">TrustLink</h1>
+          <h1 className="text-base font-black tracking-tight text-white">TrustLink</h1>
           <p className="text-[9px] text-blue-400/70 font-semibold uppercase tracking-widest">Verify Before You Trust</p>
         </div>
       </div>
@@ -48,10 +69,10 @@ export function Sidebar({ onLogout, isAdmin }: SidebarProps) {
               )}
             >
               <div className="flex items-center gap-3">
-                <Icon className={cn("w-4.5 h-4.5", isActive ? "text-white" : "text-white/40 group-hover:text-white")} />
+                <Icon className={cn("w-5 h-5", isActive ? "text-white" : "text-white/40 group-hover:text-white")} />
                 <span className="font-medium text-sm">{label}</span>
               </div>
-              {isActive && <ChevronRight className="w-3.5 h-3.5" />}
+              {isActive && <FiChevronRight className="w-3.5 h-3.5" />}
             </Link>
           );
         })}
@@ -69,10 +90,10 @@ export function Sidebar({ onLogout, isAdmin }: SidebarProps) {
               )}
             >
               <div className="flex items-center gap-3">
-                <Shield className="w-4.5 h-4.5" />
+                <MdOutlineAdminPanelSettings className="w-5 h-5" />
                 <span className="font-bold text-sm">Admin Portal</span>
               </div>
-              <ChevronRight className="w-3.5 h-3.5" />
+              <FiChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         )}
@@ -83,10 +104,11 @@ export function Sidebar({ onLogout, isAdmin }: SidebarProps) {
           onClick={onLogout}
           className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all font-semibold"
         >
-          <LogOut className="w-4 h-4" />
+          <FiLogOut className="w-4 h-4" />
           <span className="text-sm">Logout</span>
         </button>
       </div>
     </div>
   );
 }
+

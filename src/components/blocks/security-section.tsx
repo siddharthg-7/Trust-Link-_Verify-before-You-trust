@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
-import { Check } from "lucide-react";
+import { motion } from "motion/react";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
+import { MdCheck as MdCheckRaw } from "react-icons/md";
+
+const MdCheck = MdCheckRaw as any;
 
 export function SecuritySection() {
   return (
@@ -41,7 +43,7 @@ export function SecuritySection() {
               ].map((point, i) => (
                 <li key={i} className="flex items-center gap-3 text-white/80 font-medium">
                   <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center shrink-0">
-                    <Check className="w-3 h-3 text-white" />
+                    <MdCheck className="w-3 h-3 text-white" />
                   </div>
                   {point}
                 </li>

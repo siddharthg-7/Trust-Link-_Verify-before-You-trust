@@ -231,85 +231,86 @@ export function AuthPage() {
   };
 
   const inputClass =
-    "w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all text-sm";
+    "w-full bg-zinc-800/50 border border-zinc-700 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-zinc-600 focus:scale-[1.01] transition-all text-sm";
 
-  const labelClass = "text-xs font-semibold uppercase tracking-wider text-white/40 mb-1.5 block";
+  const labelClass = "text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-1.5 block ml-1";
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background */}
-      <div className="glass-bg">
-        <div className="glass-blob bg-blue-600 top-[-10%] left-[-10%]" />
-        <div className="glass-blob bg-purple-600 bottom-[-10%] right-[-10%]" />
-        <div className="glass-blob bg-indigo-500 top-[40%] left-[30%] w-[300px] h-[300px]" />
-      </div>
+    <div className="min-h-screen bg-black flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+      {/* Background radial glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/[0.03] blur-[120px] rounded-full" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.05)_0%,_transparent_70%)]" />
 
+      {/* Back to Home Link */}
       <button
         onClick={() => navigate('/')}
-        className="absolute top-8 left-8 flex items-center gap-2 text-white/40 hover:text-white transition-colors text-sm font-medium"
+        className="absolute top-8 left-8 flex items-center gap-2 text-zinc-500 hover:text-white transition-all text-xs font-bold tracking-tight group"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
         Back to Home
       </button>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 20 }}
+        initial={{ opacity: 0, scale: 0.98, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
         className="w-full max-w-md z-10"
       >
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl flex items-center justify-center shadow-xl shadow-blue-900/40 mx-auto mb-4">
-            <Shield className="w-9 h-9 text-white" />
+        {/* Header Section */}
+        <div className="text-center mb-10">
+          <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-2xl shadow-white/10 mx-auto mb-6 rotate-3 hover:rotate-0 transition-transform duration-500">
+            <Shield className="w-8 h-8 text-black" fill="black" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">TrustLink</h1>
-          <p className="text-white/40 mt-1 text-sm">Verify Before You Trust</p>
+          <h1 className="text-3xl font-black tracking-tighter text-white">TrustLink</h1>
+          <p className="text-zinc-500 mt-1.5 text-xs font-medium tracking-tight">Verify Before You Trust</p>
         </div>
 
-        {/* Role Tab Toggle */}
-        <div className="flex bg-white/5 p-1 rounded-2xl border border-white/10 mb-6">
+        {/* User/Admin Toggle (Segmented Control) */}
+        <div className="relative flex bg-zinc-900/80 p-1 rounded-full border border-zinc-800 mb-8 max-w-[280px] mx-auto overflow-hidden">
+          <motion.div
+            className="absolute top-1 bottom-1 left-1 rounded-full bg-white transition-all duration-300"
+            initial={false}
+            animate={{
+              x: roleTab === "user" ? 0 : "100%",
+              width: "calc(50% - 4px)"
+            }}
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          />
           <button
             onClick={() => { setRoleTab("user"); setAuthMode("login"); }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-              roleTab === "user"
-                ? "bg-white text-black shadow-lg"
-                : "text-white/40 hover:text-white"
+            className={`relative flex-1 py-2.5 rounded-full font-bold text-[11px] uppercase tracking-widest transition-colors duration-300 z-10 ${
+              roleTab === "user" ? "text-black" : "text-zinc-500 hover:text-white"
             }`}
           >
-            <User className="w-4 h-4" />
             User
           </button>
           <button
             onClick={() => { setRoleTab("admin"); setAuthMode("login"); }}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-              roleTab === "admin"
-                ? "bg-blue-600 text-white shadow-lg"
-                : "text-white/40 hover:text-white"
+            className={`relative flex-1 py-2.5 rounded-full font-bold text-[11px] uppercase tracking-widest transition-colors duration-300 z-10 ${
+              roleTab === "admin" ? "text-black" : "text-zinc-500 hover:text-white"
             }`}
           >
-            <ShieldCheck className="w-4 h-4" />
             Admin
           </button>
         </div>
 
-        <GlassCard gradient className="p-6">
+        <div className="bg-zinc-900/60 backdrop-blur-3xl border border-zinc-800 rounded-2xl p-8 shadow-2xl shadow-black/80">
           <AnimatePresence mode="wait">
             {/* ── USER PANEL ── */}
             {roleTab === "user" && (
               <motion.div
                 key={`user-${authMode}`}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.2 }}
-                className="space-y-5"
+                className="space-y-6"
               >
-                <div className="text-center mb-1">
-                  <h2 className="text-lg font-bold">
+                <div className="text-center">
+                  <h2 className="text-2xl font-black text-white tracking-tight">
                     {authMode === "login" ? "Welcome Back" : "Create Account"}
                   </h2>
-                  <p className="text-xs text-white/40 mt-1">
+                  <p className="text-sm text-zinc-500 mt-2">
                     {authMode === "login"
                       ? "Sign in to your TrustLink account"
                       : "Join the community fighting scams"}
@@ -320,18 +321,18 @@ export function AuthPage() {
                 <button
                   onClick={handleGoogleLogin}
                   disabled={isLoading}
-                  className="w-full py-3 bg-white text-gray-800 rounded-xl font-semibold text-sm flex items-center justify-center gap-3 hover:bg-white/90 active:scale-[0.98] transition-all disabled:opacity-50 shadow-md"
+                  className="w-full h-12 bg-white text-black rounded-xl font-bold text-sm flex items-center justify-center gap-3 hover:bg-zinc-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
                 >
                   <GoogleIcon />
                   Continue with Google
                 </button>
 
-                <div className="relative">
+                <div className="relative py-2">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/10" />
+                    <div className="w-full border-t border-zinc-800" />
                   </div>
                   <div className="relative flex justify-center">
-                    <span className="px-3 text-xs text-white/25 bg-[#0f172a]">
+                    <span className="px-4 text-[10px] uppercase tracking-[0.2em] font-black text-zinc-600 bg-[#09090b]">
                       or continue with email
                     </span>
                   </div>
@@ -339,14 +340,14 @@ export function AuthPage() {
 
                 <form
                   onSubmit={authMode === "login" ? handleEmailLogin : handleEmailSignup}
-                  className="space-y-3.5"
+                  className="space-y-4"
                 >
                   {/* Name (signup only) */}
                   {authMode === "signup" && (
-                    <div>
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
                       <label className={labelClass}>Full Name</label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                      <div className="relative group">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-white transition-colors" />
                         <input
                           type="text"
                           value={name}
@@ -356,14 +357,14 @@ export function AuthPage() {
                           required
                         />
                       </div>
-                    </div>
+                    </motion.div>
                   )}
 
                   {/* Email */}
                   <div>
                     <label className={labelClass}>Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-white transition-colors" />
                       <input
                         type="email"
                         value={email}
@@ -378,8 +379,8 @@ export function AuthPage() {
                   {/* Password */}
                   <div>
                     <label className={labelClass}>Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-white transition-colors" />
                       <input
                         type={showPassword ? "text" : "password"}
                         value={password}
@@ -391,7 +392,7 @@ export function AuthPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -400,10 +401,10 @@ export function AuthPage() {
 
                   {/* Confirm Password (signup only) */}
                   {authMode === "signup" && (
-                    <div>
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
                       <label className={labelClass}>Confirm Password</label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                      <div className="relative group">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-white transition-colors" />
                         <input
                           type={showPassword ? "text" : "password"}
                           value={confirmPassword}
@@ -413,38 +414,36 @@ export function AuthPage() {
                           required
                         />
                       </div>
-                    </div>
+                    </motion.div>
                   )}
 
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-blue-900/30 disabled:opacity-50 mt-1"
+                    className="w-full h-12 bg-white hover:bg-zinc-200 text-black rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 mt-4"
                   >
                     {isLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                     ) : authMode === "login" ? (
                       <>
-                        <LogIn className="w-4 h-4" />
-                        Sign In
+                        Sign In →
                       </>
                     ) : (
                       <>
-                        <UserPlus className="w-4 h-4" />
-                        Create Account
+                        Create Account →
                       </>
                     )}
                   </button>
                 </form>
 
                 {/* Toggle login / signup */}
-                <p className="text-center text-xs text-white/30">
+                <p className="text-center text-xs font-medium text-zinc-500">
                   {authMode === "login" ? (
                     <>
                       Don't have an account?{" "}
                       <button
                         onClick={() => { setAuthMode("signup"); setEmail(""); setPassword(""); setName(""); setConfirmPassword(""); }}
-                        className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                        className="text-white hover:underline font-bold transition-all underline-offset-4"
                       >
                         Sign Up
                       </button>
@@ -454,7 +453,7 @@ export function AuthPage() {
                       Already have an account?{" "}
                       <button
                         onClick={() => { setAuthMode("login"); setEmail(""); setPassword(""); setName(""); setConfirmPassword(""); }}
-                        className="text-blue-400 hover:text-blue-300 font-semibold transition-colors"
+                        className="text-white hover:underline font-bold transition-all underline-offset-4"
                       >
                         Sign In
                       </button>
@@ -468,21 +467,22 @@ export function AuthPage() {
             {roleTab === "admin" && (
               <motion.div
                 key="admin"
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.2 }}
+                className="space-y-6"
               >
-                <div className="text-center mb-5">
-                  <h2 className="text-lg font-bold">Admin Portal</h2>
-                  <p className="text-xs text-white/40 mt-1">Authorized personnel only</p>
+                <div className="text-center">
+                  <h2 className="text-2xl font-black text-white tracking-tight">Admin Portal</h2>
+                  <p className="text-sm text-zinc-500 mt-2">Authorized personnel only</p>
                 </div>
 
-                <form onSubmit={handleAdminLogin} className="space-y-4">
+                <form onSubmit={handleAdminLogin} className="space-y-5">
                   <div>
                     <label className={labelClass}>Admin Email</label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                    <div className="relative group">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-white transition-colors" />
                       <input
                         type="email"
                         value={email}
@@ -496,8 +496,8 @@ export function AuthPage() {
 
                   <div>
                     <label className={labelClass}>Password</label>
-                    <div className="relative">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25" />
+                    <div className="relative group">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-white transition-colors" />
                       <input
                         type={showPassword ? "text" : "password"}
                         value={password}
@@ -509,7 +509,7 @@ export function AuthPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-white transition-colors"
                       >
                         {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -519,26 +519,26 @@ export function AuthPage() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-blue-900/30 disabled:opacity-50 mt-2"
+                    className="w-full h-12 bg-white hover:bg-zinc-200 text-black rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 mt-2"
                   >
                     {isLoading ? (
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
                     ) : (
                       <>
                         <ShieldCheck className="w-4 h-4" />
-                        Admin Sign In
+                        Admin Access →
                       </>
                     )}
                   </button>
                 </form>
 
-                <p className="text-center text-xs text-white/20 mt-4">
-                  Admin accounts must be pre-configured in Firebase
+                <p className="text-center text-[10px] font-black uppercase tracking-widest text-zinc-600/50 mt-4">
+                  Hardware Authentication Required
                 </p>
               </motion.div>
             )}
           </AnimatePresence>
-        </GlassCard>
+        </div>
       </motion.div>
     </div>
   );

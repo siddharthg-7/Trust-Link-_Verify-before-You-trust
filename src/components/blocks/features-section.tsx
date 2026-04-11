@@ -1,47 +1,61 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { 
-  ShieldCheck, 
-  Link as LinkIcon, 
-  Users, 
-  Bell, 
-  FileSearch, 
-  Activity 
-} from "lucide-react";
-import { cn } from "../../lib/utils";
+  MdOutlineVerified as MdOutlineVerifiedRaw 
+} from "react-icons/md";
+import { 
+  AiOutlineLink as AiOutlineLinkRaw 
+} from "react-icons/ai";
+import { 
+  RiTeamLine as RiTeamLineRaw 
+} from "react-icons/ri";
+import { 
+  BsBell as BsBellRaw 
+} from "react-icons/bs";
+import { 
+  FiFileText as FiFileTextRaw, 
+  FiTrendingUp as FiTrendingUpRaw 
+} from "react-icons/fi";
+
+const MdOutlineVerified = MdOutlineVerifiedRaw as any;
+const AiOutlineLink = AiOutlineLinkRaw as any;
+const RiTeamLine = RiTeamLineRaw as any;
+const BsBell = BsBellRaw as any;
+const FiFileText = FiFileTextRaw as any;
+const FiTrendingUp = FiTrendingUpRaw as any;
 
 const features = [
   {
     title: "AI Scam Detection",
     description: "Advanced NLP models analyze messages, links, and files to detect scams in real time.",
-    icon: ShieldCheck,
+    icon: MdOutlineVerified,
   },
   {
     title: "Link Intelligence",
     description: "Instantly verify suspicious URLs with risk scoring and threat indicators.",
-    icon: LinkIcon,
+    icon: AiOutlineLink,
   },
   {
     title: "Crowd Verification",
     description: "Community-driven validation ensures faster detection of new scam patterns.",
-    icon: Users,
+    icon: RiTeamLine,
   },
   {
     title: "Smart Alerts",
     description: "Get notified when a suspicious message or link is detected.",
-    icon: Bell,
+    icon: BsBell,
   },
   {
     title: "File Scanner",
     description: "Upload PDFs, images, or docs to detect hidden malicious intent.",
-    icon: FileSearch,
+    icon: FiFileText,
   },
   {
     title: "Risk Score Engine",
     description: "Every input gets a trust score based on AI + behavioral analysis.",
-    icon: Activity,
+    icon: FiTrendingUp,
   },
 ];
 
@@ -67,27 +81,30 @@ export function FeaturesSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              whileHover={{ scale: 1.02 }}
-              className="group p-8 bg-black border border-zinc-800 rounded-2xl hover:bg-zinc-900 hover:border-zinc-700 transition-all cursor-default"
-            >
-              <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center mb-6 group-hover:bg-white/10 transition-colors">
-                <feature.icon className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white mb-3 tracking-tight">
-                {feature.title}
-              </h3>
-              <p className="text-zinc-500 leading-relaxed text-sm">
-                {feature.description}
-              </p>
-            </motion.div>
-          ))}
+          {features.map((feature, i) => {
+            const Icon = feature.icon;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+                whileHover={{ scale: 1.02 }}
+                className="group p-8 bg-black border border-zinc-800 rounded-2xl hover:bg-zinc-900 hover:border-zinc-700 transition-all cursor-default"
+              >
+                <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center mb-6 group-hover:bg-white/10 transition-colors">
+                  <Icon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3 tracking-tight">
+                  {feature.title}
+                </h3>
+                <p className="text-zinc-500 leading-relaxed text-sm">
+                  {feature.description}
+                </p>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>

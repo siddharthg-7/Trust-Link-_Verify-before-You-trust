@@ -6,7 +6,17 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { Button } from "../ui/button";
 import { InfiniteSlider } from "../ui/infinite-slider";
 import { useNavigate } from "react-router-dom";
-import { Shield, Lock, Eye, AlertTriangle } from "lucide-react";
+import { 
+  BsShieldLock as BsShieldLockRaw, 
+  BsLock as BsLockRaw 
+} from "react-icons/bs";
+import { AiOutlineEye as AiOutlineEyeRaw } from "react-icons/ai";
+import { RiAlertLine as RiAlertLineRaw } from "react-icons/ri";
+
+const BsShieldLock = BsShieldLockRaw as any;
+const BsLock = BsLockRaw as any;
+const AiOutlineEye = AiOutlineEyeRaw as any;
+const RiAlertLine = RiAlertLineRaw as any;
 
 export function HeroSection() {
   const navigate = useNavigate();
@@ -22,7 +32,7 @@ export function HeroSection() {
       {/* Nav Placeholder (matches floating pill style from previous chats) */}
       <nav className="fixed top-6 z-50 px-6 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-8">
         <div className="flex items-center gap-2">
-          <Shield className="w-5 h-5 text-white" />
+          <BsShieldLock className="w-5 h-5 text-white" />
           <span className="font-bold tracking-tighter">TrustLink</span>
         </div>
         <div className="hidden md:flex items-center gap-6 text-sm text-zinc-400 font-medium">
@@ -48,12 +58,12 @@ export function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-bold uppercase tracking-widest text-zinc-300 mb-6">
-              <Lock className="w-3 h-3" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-bold uppercase tracking-widest text-zinc-300 mb-6 font-mono">
+              <BsLock className="w-3 h-3" />
               Verified Trust Architecture
             </div>
             
-            <h1 className="text-6xl md:text-7xl xl:text-8xl font-black tracking-tighter leading-[0.9]">
+            <h1 className="text-6xl md:text-7xl xl:text-8xl font-black tracking-tighter leading-[0.9] text-white">
               TrustLink
             </h1>
             
@@ -114,18 +124,21 @@ export function HeroSection() {
         
         <InfiniteSlider duration={30} gap={80} className="py-4">
           {[
-            { icon: Shield, name: "SecuNet" },
-            { icon: Lock, name: "SafeNode" },
-            { icon: Eye, name: "OmniView" },
-            { icon: AlertTriangle, name: "RiskRadar" },
-            { icon: Shield, name: "CyberWard" },
-            { icon: Lock, name: "AuthGuard" }
-          ].map((brand, i) => (
-            <div key={i} className="flex items-center gap-3 grayscale opacity-30 hover:opacity-100 transition-opacity group cursor-default">
-              <brand.icon className="w-6 h-6" />
-              <span className="font-bold text-xl tracking-tighter">{brand.name}</span>
-            </div>
-          ))}
+            { icon: BsShieldLock, name: "SecuNet" },
+            { icon: BsLock, name: "SafeNode" },
+            { icon: AiOutlineEye, name: "OmniView" },
+            { icon: RiAlertLine, name: "RiskRadar" },
+            { icon: BsShieldLock, name: "CyberWard" },
+            { icon: BsLock, name: "AuthGuard" }
+          ].map((brand, i) => {
+            const BrandIcon = brand.icon as any;
+            return (
+              <div key={i} className="flex items-center gap-3 grayscale opacity-30 hover:opacity-100 transition-opacity group cursor-default">
+                <BrandIcon className="w-6 h-6 text-white" />
+                <span className="font-bold text-xl tracking-tighter text-white">{brand.name}</span>
+              </div>
+            );
+          })}
         </InfiniteSlider>
       </div>
 
@@ -138,7 +151,7 @@ export function HeroSection() {
           { label: "Community", value: "85K+" }
         ].map((stat, i) => (
           <div key={i} className="text-center lg:text-left">
-            <div className="text-4xl font-black tracking-tight">{stat.value}</div>
+            <div className="text-4xl font-black tracking-tight text-white">{stat.value}</div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-1">{stat.label}</div>
           </div>
         ))}

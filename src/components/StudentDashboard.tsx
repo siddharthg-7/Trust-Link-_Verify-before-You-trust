@@ -1,21 +1,56 @@
 import React, { useState, useEffect } from "react";
-import {
-  Search,
-  AlertTriangle,
-  CheckCircle,
-  Send,
-  Loader2,
-  Shield,
-  Clock,
-  TrendingUp,
-  Zap,
-  ChevronDown,
-  FileText,
-  BarChart3,
-  Info,
-  MessageSquare,
-  X,
-} from "lucide-react";
+import { 
+  AiOutlineScan as AiOutlineScanRaw, 
+  AiOutlineInfoCircle as AiOutlineInfoCircleRaw 
+} from "react-icons/ai";
+import { 
+  RiAlertLine as RiAlertLineRaw, 
+  RiSendPlaneFill as RiSendPlaneFillRaw, 
+  RiTimeLine 
+} from "react-icons/ri";
+import { 
+  MdOutlineVerified as MdOutlineVerifiedRaw, 
+  MdOutlineCategory, 
+  MdClose as MdCloseRaw 
+} from "react-icons/md";
+import { 
+  BsLightningCharge as BsLightningChargeRaw, 
+  BsShieldLock as BsShieldLockRaw, 
+  BsChatDots 
+} from "react-icons/bs";
+import { 
+  FiClock as FiClockRaw, 
+  FiFileText as FiFileTextRaw, 
+  FiTrendingUp as FiTrendingUpRaw 
+} from "react-icons/fi";
+import { 
+  VscGraph as VscGraphRaw 
+} from "react-icons/vsc";
+import { 
+  BiChevronDown as BiChevronDownRaw, 
+  BiMessageSquareDetail as BiMessageSquareDetailRaw 
+} from "react-icons/bi";
+import { 
+  CgSpinner as CgSpinnerRaw 
+} from "react-icons/cg";
+
+// ── Caste icons to any to bypass strict React 19 types ──
+const AiOutlineScan = AiOutlineScanRaw as any;
+const AiOutlineInfoCircle = AiOutlineInfoCircleRaw as any;
+const RiAlertLine = RiAlertLineRaw as any;
+const RiSendPlaneFill = RiSendPlaneFillRaw as any;
+const MdOutlineVerified = MdOutlineVerifiedRaw as any;
+const MdClose = MdCloseRaw as any;
+const BsLightningCharge = BsLightningChargeRaw as any;
+const BsShieldLock = BsShieldLockRaw as any;
+const FiClock = FiClockRaw as any;
+const FiFileText = FiFileTextRaw as any;
+const FiTrendingUp = FiTrendingUpRaw as any;
+const VscGraph = VscGraphRaw as any;
+const BiChevronDown = BiChevronDownRaw as any;
+const BiMessageSquareDetail = BiMessageSquareDetailRaw as any;
+const CgSpinner = CgSpinnerRaw as any;
+
 import { ChatSystem } from "./ChatSystem";
 import { GlassCard } from "./ui/GlassCard";
 import axios from "axios";
@@ -44,6 +79,7 @@ interface AnalysisResult {
   findings: string[];
   explanation: string;
   bayesScore?: number;
+  richScore?: number;
 }
 
 // ── Risk color helpers ─────────────────────────────────────────
@@ -98,69 +134,77 @@ const CATEGORIES = [
   "Lottery / Prize Scam",
   "Job / Work-From-Home Fraud",
   "Impersonation",
-  "Malicious Link",
+  "Fake Shopping Site",
   "Other",
 ];
 
 export function StudentDashboard() {
   const [content, setContent] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
-  const [showComplaintForm, setShowComplaintForm] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [recentReports, setRecentReports] = useState<any[]>([]);
-  const [selectedChatReport, setSelectedChatReport] = useState<any>(null);
-
-  const [complaintData, setComplaintData] = useState({
-    title: "",
-    description: "",
-    category: "",
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [stats, setStats] = useState({ 
+    scamsDetected: 0, 
+    verifications: 0, 
+    activeReports: 0 
   });
+  const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0]);
+  const [showComplaintForm, setShowComplaintForm] = useState(false);
+  const [complaintData, setComplaintData] = useState({ title: "", description: "", category: "" });
+  const [selectedChatReport, setSelectedChatReport] = useState<any | null>(null);
 
-  // ── Load recent reports ──────────────────────────────────────
+  // Live Stats Listener
   useEffect(() => {
-    const q = query(collection(db, "reports"), orderBy("timestamp", "desc"), limit(5));
-    const unsub = onSnapshot(q, (snap) => {
-      setRecentReports(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    const q = query(collection(db, "reports"), orderBy("timestamp", "desc"), limit(10));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const docs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setRecentReports(docs);
+      
+      // Compute simple stats from last 100 (demo logic)
+      setStats({
+        scamsDetected: docs.filter((d: any) => d.status === "Scam").length,
+        verifications: docs.filter((d: any) => d.status === "Verified").length,
+        activeReports: docs.filter((d: any) => d.status === "Pending").length
+      });
     });
-    return () => unsub();
+    return unsubscribe;
   }, []);
 
-  // ── Analyze ──────────────────────────────────────────────────
-  const handleAnalyze = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAnalyze = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!content.trim()) return;
     setIsAnalyzing(true);
     setResult(null);
+
     try {
-      const { data } = await axios.post("/api/analyze", { content });
-      setResult(data);
-      setComplaintData((p) => ({ ...p, category: data.category }));
-      setShowComplaintForm(false);
+      const response = await axios.post("http://localhost:3001/api/analyze", { content });
+      setResult(response.data);
       toast.success("Analysis complete!");
-    } catch {
-      toast.error("Analysis failed — server error");
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      toast.error("Analysis failed. Is the server running?");
     } finally {
       setIsAnalyzing(false);
     }
   };
 
-  // ── Submit complaint ─────────────────────────────────────────
   const handleComplaintSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     try {
       if (!auth.currentUser) throw new Error("User not logged in");
       if (!result) throw new Error("No analysis data");
 
-      const reportData = {
+      setIsSubmitting(true);
+      
+      const payload = {
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
         content,
-        title: complaintData.title || "Scam Analysis Report",
-        description: complaintData.description,
-        category: complaintData.category || result.category,
-        aiScore: result.bayesScore ?? result.riskScore,
+        title: complaintData.title || (result.category === "Scam" ? "Potential Fraud Detected" : "Security Notice"),
+        description: complaintData.description || result.explanation,
+        category: complaintData.category || selectedCategory,
+        aiScore: result.bayesScore ?? result.richScore ?? result.riskScore,
         riskScore: result.riskScore,
         adminScore: null,
         weightedScore: null,
@@ -171,7 +215,7 @@ export function StudentDashboard() {
         chatEnabled: true
       };
 
-      await addDoc(collection(db, "reports"), reportData);
+      await addDoc(collection(db, "reports"), payload);
 
       const userRef = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userRef, { reportsCount: increment(1) });
@@ -194,10 +238,10 @@ export function StudentDashboard() {
       {/* ── Page Header ──────────────────────────────────────── */}
       <div className="space-y-1">
         <div className="flex items-center gap-2 text-blue-400 text-xs font-semibold uppercase tracking-widest mb-2">
-          <Shield className="w-3.5 h-3.5" />
+          <BsShieldLock className="w-3.5 h-3.5" />
           AI-Powered Scam Detection
         </div>
-        <h1 className="text-4xl font-black tracking-tight">Verify Content</h1>
+        <h1 className="text-4xl font-black tracking-tight text-white">Verify Content</h1>
         <p className="text-white/40 text-base leading-relaxed max-w-xl">
           Paste any suspicious link, email, or message. Our Naive Bayes + NLP ensemble
           will instantly detect scam patterns.
@@ -207,16 +251,16 @@ export function StudentDashboard() {
       {/* ── Stats bar ────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { icon: BarChart3, label: "Reports Analyzed", value: recentReports.length + "+" },
-          { icon: TrendingUp, label: "Detection Rate", value: "97.3%" },
-          { icon: Zap, label: "Avg Response", value: "<200ms" },
-        ].map(({ icon: Icon, label, value }) => (
+          { icon: VscGraph, label: "Reports Analyzed", value: recentReports.length + "+" },
+          { icon: FiTrendingUp, label: "Detection Rate", value: "97.3%" },
+          { icon: BsLightningCharge, label: "Avg Response", value: "<200ms" },
+        ].map(({ icon: IconComponent, label, value }) => (
           <GlassCard key={label} className="p-4 flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-              <Icon className="w-4 h-4 text-blue-400" />
+              <IconComponent className="w-4 h-4 text-blue-400" />
             </div>
             <div>
-              <div className="text-lg font-bold leading-none">{value}</div>
+              <div className="text-lg font-bold leading-none text-white">{value}</div>
               <div className="text-[10px] text-white/30 uppercase tracking-wider mt-0.5">{label}</div>
             </div>
           </GlassCard>
@@ -227,7 +271,7 @@ export function StudentDashboard() {
       <GlassCard gradient className="p-6">
         <form onSubmit={handleAnalyze} className="space-y-4">
           <div className="flex items-center gap-2 mb-1">
-            <Search className="w-4 h-4 text-blue-400" />
+            <AiOutlineScan className="w-4 h-4 text-blue-400" />
             <h2 className="font-bold text-sm uppercase tracking-widest text-white/60">
               Paste Suspicious Content
             </h2>
@@ -252,12 +296,12 @@ export function StudentDashboard() {
           >
             {isAnalyzing ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <CgSpinner className="w-5 h-5 animate-spin" />
                 Analyzing with AI...
               </>
             ) : (
               <>
-                <Search className="w-5 h-5" />
+                <AiOutlineScan className="w-5 h-5" />
                 Analyze Content
               </>
             )}
@@ -320,7 +364,7 @@ export function StudentDashboard() {
                           key={i}
                           className="flex items-start gap-2 text-xs text-white/40 bg-white/5 p-2.5 rounded-xl"
                         >
-                          <AlertTriangle className="w-3.5 h-3.5 text-yellow-500/60 shrink-0 mt-0.5" />
+                          <RiAlertLine className="w-3.5 h-3.5 text-yellow-500/60 shrink-0 mt-0.5" />
                           {f}
                         </div>
                       ))}
@@ -338,14 +382,14 @@ export function StudentDashboard() {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 bg-blue-500/10 rounded-xl flex items-center justify-center">
-                    <Send className="w-4 h-4 text-blue-400" />
+                    <RiSendPlaneFill className="w-4 h-4 text-blue-400" />
                   </div>
                   <div className="text-left">
-                    <div className="font-bold text-sm">Submit Official Complaint</div>
+                    <div className="font-bold text-sm text-white">Submit Official Complaint</div>
                     <div className="text-xs text-white/40">Report this content to our admin team for review</div>
                   </div>
                 </div>
-                <ChevronDown
+                <BiChevronDown
                   className={cn(
                     "w-5 h-5 text-white/30 transition-transform",
                     showComplaintForm ? "rotate-180" : ""
@@ -409,9 +453,9 @@ export function StudentDashboard() {
                         className="w-full py-3.5 bg-white text-black rounded-xl font-bold text-sm hover:bg-white/90 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                       >
                         {isSubmitting ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <CgSpinner className="w-4 h-4 animate-spin" />
                         ) : (
-                          <Send className="w-4 h-4" />
+                          <RiSendPlaneFill className="w-4 h-4" />
                         )}
                         {isSubmitting ? "Submitting..." : "Submit Report to Admin"}
                       </button>
@@ -428,7 +472,7 @@ export function StudentDashboard() {
       <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-white/40" />
+            <FiFileText className="w-4 h-4 text-white/40" />
             <h2 className="font-bold text-sm uppercase tracking-widest text-white/40">
               Recent Community Analyses
             </h2>
@@ -438,7 +482,7 @@ export function StudentDashboard() {
 
         {recentReports.length === 0 ? (
           <GlassCard className="p-8 text-center">
-            <Shield className="w-10 h-10 text-white/10 mx-auto mb-3" />
+            <BsShieldLock className="w-10 h-10 text-white/10 mx-auto mb-3" />
             <p className="text-white/30 text-sm">No reports yet. Be the first to analyze suspicious content!</p>
           </GlassCard>
         ) : (
@@ -457,17 +501,17 @@ export function StudentDashboard() {
                     )}
                   >
                     {report.status === "Scam" ? (
-                      <Shield className="w-6 h-6" />
+                      <BsShieldLock className="w-6 h-6" />
                     ) : report.status === "Verified" ? (
-                      <CheckCircle className="w-6 h-6" />
+                      <MdOutlineVerified className="w-6 h-6" />
                     ) : (
-                      <Clock className="w-6 h-6" />
+                      <FiClock className="w-6 h-6" />
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-bold text-base truncate">{report.title || "Security Analysis"}</span>
+                      <span className="font-bold text-base truncate text-white">{report.title || "Security Analysis"}</span>
                       <span className={cn(
                         "px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest border",
                         report.status === "Scam" ? "bg-red-500/10 text-red-500 border-red-500/20" :
@@ -507,7 +551,7 @@ export function StudentDashboard() {
 
                   <div className="flex flex-col items-end gap-1 shrink-0">
                     <div className="flex items-center gap-1 text-[10px] text-white/20 font-bold uppercase">
-                      <Clock className="w-3 h-3" />
+                      <FiClock className="w-3 h-3" />
                       {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString() : "Pending"}
                     </div>
                     {report.userId === auth.currentUser?.uid && (
@@ -515,7 +559,7 @@ export function StudentDashboard() {
                         onClick={() => setSelectedChatReport(report)}
                         className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-[10px] font-black uppercase transition-all border border-blue-500/10"
                       >
-                        <MessageSquare className="w-3 h-3" />
+                        <BiMessageSquareDetail className="w-3 h-3" />
                         Chat with Mod
                       </button>
                     )}
@@ -525,9 +569,9 @@ export function StudentDashboard() {
                 {report.adminFeedback && (
                   <div className="px-5 py-3 bg-blue-500/5 border-t border-white/5">
                     <div className="flex gap-2">
-                      <Info className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
+                      <AiOutlineInfoCircle className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
                       <p className="text-[11px] text-blue-300/80 leading-relaxed italic">
-                        <span className="font-bold uppercase tracking-wider mr-1 not-italic">Moderator Feedback:</span>
+                        <span className="font-bold uppercase tracking-wider mr-1 not-italic text-blue-400">Moderator Feedback:</span>
                         {report.adminFeedback}
                       </p>
                     </div>
@@ -552,7 +596,7 @@ export function StudentDashboard() {
                 onClick={() => setSelectedChatReport(null)}
                 className="absolute -top-12 right-0 p-2 text-white/40 hover:text-white transition-all bg-white/5 rounded-full hover:bg-white/10"
               >
-                <X className="w-5 h-5" />
+                <MdClose className="w-5 h-5" />
               </button>
               <GlassCard className="p-0 overflow-hidden shadow-2xl shadow-blue-500/10 border-blue-500/20">
                 <ChatSystem 
