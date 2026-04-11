@@ -100,6 +100,7 @@ export function AuthPage() {
         if (result?.user) {
           await ensureUserDoc(result.user);
           toast.success("Welcome to TrustLink!");
+          navigate(result.user.email === "siddharth@gmail.com" ? "/admin" : "/app/home", { replace: true });
         }
       })
       .catch((err) => {
@@ -108,7 +109,7 @@ export function AuthPage() {
         }
       })
       .finally(() => setGoogleLoading(false));
-  }, []);
+  }, [navigate]);
 
   // ─── Email / Password Login ──────────────────────────────────
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -176,6 +177,7 @@ export function AuthPage() {
       const result = await signInWithPopup(auth, googleProvider);
       await ensureUserDoc(result.user);
       toast.success("Welcome to TrustLink!");
+      navigate(result.user.email === "siddharth@gmail.com" ? "/admin" : "/app/home", { replace: true });
     } catch (err: any) {
       if (err.code === "auth/popup-blocked" || err.code === "auth/popup-cancelled") {
         // Popup blocked by browser — fall back to redirect

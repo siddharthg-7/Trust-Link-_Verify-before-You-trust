@@ -54,13 +54,13 @@ export default function App() {
           }
 
           // Initial redirect when auth is ready
-          if (!isAuthReady) {
-            if (role === "admin" || adminByEmail) {
-              if (!location.pathname.startsWith("/admin")) navigate("/admin", { replace: true });
-            } else {
-              if (location.pathname === "/" || location.pathname === "/auth") {
-                navigate("/app/home", { replace: true });
-              }
+          if (role === "admin" || adminByEmail) {
+            if (!location.pathname.startsWith("/admin")) {
+              navigate("/admin", { replace: true });
+            }
+          } else {
+            if (location.pathname === "/" || location.pathname === "/auth") {
+              navigate("/app/home", { replace: true });
             }
           }
         } catch (error) {

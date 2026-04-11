@@ -13,7 +13,10 @@ import {
   FileText,
   BarChart3,
   Info,
+  MessageSquare,
+  X,
 } from "lucide-react";
+import { ChatSystem } from "./ChatSystem";
 import { GlassCard } from "./ui/GlassCard";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -106,6 +109,7 @@ export function StudentDashboard() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [showComplaintForm, setShowComplaintForm] = useState(false);
   const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [selectedChatReport, setSelectedChatReport] = useState<any>(null);
 
   const [complaintData, setComplaintData] = useState({
     title: "",
@@ -144,37 +148,41 @@ export function StudentDashboard() {
   // ── Submit complaint ─────────────────────────────────────────
   const handleComplaintSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!result) return;
     setIsSubmitting(true);
     try {
+      if (!auth.currentUser) throw new Error("User not logged in");
+      if (!result) throw new Error("No analysis data");
+
       const reportData = {
-        userId: auth.currentUser?.uid,
+        userId: auth.currentUser.uid,
+        userEmail: auth.currentUser.email,
+        content,
         title: complaintData.title || "Scam Analysis Report",
         description: complaintData.description,
-        content,
+        category: complaintData.category || result.category,
+        aiScore: result.bayesScore ?? result.riskScore,
         riskScore: result.riskScore,
-        category: result.category,
+        adminScore: null,
+        weightedScore: null,
         status: "Pending",
         findings: result.findings,
         aiAnalysis: result.explanation,
         timestamp: serverTimestamp(),
-        votes: {},
-        comments: [],
+        chatEnabled: true
       };
 
       await addDoc(collection(db, "reports"), reportData);
 
-      if (auth.currentUser) {
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        await updateDoc(userRef, { reportsCount: increment(1) });
-      }
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userRef, { reportsCount: increment(1) });
 
       toast.success("Report submitted for review!");
       setResult(null);
       setContent("");
       setComplaintData({ title: "", description: "", category: "" });
       setShowComplaintForm(false);
-    } catch (error) {
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit report");
       handleFirestoreError(error, OperationType.WRITE, "reports");
     } finally {
       setIsSubmitting(false);
@@ -484,9 +492,14 @@ export function StudentDashboard() {
                           {report.weightedScore ?? report.riskScore}% <span className="text-white/20">Trust Risk</span>
                         </span>
                       </div>
-                      {report.weightedScore !== undefined && (
-                         <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-bold uppercase tracking-tighter">
-                          50/50 Verified
+                      {report.aiScore !== undefined && (
+                         <span className="text-[10px] bg-white/5 text-white/40 px-2 py-0.5 rounded font-bold uppercase tracking-tighter border border-white/5">
+                          AI: {report.aiScore}%
+                         </span>
+                      )}
+                      {report.weightedScore != null && (
+                         <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-bold uppercase tracking-tighter border border-blue-500/10">
+                          70/30 Verified
                          </span>
                       )}
                     </div>
@@ -497,6 +510,15 @@ export function StudentDashboard() {
                       <Clock className="w-3 h-3" />
                       {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString() : "Pending"}
                     </div>
+                    {report.userId === auth.currentUser?.uid && (
+                      <button 
+                        onClick={() => setSelectedChatReport(report)}
+                        className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 rounded-lg text-[10px] font-black uppercase transition-all border border-blue-500/10"
+                      >
+                        <MessageSquare className="w-3 h-3" />
+                        Chat with Mod
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -516,6 +538,33 @@ export function StudentDashboard() {
           </div>
         )}
       </div>
+
+      <AnimatePresence>
+        {selectedChatReport && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-lg relative"
+            >
+              <button 
+                onClick={() => setSelectedChatReport(null)}
+                className="absolute -top-12 right-0 p-2 text-white/40 hover:text-white transition-all bg-white/5 rounded-full hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              <GlassCard className="p-0 overflow-hidden shadow-2xl shadow-blue-500/10 border-blue-500/20">
+                <ChatSystem 
+                  reportId={selectedChatReport.id} 
+                  currentRole="user" 
+                  contentContext={selectedChatReport.content} 
+                />
+              </GlassCard>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

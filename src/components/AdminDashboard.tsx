@@ -19,11 +19,34 @@ import toast from "react-hot-toast";
 import { cn } from "../lib/utils";
 import axios from "axios";
 import { logAudit } from "../lib/audit";
+import { ChatSystem } from "./ChatSystem";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line,
-  AreaChart, Area, Legend
-} from "recharts";
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip as ChartTooltip,
+  Legend as ChartLegend,
+  ArcElement,
+  PointElement,
+  LineElement,
+  Filler,
+} from 'chart.js';
+import { Bar, Pie, Line } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  ChartTooltip,
+  ChartLegend,
+  ArcElement,
+  PointElement,
+  LineElement,
+  Filler
+);
 
 // ─── Types ─────────────────────────────────────────────────────
 type AdminTab =
@@ -207,18 +230,37 @@ function OverviewTab({ reports, users, community }: { reports: any[]; users: any
   const pendingCount = reports.filter(r => r.status === "Pending").length;
   const highRisk     = reports.filter(r => r.riskScore > 65);
 
-  const weekData = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((day, i) => ({
-    day,
-    scams: reports.filter(r => r.riskScore > 65 && i < reports.length).length + Math.floor(Math.random() * 3),
-    safe:  reports.filter(r => r.riskScore <= 35 && i < reports.length).length + Math.floor(Math.random() * 2),
-  }));
+  const weekData = {
+    labels: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+    datasets: [
+      {
+        label: 'Scams',
+        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.riskScore > 65 && r.timestamp?.toDate().getDay() === (i + 1) % 7).length),
+        backgroundColor: '#ef4444',
+        borderRadius: 4,
+      },
+      {
+        label: 'Safe',
+        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.riskScore <= 35 && r.timestamp?.toDate().getDay() === (i + 1) % 7).length),
+        backgroundColor: '#22c55e',
+        borderRadius: 4,
+      }
+    ]
+  };
 
-  const categoryData = [
-    { name: "Phishing", value: Math.max(1, Math.floor(scamCount * 0.4)) },
-    { name: "Investment Fraud", value: Math.max(1, Math.floor(scamCount * 0.25)) },
-    { name: "Impersonation", value: Math.max(1, Math.floor(scamCount * 0.2)) },
-    { name: "Tech Support", value: Math.max(1, Math.floor(scamCount * 0.15)) },
-  ];
+  const categoryData = {
+    labels: ["Phishing", "Investment", "Impersonation", "Tech Support"],
+    datasets: [{
+      data: [
+        reports.filter(r => r.category === "Phishing").length || 1,
+        reports.filter(r => r.category === "Investment").length || 1,
+        reports.filter(r => r.category === "Impersonation").length || 1,
+        reports.filter(r => r.category === "Tech Support").length || 1,
+      ],
+      backgroundColor: CHART_COLORS,
+      borderWidth: 0,
+    }]
+  };
 
   return (
     <div className="space-y-6">
@@ -251,17 +293,18 @@ function OverviewTab({ reports, users, community }: { reports: any[]; users: any
             <span className="text-xs text-white/30">Last 7 days</span>
           </div>
           <div className="h-52">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weekData} barSize={16}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
-                <XAxis dataKey="day" stroke="#ffffff30" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#ffffff30" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Bar dataKey="scams" fill="#ef4444" name="Scams" radius={[4,4,0,0]} />
-                <Bar dataKey="safe"  fill="#22c55e" name="Safe"  radius={[4,4,0,0]} />
-                <Legend wrapperStyle={{ color: "#ffffff60", fontSize: 11 }} />
-              </BarChart>
-            </ResponsiveContainer>
+            <Bar 
+              data={weekData} 
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a' } },
+                scales: { 
+                  x: { grid: { display: false }, ticks: { color: '#ffffff40' } },
+                  y: { grid: { color: '#ffffff05' }, ticks: { color: '#ffffff40' } }
+                }
+              }} 
+            />
           </div>
         </GlassCard>
 
@@ -271,23 +314,23 @@ function OverviewTab({ reports, users, community }: { reports: any[]; users: any
             <PieChartIcon className="w-4 h-4 text-purple-400" /> Scam Category Heatmap
           </h3>
           <div className="h-40">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={categoryData} cx="50%" cy="50%" innerRadius={40} outerRadius={60} paddingAngle={3} dataKey="value">
-                  {categoryData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-                </Pie>
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-              </PieChart>
-            </ResponsiveContainer>
+            <Pie 
+              data={categoryData} 
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } }
+              }} 
+            />
           </div>
           <div className="mt-3 space-y-1.5">
-            {categoryData.map((c, i) => (
-              <div key={c.name} className="flex items-center justify-between text-xs">
+            {categoryData.labels.map((label, i) => (
+              <div key={label} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ background: CHART_COLORS[i] }} />
-                  <span className="text-white/50">{c.name}</span>
+                  <span className="text-white/50">{label}</span>
                 </div>
-                <span className="font-bold">{c.value}</span>
+                <span className="font-bold">{categoryData.datasets[0].data[i]}</span>
               </div>
             ))}
           </div>
@@ -376,7 +419,7 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
       const fixedScore = label === "Verified" ? 0 : label === "Scam" ? 100 : 50;
       const r = reports.find(x => x.id === id);
       const aiScore = r?.riskScore || 0;
-      const weightedScore = Math.round((aiScore * 0.5) + (fixedScore * 0.5));
+      const weightedScore = Math.round((aiScore * 0.7) + (fixedScore * 0.3));
 
       await updateDoc(doc(db, "reports", id), { 
         trustLabel: label, 
@@ -395,7 +438,7 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
     setUpdatingId(reviewingReport.id);
     try {
       const aiScore = reviewingReport.riskScore || 0;
-      const weightedScore = Math.round((aiScore * 0.5) + (adminScore * 0.5));
+      const weightedScore = Math.round((aiScore * 0.7) + (adminScore * 0.3));
       const status = weightedScore > 50 ? "Scam" : "Verified";
 
       await updateDoc(doc(db, "reports", reviewingReport.id), {
@@ -463,13 +506,13 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
               
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-400/50 mb-1">NLP AI Score (50%)</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-400/50 mb-1">NLP AI Contribution (70%)</p>
                   <p className="text-2xl font-black">{reviewingReport.riskScore}%</p>
                 </div>
                 <div className="p-4 bg-purple-500/5 rounded-2xl border border-purple-500/10">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-purple-400/50 mb-1">Calculated Weighted</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-purple-400/50 mb-1">Final Weighted Score</p>
                   <p className="text-2xl font-black text-white/80">
-                    {Math.round((reviewingReport.riskScore * 0.5) + (adminScore * 0.5))}%
+                    {Math.round((reviewingReport.riskScore * 0.7) + (adminScore * 0.3))}%
                   </p>
                 </div>
               </div>
@@ -478,7 +521,7 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
             <div className="space-y-5">
               <div className="space-y-3">
                 <div className="flex justify-between items-end">
-                  <label className="text-xs font-black uppercase tracking-widest text-white/40">Admin Severity Score (50%)</label>
+                  <label className="text-xs font-black uppercase tracking-widest text-white/40">Admin Review Score (30%)</label>
                   <span className={cn("text-xl font-black transition-colors", adminScore > 50 ? "text-red-400" : "text-green-400")}>{adminScore}%</span>
                 </div>
                 <input 
@@ -508,8 +551,16 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
                 className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-base flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20 active:scale-[0.98]"
               >
                 {updatingId === reviewingReport.id ? <Loader2 className="w-5 h-5 animate-spin" /> : <CheckCircle className="w-5 h-5" />}
-                Submit 50/50 Combined Verification
+                Submit 70/30 Hybrid Verification
               </button>
+
+              <div className="mt-6">
+                <ChatSystem 
+                  reportId={reviewingReport.id} 
+                  currentRole="admin" 
+                  contentContext={reviewingReport.content} 
+                />
+              </div>
             </div>
           </div>
         </GlassCard>
@@ -966,24 +1017,55 @@ function ReportsTab({ reports }: { reports: any[] }) {
 //  6. ANALYTICS TAB
 // ═══════════════════════════════════════════════════════════════
 function AnalyticsTab({ reports, users, community }: { reports: any[]; users: any[]; community: any[] }) {
-  const categoryDist = [
-    { name: "Scam",    value: reports.filter(r => r.category === "Scam").length,    fill: "#ef4444" },
-    { name: "Safe",    value: reports.filter(r => r.category === "Safe").length,    fill: "#22c55e" },
-    { name: "Pending", value: reports.filter(r => r.status === "Pending").length,   fill: "#f59e0b" },
-  ];
+  const categoryDist = {
+    labels: ["Scam", "Safe", "Pending"],
+    datasets: [{
+      data: [
+        reports.filter(r => r.category === "Scam").length,
+        reports.filter(r => r.category === "Safe").length,
+        reports.filter(r => r.status === "Pending").length,
+      ],
+      backgroundColor: ["#ef4444", "#22c55e", "#f59e0b"],
+      borderWidth: 0,
+    }]
+  };
 
-  const riskBands = [
-    { band: "0–25% (Low)",    count: reports.filter(r => r.riskScore <= 25).length,  fill: "#22c55e" },
-    { band: "26–50% (Moderate)", count: reports.filter(r => r.riskScore > 25 && r.riskScore <= 50).length, fill: "#3b82f6" },
-    { band: "51–75% (High)",  count: reports.filter(r => r.riskScore > 50 && r.riskScore <= 75).length, fill: "#f59e0b" },
-    { band: "76–100% (Critical)", count: reports.filter(r => r.riskScore > 75).length, fill: "#ef4444" },
-  ];
+  const riskBandsData = {
+    labels: ["0–25% (Low)", "26–50% (Moderate)", "51–75% (High)", "76–100% (Critical)"],
+    datasets: [{
+      label: 'Reports',
+      data: [
+        reports.filter(r => r.riskScore <= 25).length,
+        reports.filter(r => r.riskScore > 25 && r.riskScore <= 50).length,
+        reports.filter(r => r.riskScore > 50 && r.riskScore <= 75).length,
+        reports.filter(r => r.riskScore > 75).length,
+      ],
+      backgroundColor: ["#22c55e", "#3b82f6", "#f59e0b", "#ef4444"],
+      borderRadius: 4,
+    }]
+  };
 
-  const weeklyTrend = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((day, i) => ({
-    day,
-    reports: Math.floor(reports.length / 7 * (1 + Math.random() * 0.5)),
-    users: Math.floor(users.length / 7 * (1 + Math.random() * 0.3)),
-  }));
+  const weeklyTrendData = {
+    labels: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+    datasets: [
+      {
+        label: 'Reports',
+        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.timestamp?.toDate().getDay() === (i + 1) % 7).length),
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        fill: true,
+        tension: 0.4,
+      },
+      {
+        label: 'Users',
+        data: [0,0,0,0,0,0,0].map((_, i) => users.filter(u => u.createdAt?.toDate().getDay() === (i + 1) % 7).length),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.4,
+      }
+    ]
+  };
 
   return (
     <div className="space-y-6">
@@ -994,14 +1076,14 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
             <PieChartIcon className="w-4 h-4 text-purple-400" /> Category Distribution
           </h3>
           <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={categoryDist} cx="50%" cy="50%" outerRadius={80} paddingAngle={4} dataKey="value" label={({ name, percent }) => `${name} ${(percent*100).toFixed(0)}%`}>
-                  {categoryDist.map((c, i) => <Cell key={i} fill={c.fill} />)}
-                </Pie>
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-              </PieChart>
-            </ResponsiveContainer>
+            <Pie 
+              data={categoryDist} 
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { color: '#ffffff40', font: { size: 10 } } } }
+              }} 
+            />
           </div>
         </GlassCard>
 
@@ -1011,17 +1093,19 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
             <BarChart3 className="w-4 h-4 text-blue-400" /> Risk Score Distribution
           </h3>
           <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={riskBands} layout="vertical" barSize={14}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" horizontal={false} />
-                <XAxis type="number" stroke="#ffffff20" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis type="category" dataKey="band" stroke="#ffffff20" fontSize={9} tickLine={false} width={110} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Bar dataKey="count" name="Reports" radius={[0,4,4,0]}>
-                  {riskBands.map((b, i) => <Cell key={i} fill={b.fill} />)}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <Bar 
+              data={riskBandsData} 
+              options={{
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                  x: { grid: { display: false }, ticks: { color: '#ffffff40' } },
+                  y: { grid: { display: false }, ticks: { color: '#ffffff40', font: { size: 9 } } }
+                }
+              }} 
+            />
           </div>
         </GlassCard>
       </div>
@@ -1032,17 +1116,18 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
           <TrendingUp className="w-4 h-4 text-green-400" /> Weekly Trend — Reports vs New Users
         </h3>
         <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={weeklyTrend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
-              <XAxis dataKey="day" stroke="#ffffff30" fontSize={11} tickLine={false} axisLine={false} />
-              <YAxis stroke="#ffffff30" fontSize={11} tickLine={false} axisLine={false} />
-              <Tooltip contentStyle={TOOLTIP_STYLE} />
-              <Legend wrapperStyle={{ color: "#ffffff60", fontSize: 11 }} />
-              <Line type="monotone" dataKey="reports" stroke="#ef4444" strokeWidth={2} dot={{ r: 3, fill: "#ef4444" }} name="Reports" />
-              <Line type="monotone" dataKey="users"   stroke="#3b82f6" strokeWidth={2} dot={{ r: 3, fill: "#3b82f6" }} name="Users" />
-            </LineChart>
-          </ResponsiveContainer>
+          <Line 
+            data={weeklyTrendData} 
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { position: 'top', labels: { color: '#ffffff40' } } },
+              scales: { 
+                x: { grid: { display: false }, ticks: { color: '#ffffff40' } },
+                y: { grid: { color: '#ffffff05' }, ticks: { color: '#ffffff40' } }
+              }
+            }} 
+          />
         </div>
       </GlassCard>
 
