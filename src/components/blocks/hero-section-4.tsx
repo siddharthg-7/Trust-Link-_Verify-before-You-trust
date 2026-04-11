@@ -76,6 +76,7 @@ export function HeroSection() {
               <Button 
                 variant="ghost" 
                 className="text-white text-lg font-bold px-8 hover:bg-white/10"
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Learn More
               </Button>
@@ -84,7 +85,7 @@ export function HeroSection() {
         </div>
 
         {/* Right Animation */}
-        <div className="lg:w-1/2 flex justify-center mt-12 lg:mt-0 relative">
+        <div className="lg:w-1/2 flex justify-center mt-20 lg:mt-0 relative lg:translate-x-12">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -95,10 +96,10 @@ export function HeroSection() {
             <div className="absolute inset-0 bg-white/5 blur-[80px] rounded-full scale-75 animate-pulse" />
             
             <DotLottieReact
-              src="https://lottie.host/095adaaf-5c7a-46fc-a18b-9ab3c7371223/MVHwitTOCQ.lottie"
+              src="https://lottie.host/64780a8b-9efe-4150-a0a5-b3cd13778c68/yNYY2hjcwe.lottie"
               loop
               autoplay
-              className="w-[350px] md:w-[500px] lg:w-[600px] relative z-10 drop-shadow-[0_0_50px_rgba(255,255,255,0.1)]"
+              className="w-[450px] md:w-[700px] lg:w-[900px] relative z-10 drop-shadow-[0_0_80px_rgba(255,255,255,0.05)]"
             />
           </motion.div>
         </div>
