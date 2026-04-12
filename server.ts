@@ -5,6 +5,7 @@ import cors from "cors";
 import helmet from "helmet";
 import natural from "natural";
 import axios from "axios";
+import 'dotenv/config';
 
 const app = express();
 const PORT = 3000;
@@ -782,11 +783,14 @@ async function startServer() {
     app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🛡️  TrustLink server running on http://localhost:${PORT}`);
-    console.log(`📊 NLP metrics available at /api/nlp/metrics`);
-    console.log(`❤️  NLP health check at /api/nlp/health`);
-  });
+  if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🛡️  TrustLink server running on http://localhost:${PORT}`);
+      console.log(`📊 NLP metrics available at /api/nlp/metrics`);
+      console.log(`❤️  NLP health check at /api/nlp/health`);
+    });
+  }
 }
 
 startServer();
+export default app;
