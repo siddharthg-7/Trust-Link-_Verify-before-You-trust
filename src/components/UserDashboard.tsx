@@ -34,23 +34,36 @@ export function UserDashboard() {
     return () => unsub();
   }, [uid]);
 
-  // My reports
+  // My reports (Query modified to avoid index requirement)
   useEffect(() => {
     if (!uid) return;
+    // We use a simple query (single field order) and filter in memory to resolve the 'Failed Precondition' error
+    // until the recommended composite index is created in the Firebase Console.
     const q = query(
       collection(db, "reports"),
-      where("userId", "==", uid),
       orderBy("timestamp", "desc")
     );
     const unsub = onSnapshot(q, snap => {
-      setMyReports(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      const allReports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setMyReports(allReports.filter((r: any) => r.userId === uid));
+    }, (err) => {
+      // Graceful handling of permission-denied during auth transitions
+      if (err.code === 'permission-denied') {
+        console.warn("Permission denied for reports list - awaiting auth...");
+      } else {
+        console.error("Snapshot error in UserDashboard:", err);
+      }
     });
     return () => unsub();
   }, [uid]);
 
-  const weekActivity = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((day, i) => ({
-    day, reports: myReports.filter((_, ri) => ri % 7 === i).length || 0
-  }));
+  const weekActivity = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((day, i) => {
+    const dayCount = myReports.filter(report => {
+      const reportDate = report.timestamp?.toDate ? report.timestamp.toDate() : null;
+      return reportDate && reportDate.getDay() === i;
+    }).length;
+    return { day, reports: dayCount };
+  });
 
   const stats = [
     { label: "Reports Submitted", value: userData?.reportsCount || 0,   icon: Shield,        color: "from-blue-500/20 to-blue-600/10   text-blue-400" },

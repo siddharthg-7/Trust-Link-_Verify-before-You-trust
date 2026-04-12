@@ -1,147 +1,46 @@
-// ===============================================================
-// Assumed Data Model
-// ===============================================================
-//
-// Collection: users
-// Document ID: {userId}
-// Fields:
-//   - uid: string (required)
-//   - username: string
-//   - email: string (required)
-//   - role: string (user, admin)
-//   - reportsCount: number
-//   - votesCount: number
-//   - commentsCount: number
-//   - trustScore: number
-//   - createdAt: timestamp
-//
-// Collection: reports
-// Document ID: {reportId}
-// Fields:
-//   - userId: string
-//   - title: string
-//   - description: string
-//   - content: string (required)
-//   - link: string
-//   - riskScore: number (required)
-//   - category: string (Scam, Safe)
-//   - status: string (Pending, Verified, Scam)
-//   - findings: list of strings
-//   - aiAnalysis: string
-//   - proofUrl: string
-//   - timestamp: timestamp (required)
-//   - comments: list
-//   - votes: map
-//
-// Collection: community
-// Document ID: {postId}
-// Fields:
-//   - userId: string
-//   - username: string
-//   - type: string (post, poll)
-//   - content: string (required)
-//   - pollOptions: list
-//   - votes: map
-//   - timestamp: timestamp (required)
-//
-// ===============================================================
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // ===============================================================
-    // Helper Functions
-    // ===============================================================
     
+    // Helper functions
     function isAuthenticated() {
       return request.auth != null;
     }
-
+    
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return request.auth.uid == userId;
     }
 
     function isAdmin() {
-      return isAuthenticated() && 
-        (request.auth.token.email == "siddharth@gmail.com" ||
-         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+      return isAuthenticated() && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        request.auth.token.email == 'siddharth@gmail.com'
+      );
     }
 
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'email']) &&
-             data.uid is string &&
-             data.email is string &&
-             (!('role' in data) || data.role in ['user', 'admin']);
-    }
-
-    function isValidReport(data) {
-      return data.keys().hasAll(['content', 'riskScore', 'status', 'timestamp']) &&
-             data.content is string && data.content.size() < 5000 &&
-             data.riskScore is number && data.riskScore >= 0 && data.riskScore <= 100 &&
-             data.status in ['Pending', 'Verified', 'Scam'] &&
-             data.timestamp is timestamp;
-    }
-
-    function isValidCommunityPost(data) {
-      return data.keys().hasAll(['userId', 'type', 'content', 'timestamp']) &&
-             data.userId is string &&
-             data.type in ['post', 'poll'] &&
-             data.content is string && data.content.size() < 2000 &&
-             data.timestamp is timestamp;
-    }
-
-    // ===============================================================
-    // Rules
-    // ===============================================================
-
+    // --- Users Collection ---
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidUser(request.resource.data) && 
-                      (isOwner(userId) && (!('role' in request.resource.data) || request.resource.data.role == 'user') || isAdmin());
-      allow update: if isAuthenticated() && 
-                      (isOwner(userId) && request.resource.data.role == resource.data.role || isAdmin());
+      allow create: if isAuthenticated() && isOwner(userId);
+      allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
     }
 
+    // --- Reports Collection ---
     match /reports/{reportId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidReport(request.resource.data) && 
-                      (request.resource.data.userId == request.auth.uid || isAdmin());
-      allow update: if isAuthenticated() && (isAdmin() || (isOwner(resource.data.userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments', 'votes'])));
-      allow delete: if isAdmin();
-    }
-
-      match /community/{postId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidCommunityPost(request.resource.data);
-      allow update: if isAuthenticated() && (isOwner(resource.data.userId) || isAdmin() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes']));
-      allow delete: if isOwner(resource.data.userId) || isAdmin();
-
-      match /comments/{commentId} {
-        allow read: if isAuthenticated();
-        allow create: if isAuthenticated();
-        allow update, delete: if isOwner(resource.data.userId) || isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated();
       }
     }
 
-    // Audit logs — admin write, authenticated read
-    match /auditLogs/{logId} {
-      allow read: if isAdmin();
-      allow create: if isAdmin();
-      allow update, delete: if false;
-    }
-
-    // Platform alerts — admin write, authenticated read
-    match /platformAlerts/{alertId} {
+    // --- Community Collection ---
+    match /community/{postId} {
       allow read: if isAuthenticated();
-      allow create, update, delete: if isAdmin();
-    }
-
-    // System settings — admin only
-    match /settings/{settingId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
     }
   }
 }

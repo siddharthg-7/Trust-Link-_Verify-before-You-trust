@@ -6,11 +6,17 @@ import {
   CheckCircle, 
   Clock, 
   ChevronRight,
-  MessageSquare,
   ThumbsUp,
   ThumbsDown,
-  ExternalLink
+  ExternalLink,
+  MessageCircle,
+  MessageSquare as MessageSquareIcon
 } from "lucide-react";
+import { ChatSystem } from "./ChatSystem";
+import { MdClose as MdCloseRaw } from "react-icons/md";
+const MdClose = MdCloseRaw as any;
+import { motion, AnimatePresence } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import { GlassCard } from "./ui/GlassCard";
 import { db, auth } from "../lib/firebase";
 import { 
@@ -28,7 +34,10 @@ import toast from "react-hot-toast";
 export function ResponsesPage() {
   const [reports, setReports] = useState<any[]>([]);
   const [filter, setFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState<"all" | "mine">("all");
   const [search, setSearch] = useState("");
+  const [selectedChatReport, setSelectedChatReport] = useState<any | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const q = query(collection(db, "reports"), orderBy("timestamp", "desc"));
@@ -39,20 +48,30 @@ export function ResponsesPage() {
   }, []);
 
   const filteredReports = reports.filter(report => {
-    const matchesSearch = (report.title || report.content).toLowerCase().includes(search.toLowerCase());
-    const matchesFilter = filter === "all" || report.category.toLowerCase() === filter.toLowerCase();
-    return matchesSearch && matchesFilter;
+    const matchesSearch = (report.title || report.content)?.toLowerCase().includes(search.toLowerCase());
+    const matchesFilter = filter === "all" || report.category?.toLowerCase() === filter.toLowerCase();
+    const isMine = report.userId === auth.currentUser?.uid;
+    const matchesTab = activeTab === "all" || isMine;
+    return matchesSearch && matchesFilter && matchesTab;
   });
 
   const handleVote = async (reportId: string, type: 'up' | 'down') => {
     const userId = auth.currentUser?.uid;
-    if (!userId) return;
+    if (!userId) {
+      toast.error("Sign in to vote");
+      return;
+    }
 
     const reportRef = doc(db, "reports", reportId);
+    const existingVote = reports.find(r => r.id === reportId)?.votes?.[userId];
+
     try {
+      // Toggle logic
+      const newVote = existingVote === type ? null : type;
       await updateDoc(reportRef, {
-        [`votes.${userId}`]: type
+        [`votes.${userId}`]: newVote
       });
+      if (newVote) toast.success(`Vote ${type === 'up' ? 'recorded' : 'noted'}`);
     } catch (error) {
       toast.error("Failed to vote");
     }
@@ -60,31 +79,53 @@ export function ResponsesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-bold">Verification Responses</h2>
-          <p className="text-white/40">Browse and learn from previously analyzed messages and links.</p>
+          <h2 className="text-4xl font-black tracking-tight text-white mb-1">Verification Archive</h2>
+          <p className="text-white/40 text-sm">Browse and learn from previously analyzed messages and links.</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* My/All Toggle */}
+          <div className="flex bg-white/5 border border-white/10 rounded-xl p-1 shrink-0">
+             <button
+              onClick={() => setActiveTab("all")}
+              className={cn(
+                "px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
+                activeTab === "all" ? "bg-white text-black shadow-lg" : "text-white/40 hover:text-white"
+              )}
+            >
+              All Reports
+            </button>
+            <button
+              onClick={() => setActiveTab("mine")}
+              className={cn(
+                "px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all",
+                activeTab === "mine" ? "bg-white text-black shadow-lg" : "text-white/40 hover:text-white"
+              )}
+            >
+              My Responses
+            </button>
+          </div>
+
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/20" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search reports..."
-              className="bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+              placeholder="Search data..."
+              className="bg-white/5 border border-white/10 rounded-xl py-2 pl-10 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 min-w-[200px]"
             />
           </div>
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            className="bg-white/5 border border-white/10 rounded-xl py-2 px-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none min-w-[140px]"
           >
-            <option value="all">All Categories</option>
-            <option value="scam">Scam</option>
-            <option value="safe">Safe</option>
+            <option value="all" className="bg-[#020617]">All Scores</option>
+            <option value="scam" className="bg-[#020617]">High Risk</option>
+            <option value="safe" className="bg-[#020617]">Verified Safe</option>
           </select>
         </div>
       </div>
@@ -120,42 +161,90 @@ export function ResponsesPage() {
                   )}>
                     {report.category} ({report.riskScore}%)
                   </div>
-                  <div className="flex items-center gap-4 ml-auto">
-                    <div className="flex items-center bg-white/5 rounded-lg p-1">
+                    <div className="flex items-center gap-4 ml-auto">
+                      {/* Voting */}
+                      <div className="flex items-center bg-white/5 rounded-lg p-1 border border-white/10">
+                        <button 
+                          onClick={() => handleVote(report.id, 'up')}
+                          className={cn(
+                            "p-1.5 rounded-md transition-all",
+                            report.votes?.[auth.currentUser?.uid || ""] === 'up' 
+                              ? "bg-blue-600/20 text-blue-400" 
+                              : "text-white/40 hover:text-white"
+                          )}
+                        >
+                          <ThumbsUp className="w-4 h-4" />
+                        </button>
+                        <div className="w-px h-3 bg-white/10 mx-1" />
+                        <button 
+                          onClick={() => handleVote(report.id, 'down')}
+                          className={cn(
+                            "p-1.5 rounded-md transition-all",
+                            report.votes?.[auth.currentUser?.uid || ""] === 'down' 
+                              ? "bg-red-600/20 text-red-400" 
+                              : "text-white/40 hover:text-white"
+                          )}
+                        >
+                          <ThumbsDown className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Chat / Detail navigation */}
                       <button 
-                        onClick={() => handleVote(report.id, 'up')}
+                        onClick={() => setSelectedChatReport(report)}
                         className={cn(
-                          "p-1.5 rounded-md transition-colors",
-                          report.votes?.[auth.currentUser?.uid || ""] === 'up' ? "bg-blue-600 text-white" : "text-white/40 hover:text-white"
+                          "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-tighter transition-all border",
+                          report.userId === auth.currentUser?.uid
+                            ? "bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-blue-500/10"
+                            : "bg-white/5 text-white/20 border-white/5 opacity-50 cursor-not-allowed"
                         )}
+                        disabled={report.userId !== auth.currentUser?.uid}
                       >
-                        <ThumbsUp className="w-4 h-4" />
+                        <MessageSquareIcon className="w-3.5 h-3.5" />
+                        Chat
                       </button>
-                      <div className="w-px h-4 bg-white/10 mx-1" />
+
                       <button 
-                        onClick={() => handleVote(report.id, 'down')}
-                        className={cn(
-                          "p-1.5 rounded-md transition-colors",
-                          report.votes?.[auth.currentUser?.uid || ""] === 'down' ? "bg-red-600 text-white" : "text-white/40 hover:text-white"
-                        )}
+                        onClick={() => navigate('/app/home')}
+                        title="View Details"
+                        className="p-2 bg-white/5 rounded-xl text-white/40 group-hover:text-white group-hover:bg-blue-600 transition-all border border-white/5"
                       >
-                        <ThumbsDown className="w-4 h-4" />
+                        <ChevronRight className="w-5 h-5" />
                       </button>
                     </div>
-                    <button className="flex items-center gap-2 text-xs font-bold text-white/40 hover:text-white transition-colors">
-                      <MessageSquare className="w-4 h-4" />
-                      {report.comments?.length || 0}
-                    </button>
-                    <button className="p-2 bg-white/5 rounded-xl text-white/40 group-hover:text-white group-hover:bg-blue-600 transition-all">
-                      <ChevronRight className="w-5 h-5" />
-                    </button>
-                  </div>
                 </div>
               </div>
             </div>
           </GlassCard>
         ))}
       </div>
+
+      <AnimatePresence>
+        {selectedChatReport && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-lg relative"
+            >
+              <button 
+                onClick={() => setSelectedChatReport(null)}
+                className="absolute -top-12 right-0 p-2 text-white/40 hover:text-white transition-all bg-white/5 rounded-full hover:bg-white/10"
+              >
+                <MdClose className="w-5 h-5" />
+              </button>
+              <GlassCard className="p-0 overflow-hidden shadow-2xl shadow-blue-500/10 border-blue-500/20">
+                <ChatSystem 
+                  reportId={selectedChatReport.id} 
+                  currentRole="user" 
+                  contentContext={selectedChatReport.content} 
+                />
+              </GlassCard>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

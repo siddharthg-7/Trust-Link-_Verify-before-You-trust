@@ -63,8 +63,12 @@ export default function App() {
               navigate("/app/home", { replace: true });
             }
           }
-        } catch (error) {
-          handleFirestoreError(error, OperationType.GET, "users");
+        } catch (error: any) {
+          console.error("Auth init error:", error);
+          if (error.code === 'permission-denied') {
+            setUser(null);
+            setIsAdmin(false);
+          }
         }
       } else {
         setUser(null);

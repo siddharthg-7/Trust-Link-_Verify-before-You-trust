@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   MessageCircle, 
   ThumbsUp, 
@@ -12,6 +13,9 @@ import {
   ChevronUp
 } from "lucide-react";
 import { GlassCard } from "./ui/GlassCard";
+import { ChatSystem } from "./ChatSystem";
+import { MdClose as MdCloseRaw } from "react-icons/md";
+const MdClose = MdCloseRaw as any;
 import { db, auth } from "../lib/firebase";
 import { 
   collection, 
@@ -37,6 +41,8 @@ export function CommunityPage() {
   const [activeComments, setActiveComments] = useState<string | null>(null);
   const [comments, setComments] = useState<{ [key: string]: any[] }>({});
   const [newComment, setNewComment] = useState("");
+
+  const [selectedChatPost, setSelectedChatPost] = useState<any | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, "community"), orderBy("timestamp", "desc"));
@@ -115,12 +121,22 @@ export function CommunityPage() {
   const handleVote = async (postId: string, optionIndex?: number) => {
     const postRef = doc(db, "community", postId);
     const userId = auth.currentUser?.uid;
-    if (!userId) return;
+    if (!userId) {
+      toast.error("Please login to vote");
+      return;
+    }
 
     try {
       if (optionIndex !== undefined) {
         // Poll vote
         const post = posts.find(p => p.id === postId);
+        const currentVote = post.votes?.[userId];
+
+        if (currentVote !== undefined) {
+          toast.error("You have already voted in this poll");
+          return;
+        }
+
         const newOptions = [...post.pollOptions];
         newOptions[optionIndex].votes += 1;
         await updateDoc(postRef, { 
@@ -128,10 +144,14 @@ export function CommunityPage() {
           [`votes.${userId}`]: optionIndex
         });
       } else {
-        // Post upvote
+        // Post upvote (Toggle logic)
+        const post = posts.find(p => p.id === postId);
+        const hasVoted = post.votes?.[userId] === true;
+        
         await updateDoc(postRef, {
-          [`votes.${userId}`]: true
+          [`votes.${userId}`]: hasVoted ? null : true
         });
+        toast.success(hasVoted ? "Upvote removed" : "Post upvoted");
       }
     } catch (error) {
       toast.error("Failed to vote");
@@ -290,23 +310,30 @@ export function CommunityPage() {
               <button 
                 onClick={() => handleVote(post.id)}
                 className={cn(
-                  "flex items-center gap-2 text-sm font-bold transition-colors",
-                  post.votes?.[auth.currentUser?.uid || ""] ? "text-blue-400" : "text-white/40 hover:text-white"
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all",
+                  post.votes?.[auth.currentUser?.uid || ""] === true 
+                    ? "bg-blue-600/20 text-blue-400" 
+                    : "text-white/40 hover:text-white bg-white/5"
                 )}
               >
                 <ThumbsUp className="w-4 h-4" />
-                {Object.keys(post.votes || {}).length}
+                <span className="text-xs font-bold leading-none">{Object.values(post.votes || {}).filter(v => v === true).length}</span>
               </button>
+
               <button 
-                onClick={() => fetchComments(post.id)}
-                className="flex items-center gap-2 text-sm text-white/40 hover:text-white font-bold transition-colors"
+                onClick={() => setSelectedChatPost(post)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-white/40 hover:text-white bg-white/5 transition-all text-xs font-bold"
               >
                 <MessageCircle className="w-4 h-4" />
-                {post.commentsCount}
+                <span>Join Discussion</span>
               </button>
-              <button className="flex items-center gap-2 text-sm text-white/40 hover:text-white font-bold transition-colors ml-auto">
-                <Share2 className="w-4 h-4" />
-                Share
+              
+              <button 
+                onClick={() => fetchComments(post.id)}
+                className="flex items-center gap-2 text-sm text-white/40 hover:text-white font-bold transition-colors ml-auto"
+              >
+                <BarChart2 className="w-4 h-4" />
+                {post.commentsCount || 0} Comments
               </button>
             </div>
 
@@ -350,6 +377,33 @@ export function CommunityPage() {
           </GlassCard>
         ))}
       </div>
+
+      <AnimatePresence>
+        {selectedChatPost && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-lg relative"
+            >
+              <button 
+                onClick={() => setSelectedChatPost(null)}
+                className="absolute -top-12 right-0 p-2 text-white/40 hover:text-white transition-all bg-white/5 rounded-full hover:bg-white/10"
+              >
+                <MdClose className="w-5 h-5" />
+              </button>
+              <GlassCard className="p-0 overflow-hidden shadow-2xl shadow-blue-500/10 border-blue-500/20">
+                <ChatSystem 
+                  reportId={`comm-${selectedChatPost.id}`} 
+                  currentRole="user" 
+                  contentContext={selectedChatPost.content} 
+                />
+              </GlassCard>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
