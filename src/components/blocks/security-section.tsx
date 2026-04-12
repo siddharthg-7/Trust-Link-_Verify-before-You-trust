@@ -21,7 +21,7 @@ export function SecuritySection() {
             transition={{ duration: 0.6 }}
           >
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-6 font-mono">
-              🔒 Security First Architecture
+              Security First Architecture
             </div>
 
             <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-white mb-6 leading-tight">
