@@ -7,7 +7,7 @@
     "dev": "tsx server.ts",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist",
+    "clean": "if exist dist (rd /s /q dist)",
     "lint": "tsc --noEmit",
     "deploy": "npx firebase-tools deploy"
   },
