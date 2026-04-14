@@ -8,6 +8,7 @@ import { MdOutlineAdminPanelSettings as MdOutlineAdminPanelSettingsRaw } from "r
 import { BsShieldLock as BsShieldLockRaw } from "react-icons/bs";
 import { cn } from "../lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 // ── Icons cast to any for React 19 compatibility if needed ──
 const FiHome = FiHomeRaw as any;
@@ -34,7 +35,7 @@ interface MenuItem {
 }
 
 const MENU: MenuItem[] = [
-  { id: "home",      path: "/app/home",      label: "Home",      icon: FiHome },
+  { id: "home", path: "/app/home", label: "Home", icon: FiHome },
   { id: "responses", path: "/app/responses", label: "Responses", icon: HiOutlineChatAlt2 },
   { id: "community", path: "/app/community", label: "Community", icon: RiTeamLine },
   { id: "dashboard", path: "/app/dashboard", label: "Dashboard", icon: BiGridAlt },
@@ -42,6 +43,7 @@ const MENU: MenuItem[] = [
 
 export function Sidebar({ onLogout, isAdmin, isOpen, setIsOpen }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const SidebarContent = (
     <div className="w-full h-full flex flex-col p-6 bg-black">
@@ -49,17 +51,17 @@ export function Sidebar({ onLogout, isAdmin, isOpen, setIsOpen }: SidebarProps) 
       <div className="flex items-center justify-between mb-12 px-2">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-            <BsShieldLock size={20} className="text-black" />
+            <BsShieldLock size={20} className="text-black" onClick={() => navigate("/app/home")} />
           </div>
           <div>
-            <h1 className="text-lg font-bold tracking-tighter text-white">TrustLink</h1>
-            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Safety First</p>
+            <h1 className="text-lg font-bold tracking-tighter text-white" onClick={() => navigate("/app/home")}  >TrustLink</h1>
+            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider" onClick={() => navigate("/app/home")} >Safety First</p>
           </div>
         </div>
-        
+
         {/* Mobile close button */}
         {setIsOpen && (
-          <button 
+          <button
             onClick={() => setIsOpen(false)}
             className="lg:hidden p-2 text-zinc-500 hover:text-white transition-colors"
           >
@@ -151,7 +153,7 @@ export function Sidebar({ onLogout, isAdmin, isOpen, setIsOpen }: SidebarProps) 
               onClick={() => setIsOpen?.(false)}
               className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden"
             />
-            
+
             {/* Drawer */}
             <motion.div
               initial={{ x: "-100%" }}
