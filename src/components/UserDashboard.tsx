@@ -86,7 +86,7 @@ export function UserDashboard() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto space-y-12 pb-20 px-6">
+    <div className="space-y-12 pb-20">
       {/* ── Profile Header ─────────────────────────────────── */}
       <div className="bg-zinc-950 border border-zinc-900 rounded-[32px] p-8 mt-12">
         <div className="flex flex-col md:flex-row items-center gap-8">

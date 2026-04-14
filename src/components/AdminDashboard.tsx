@@ -6,7 +6,7 @@ import {
   TrendingUp, Activity, Globe, Lock, ChevronRight, FileWarning,
   MessageSquare, Star, Info, PieChart as PieChartIcon, Send,
   BookOpen, Database, Cpu, ToggleLeft, ToggleRight, MoreVertical,
-  ArrowUpRight, Loader2
+  ArrowUpRight, Loader2, Menu
 } from "lucide-react";
 import { GlassCard } from "./ui/GlassCard";
 import { db, auth } from "../lib/firebase";
@@ -20,6 +20,7 @@ import { cn } from "../lib/utils";
 import axios from "axios";
 import { logAudit } from "../lib/audit";
 import { ChatSystem } from "./ChatSystem";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -82,6 +83,7 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const [community, setCommunity] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
 
   const pendingCount  = reports.filter(r => r.status === "Pending").length;
   const highRiskCount = reports.filter(r => r.riskScore > 65).length;
@@ -119,103 +121,150 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
     notifications: <NotificationsTab reports={reports} />,
   };
 
+  const AdminSidebarContent = (
+    <div className="flex flex-col h-full bg-[#0a0f1e]">
+      {/* Logo */}
+      <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+            <Shield className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="font-black text-sm tracking-tight">Admin Portal</p>
+            <p className="text-[9px] text-red-400 font-bold uppercase tracking-widest">Trust Intelligence</p>
+          </div>
+        </div>
+        <button onClick={() => setIsAdminSidebarOpen(false)} className="lg:hidden text-white/40 hover:text-white">
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
+        {NAV.map(({ id, label, icon: Icon, badge }) => {
+          const isActive = activeTab === id;
+          const badgeCount = badge === "reports" ? reports.length : badge === "pending" ? pendingCount : 0;
+          return (
+            <button
+              key={id}
+              onClick={() => { setActiveTab(id as AdminTab); setIsAdminSidebarOpen(false); }}
+              className={cn(
+                "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all group",
+                isActive
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
+                  : "text-white/40 hover:text-white hover:bg-white/5"
+              )}
+            >
+              <div className="flex items-center gap-2.5">
+                <Icon className={cn("w-4 h-4", isActive ? "text-white" : "text-white/40 group-hover:text-white")} />
+                {label}
+              </div>
+              {badgeCount > 0 && (
+                <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+                  isActive ? "bg-white/20 text-white" : "bg-red-500/20 text-red-400"
+                )}>
+                  {badgeCount}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Admin user */}
+      <div className="px-4 py-4 border-t border-white/10">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold">
+            {user?.email?.[0]?.toUpperCase() || "A"}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold truncate">{user?.displayName || "Admin"}</p>
+            <p className="text-[10px] text-white/30 truncate">{user?.email}</p>
+          </div>
+        </div>
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-red-400 hover:bg-red-500/10 text-xs font-semibold transition-all"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          Sign Out
+        </button>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="flex h-screen bg-[#020617] text-white overflow-hidden">
-      {/* ── Admin Sidebar ──────────────────────────────────── */}
-      <aside className="w-64 h-full bg-white/[0.03] border-r border-white/10 flex flex-col shrink-0 z-20">
-        {/* Logo */}
-        <div className="px-6 py-5 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-              <Shield className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="font-black text-sm tracking-tight">TrustLink</p>
-              <p className="text-[9px] text-red-400 font-bold uppercase tracking-widest">Trust Intelligence System</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Nav */}
-        <nav className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
-          {NAV.map(({ id, label, icon: Icon, badge }) => {
-            const isActive = activeTab === id;
-            const badgeCount = badge === "reports" ? reports.length : badge === "pending" ? pendingCount : 0;
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id as AdminTab)}
-                className={cn(
-                  "w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all group",
-                  isActive
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
-                    : "text-white/40 hover:text-white hover:bg-white/5"
-                )}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Icon className={cn("w-4 h-4", isActive ? "text-white" : "text-white/40 group-hover:text-white")} />
-                  {label}
-                </div>
-                {badgeCount > 0 && (
-                  <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded-full",
-                    isActive ? "bg-white/20 text-white" : "bg-red-500/20 text-red-400"
-                  )}>
-                    {badgeCount}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Admin user */}
-        <div className="px-4 py-4 border-t border-white/10">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-xs font-bold">
-              {user?.email?.[0]?.toUpperCase() || "A"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-bold truncate">{user?.displayName || "Admin"}</p>
-              <p className="text-[10px] text-white/30 truncate">{user?.email}</p>
-            </div>
-          </div>
-          <button
-            onClick={onLogout}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-red-400 hover:bg-red-500/10 text-xs font-semibold transition-all"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Sign Out
-          </button>
-        </div>
+    <div className="flex h-screen bg-[#020617] text-white overflow-hidden relative">
+      {/* ── Desktop Sidebar ──────────────────────────────────── */}
+      <aside className="hidden lg:flex w-64 h-full bg-white/[0.03] border-r border-white/10 flex-col shrink-0 z-20">
+        {AdminSidebarContent}
       </aside>
 
+      {/* ── Mobile Sidebar Drawer ─────────────────────────────── */}
+      <AnimatePresence>
+        {isAdminSidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAdminSidebarOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 w-72 h-full z-50 lg:hidden shadow-2xl"
+            >
+              {AdminSidebarContent}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* ── Main Content ───────────────────────────────────── */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top bar */}
-        <div className="sticky top-0 z-10 bg-[#020617]/90 backdrop-blur border-b border-white/5 px-8 py-3 flex items-center justify-between">
-          <div>
-            <h1 className="font-black text-lg">
-              {NAV.find(n => n.id === activeTab)?.label || "Dashboard"}
-            </h1>
-            <p className="text-xs text-white/30">Trust Intelligence System — Admin Portal</p>
+        <div className="sticky top-0 z-10 bg-[#020617]/90 backdrop-blur border-b border-white/5 px-4 lg:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsAdminSidebarOpen(true)}
+              className="lg:hidden p-2 bg-white/5 rounded-lg text-white/60 hover:text-white"
+            >
+              <Menu size={20} />
+            </button>
+            <div>
+              <h1 className="font-black text-sm lg:text-lg">
+                {NAV.find(n => n.id === activeTab)?.label || "Dashboard"}
+              </h1>
+              <p className="text-[10px] lg:text-xs text-white/30 hidden sm:block">Trust Intelligence System — Admin Portal</p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 lg:gap-3">
             {highRiskCount > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/20 rounded-xl text-xs font-bold text-red-400">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                {highRiskCount} High-Risk
+              <div className="flex items-center gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] lg:text-xs font-bold text-red-400">
+                <AlertTriangle className="w-3 lg:w-3.5 h-3 lg:h-3.5" />
+                <span className="hidden xs:inline">{highRiskCount} High-Risk</span>
+                <span className="xs:hidden">{highRiskCount}</span>
               </div>
             )}
             {pendingCount > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-xs font-bold text-yellow-400">
-                <Clock className="w-3.5 h-3.5" />
-                {pendingCount} Pending
+              <div className="flex items-center gap-2 px-2 lg:px-3 py-1 lg:py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-[10px] lg:text-xs font-bold text-yellow-400">
+                <Clock className="w-3 lg:w-3.5 h-3 lg:h-3.5" />
+                <span className="hidden xs:inline">{pendingCount} Pending</span>
+                <span className="xs:hidden">{pendingCount}</span>
               </div>
             )}
           </div>
         </div>
 
-        <div className="p-8">{tabs[activeTab]}</div>
+        <div className="flex-1 overflow-y-auto p-4 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+            {tabs[activeTab]}
+          </div>
+        </div>
       </main>
     </div>
   );

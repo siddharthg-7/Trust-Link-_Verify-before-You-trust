@@ -211,7 +211,7 @@ export function StudentDashboard() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-12 pb-20 px-6">
+    <div className="space-y-12 pb-20">
       {/* ── Page Header ──────────────────────────────────────── */}
       <div className="pt-12 space-y-4">
         <div className="inline-flex items-center px-3 py-1 bg-cyan-500/5 border border-cyan-500/10 rounded-full text-cyan-500 text-[10px] font-bold uppercase tracking-[0.2em]">

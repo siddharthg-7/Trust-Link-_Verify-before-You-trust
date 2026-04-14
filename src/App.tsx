@@ -12,6 +12,11 @@ import { AdminDashboard } from "./components/AdminDashboard";
 import { CommunityPage } from "./components/CommunityPage";
 import { ResponsesPage } from "./components/ResponsesPage";
 import { UserDashboard } from "./components/UserDashboard";
+import { FiMenu as FiMenuRaw } from "react-icons/fi";
+import { BsShieldLock as BsShieldLockRaw } from "react-icons/bs";
+
+const FiMenu = FiMenuRaw as any;
+const BsShieldLock = BsShieldLockRaw as any;
 
 // ─── Admin email — must match Firebase Auth account ──────────
 const ADMIN_EMAIL = "siddharth@gmail.com";
@@ -20,6 +25,7 @@ export default function App() {
   const [user, setUser]             = useState<any>(null);
   const [isAdmin, setIsAdmin]       = useState(false);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -116,23 +122,47 @@ export default function App() {
         ) : (
           /* Authenticated Routes (Common Layout) */
           <Route path="/*" element={
-          <div className="flex min-h-screen bg-black text-zinc-100 selection:bg-cyan-500/30">
-              <Sidebar onLogout={handleLogout} isAdmin={isAdmin} />
-              <main className="flex-1 p-0 overflow-y-auto">
-                <div className="max-w-7xl mx-auto min-h-screen">
-                  <Routes>
-                    <Route path="/app/home" element={<StudentDashboard />} />
-                    <Route path="/app/responses" element={<ResponsesPage />} />
-                    <Route path="/app/community" element={<CommunityPage />} />
-                    <Route path="/app/dashboard" element={<UserDashboard />} />
-                    {isAdmin && (
-                      <Route path="/admin/*" element={<AdminDashboard user={user} onLogout={handleLogout} />} />
-                    )}
-                    <Route path="/" element={<Navigate to={isAdmin ? "/admin" : "/app/home"} replace />} />
-                    <Route path="*" element={<Navigate to={isAdmin ? "/admin" : "/app/home"} replace />} />
-                  </Routes>
-                </div>
-              </main>
+            <div className="flex min-h-screen bg-black text-zinc-100 selection:bg-cyan-500/30">
+              <Sidebar 
+                onLogout={handleLogout} 
+                isAdmin={isAdmin} 
+                isOpen={isSidebarOpen} 
+                setIsOpen={setIsSidebarOpen} 
+              />
+              
+              <div className="flex-1 flex flex-col min-h-screen relative">
+                {/* Mobile Top Bar */}
+                <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-6 py-4 bg-black/80 backdrop-blur-md border-b border-zinc-900">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+                      <BsShieldLock size={16} className="text-black" />
+                    </div>
+                    <span className="font-bold tracking-tighter text-white">TrustLink</span>
+                  </div>
+                  <button 
+                    onClick={() => setIsSidebarOpen(true)}
+                    className="p-2 text-zinc-400 hover:text-white transition-colors"
+                  >
+                    <FiMenu size={24} />
+                  </button>
+                </header>
+
+                <main className="flex-1 p-0 overflow-y-auto w-full">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-0">
+                    <Routes>
+                      <Route path="/app/home" element={<StudentDashboard />} />
+                      <Route path="/app/responses" element={<ResponsesPage />} />
+                      <Route path="/app/community" element={<CommunityPage />} />
+                      <Route path="/app/dashboard" element={<UserDashboard />} />
+                      {isAdmin && (
+                        <Route path="/admin/*" element={<AdminDashboard user={user} onLogout={handleLogout} />} />
+                      )}
+                      <Route path="/" element={<Navigate to={isAdmin ? "/admin" : "/app/home"} replace />} />
+                      <Route path="*" element={<Navigate to={isAdmin ? "/admin" : "/app/home"} replace />} />
+                    </Routes>
+                  </div>
+                </main>
+              </div>
 
               {/* Background blobs */}
               <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">

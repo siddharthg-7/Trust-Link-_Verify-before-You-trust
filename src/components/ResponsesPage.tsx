@@ -78,7 +78,7 @@ export function ResponsesPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-12 pb-20 px-6">
+    <div className="space-y-12 pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 pt-12">
         <div>
           <h2 className="text-5xl font-bold tracking-tighter text-white mb-4">Archive</h2>

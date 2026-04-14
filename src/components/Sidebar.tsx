@@ -1,18 +1,18 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FiHome as FiHomeRaw, FiLogOut as FiLogOutRaw, FiChevronRight as FiChevronRightRaw } from "react-icons/fi";
+import { FiHome as FiHomeRaw, FiLogOut as FiLogOutRaw, FiX as FiXRaw } from "react-icons/fi";
 import { HiOutlineChatAlt2 as HiOutlineChatAlt2Raw } from "react-icons/hi";
 import { RiTeamLine as RiTeamLineRaw } from "react-icons/ri";
 import { BiGridAlt as BiGridAltRaw } from "react-icons/bi";
 import { MdOutlineAdminPanelSettings as MdOutlineAdminPanelSettingsRaw } from "react-icons/md";
 import { BsShieldLock as BsShieldLockRaw } from "react-icons/bs";
-import { IconType } from "react-icons";
 import { cn } from "../lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
-// ── Icons as any ──
+// ── Icons cast to any for React 19 compatibility if needed ──
 const FiHome = FiHomeRaw as any;
 const FiLogOut = FiLogOutRaw as any;
-const FiChevronRight = FiChevronRightRaw as any;
+const FiX = FiXRaw as any;
 const HiOutlineChatAlt2 = HiOutlineChatAlt2Raw as any;
 const RiTeamLine = RiTeamLineRaw as any;
 const BiGridAlt = BiGridAltRaw as any;
@@ -22,6 +22,8 @@ const BsShieldLock = BsShieldLockRaw as any;
 interface SidebarProps {
   onLogout: () => void;
   isAdmin?: boolean;
+  isOpen?: boolean;
+  setIsOpen?: (open: boolean) => void;
 }
 
 interface MenuItem {
@@ -38,20 +40,32 @@ const MENU: MenuItem[] = [
   { id: "dashboard", path: "/app/dashboard", label: "Dashboard", icon: BiGridAlt },
 ];
 
-export function Sidebar({ onLogout, isAdmin }: SidebarProps) {
+export function Sidebar({ onLogout, isAdmin, isOpen, setIsOpen }: SidebarProps) {
   const location = useLocation();
 
-  return (
-    <div className="w-64 h-screen sticky top-0 bg-black border-r border-zinc-900 flex flex-col p-6 z-20 shrink-0">
-      {/* Logo */}
-      <div className="flex items-center gap-3 mb-12 px-2">
-        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-          <BsShieldLock size={20} className="text-black" />
+  const SidebarContent = (
+    <div className="w-full h-full flex flex-col p-6 bg-black">
+      {/* Logo & Close Button (Mobile) */}
+      <div className="flex items-center justify-between mb-12 px-2">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+            <BsShieldLock size={20} className="text-black" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold tracking-tighter text-white">TrustLink</h1>
+            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Safety First</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-lg font-bold tracking-tighter text-white">TrustLink</h1>
-          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Safety First</p>
-        </div>
+        
+        {/* Mobile close button */}
+        {setIsOpen && (
+          <button 
+            onClick={() => setIsOpen(false)}
+            className="lg:hidden p-2 text-zinc-500 hover:text-white transition-colors"
+          >
+            <FiX size={20} />
+          </button>
+        )}
       </div>
 
       <nav className="flex-1 space-y-1.5">
@@ -64,6 +78,7 @@ export function Sidebar({ onLogout, isAdmin }: SidebarProps) {
                 <Link
                   key={id}
                   to={path}
+                  onClick={() => setIsOpen?.(false)}
                   className={cn(
                     "w-full flex items-center gap-3 px-4 py-2.5 rounded-full transition-all duration-200 group",
                     isActive
@@ -87,6 +102,7 @@ export function Sidebar({ onLogout, isAdmin }: SidebarProps) {
             <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">Admin</p>
             <Link
               to="/admin"
+              onClick={() => setIsOpen?.(false)}
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-2.5 rounded-full transition-all duration-200 group",
                 location.pathname.startsWith("/admin")
@@ -103,7 +119,10 @@ export function Sidebar({ onLogout, isAdmin }: SidebarProps) {
 
       <div className="pt-6 border-t border-zinc-900 px-3">
         <button
-          onClick={onLogout}
+          onClick={() => {
+            onLogout();
+            setIsOpen?.(false);
+          }}
           className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-zinc-500 hover:text-white hover:bg-zinc-900/50 transition-all font-semibold"
         >
           <FiLogOut className="w-4 h-4" />
@@ -112,6 +131,43 @@ export function Sidebar({ onLogout, isAdmin }: SidebarProps) {
       </div>
     </div>
   );
+
+  return (
+    <>
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex w-64 h-screen sticky top-0 bg-black border-r border-zinc-900 flex-col z-20 shrink-0">
+        {SidebarContent}
+      </div>
+
+      {/* Mobile Sidebar (Drawer) */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen?.(false)}
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 lg:hidden"
+            />
+            
+            {/* Drawer */}
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 w-72 bg-black border-r border-zinc-900 z-50 lg:hidden"
+            >
+              {SidebarContent}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  );
 }
+
 
 

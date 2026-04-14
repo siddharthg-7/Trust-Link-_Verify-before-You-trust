@@ -159,7 +159,7 @@ export function CommunityPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12 pb-20 px-6">
+    <div className="space-y-12 pb-20">
       <div className="flex items-end justify-between pt-12">
         <div>
           <h2 className="text-5xl font-bold tracking-tighter text-white mb-4">Community</h2>
