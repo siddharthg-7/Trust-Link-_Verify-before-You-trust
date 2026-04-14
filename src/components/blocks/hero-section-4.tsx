@@ -6,9 +6,9 @@ import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import { Button } from "../ui/button";
 import { InfiniteSlider } from "../ui/infinite-slider";
 import { useNavigate } from "react-router-dom";
-import { 
-  BsShieldLock as BsShieldLockRaw, 
-  BsLock as BsLockRaw 
+import {
+  BsShieldLock as BsShieldLockRaw,
+  BsLock as BsLockRaw
 } from "react-icons/bs";
 import { AiOutlineEye as AiOutlineEyeRaw } from "react-icons/ai";
 import { RiAlertLine as RiAlertLineRaw } from "react-icons/ri";
@@ -33,16 +33,16 @@ export function HeroSection() {
       <nav className="fixed top-6 z-50 px-6 py-3 bg-white/5 backdrop-blur-md border border-white/10 rounded-full flex items-center gap-8">
         <div className="flex items-center gap-2">
           <BsShieldLock className="w-5 h-5 text-white" />
-          <span className="font-bold tracking-tighter">TrustLink</span>
+          <span className="font-bold tracking-tighter cursor-pointer" onClick={() => navigate('/home')}>TrustLink</span>
         </div>
         <div className="hidden md:flex items-center gap-6 text-sm text-zinc-400 font-medium">
           <a href="#features" className="hover:text-white transition-colors">Features</a>
           <a href="#security" className="hover:text-white transition-colors">Security</a>
           <a href="#community" className="hover:text-white transition-colors">Community</a>
         </div>
-        <Button 
-          variant="default" 
-          size="sm" 
+        <Button
+          variant="default"
+          size="sm"
           className="rounded-full bg-white text-black font-bold h-8 px-4"
           onClick={() => navigate('/auth')}
         >
@@ -62,29 +62,29 @@ export function HeroSection() {
               <BsLock className="w-3 h-3" />
               Verified Trust Architecture
             </div>
-            
+
             <h1 className="text-6xl md:text-7xl xl:text-8xl font-black tracking-tighter leading-[0.9] text-white">
               TrustLink
             </h1>
-            
+
             <p className="mt-6 text-2xl md:text-3xl font-bold text-zinc-400 tracking-tight">
               Verify Before You Trust
             </p>
-            
+
             <p className="mt-6 text-lg text-zinc-500 max-w-lg leading-relaxed">
               AI-powered scam detection using NLP + community verification.
               Protect yourself from phishing, fraud, and malicious links with real-time intelligence.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-              <Button 
+              <Button
                 onClick={() => navigate('/auth')}
                 className="w-full sm:w-auto bg-white text-black px-10 py-7 text-lg font-bold rounded-2xl hover:scale-105 transition-all shadow-2xl shadow-white/10"
               >
                 Authenticate →
               </Button>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="text-white text-lg font-bold px-8 hover:bg-white/10"
                 onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
               >
@@ -104,7 +104,7 @@ export function HeroSection() {
           >
             {/* Glow backing */}
             <div className="absolute inset-0 bg-white/5 blur-[80px] rounded-full scale-75 animate-pulse" />
-            
+
             <DotLottieReact
               src="https://lottie.host/64780a8b-9efe-4150-a0a5-b3cd13778c68/yNYY2hjcwe.lottie"
               loop
@@ -121,7 +121,7 @@ export function HeroSection() {
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-600 mb-2">Trusted by modern security teams</p>
           <div className="h-[1px] w-20 bg-zinc-800 mx-auto" />
         </div>
-        
+
         <InfiniteSlider duration={30} gap={80} className="py-4">
           {[
             { icon: BsShieldLock, name: "SecuNet" },

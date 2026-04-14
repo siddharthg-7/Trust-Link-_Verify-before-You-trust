@@ -42,73 +42,76 @@ export function Sidebar({ onLogout, isAdmin }: SidebarProps) {
   const location = useLocation();
 
   return (
-    <div className="w-60 h-screen sticky top-0 bg-white/[0.03] border-r border-white/10 flex flex-col p-5 z-20 shrink-0">
+    <div className="w-64 h-screen sticky top-0 bg-black border-r border-zinc-900 flex flex-col p-6 z-20 shrink-0">
       {/* Logo */}
-      <div className="flex items-center gap-3 mb-10">
-        <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-900/40">
-          <BsShieldLock size={20} className="text-white" />
+      <div className="flex items-center gap-3 mb-12 px-2">
+        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
+          <BsShieldLock size={20} className="text-black" />
         </div>
         <div>
-          <h1 className="text-base font-black tracking-tight text-white">TrustLink</h1>
-          <p className="text-[9px] text-blue-400/70 font-semibold uppercase tracking-widest">Verify Before You Trust</p>
+          <h1 className="text-lg font-bold tracking-tighter text-white">TrustLink</h1>
+          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Safety First</p>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1">
-        {MENU.map(({ id, path, label, icon: Icon }) => {
-          const isActive = location.pathname.startsWith(path);
-          return (
-            <Link
-              key={id}
-              to={path}
-              className={cn(
-                "w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all group",
-                isActive
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-900/20"
-                  : "text-white/40 hover:text-white hover:bg-white/5"
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <Icon className={cn("w-5 h-5", isActive ? "text-white" : "text-white/40 group-hover:text-white")} />
-                <span className="font-medium text-sm">{label}</span>
-              </div>
-              {isActive && <FiChevronRight className="w-3.5 h-3.5" />}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 space-y-1.5">
+        <div className="mb-4 px-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600 mb-4">Main Menu</p>
+          <div className="space-y-1">
+            {MENU.map(({ id, path, label, icon: Icon }) => {
+              const isActive = location.pathname.startsWith(path);
+              return (
+                <Link
+                  key={id}
+                  to={path}
+                  className={cn(
+                    "w-full flex items-center gap-3 px-4 py-2.5 rounded-full transition-all duration-200 group",
+                    isActive
+                      ? "bg-zinc-900 text-white border border-zinc-800"
+                      : "text-zinc-500 hover:text-white hover:bg-zinc-900/50"
+                  )}
+                >
+                  <Icon className={cn("w-4.5 h-4.5 transition-colors", isActive ? "text-cyan-500" : "group-hover:text-zinc-300")} />
+                  <span className="font-semibold text-sm">{label}</span>
+                  {isActive && (
+                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        </div>
 
         {isAdmin && (
-          <div className="pt-4 mt-4 border-t border-white/5">
-            <p className="px-3.5 mb-2 text-[10px] font-black uppercase tracking-widest text-white/20">Admin Tools</p>
+          <div className="pt-6 mt-6 border-t border-zinc-900 px-3">
+            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">Admin</p>
             <Link
               to="/admin"
               className={cn(
-                "w-full flex items-center justify-between px-3.5 py-3 rounded-xl transition-all group",
+                "w-full flex items-center gap-3 px-4 py-2.5 rounded-full transition-all duration-200 group",
                 location.pathname.startsWith("/admin")
-                  ? "bg-red-600 text-white shadow-lg shadow-red-900/20"
-                  : "text-red-400/60 hover:text-red-400 hover:bg-red-500/10"
+                  ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                  : "text-zinc-500 hover:text-red-400 hover:bg-red-500/5"
               )}
             >
-              <div className="flex items-center gap-3">
-                <MdOutlineAdminPanelSettings className="w-5 h-5" />
-                <span className="font-bold text-sm">Admin Portal</span>
-              </div>
-              <FiChevronRight className="w-3.5 h-3.5" />
+              <MdOutlineAdminPanelSettings className="w-4.5 h-4.5" />
+              <span className="font-semibold text-sm">Portal</span>
             </Link>
           </div>
         )}
       </nav>
 
-      <div className="pt-4 border-t border-white/10">
+      <div className="pt-6 border-t border-zinc-900 px-3">
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all font-semibold"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-zinc-500 hover:text-white hover:bg-zinc-900/50 transition-all font-semibold"
         >
           <FiLogOut className="w-4 h-4" />
-          <span className="text-sm">Logout</span>
+          <span className="text-sm">Log out</span>
         </button>
       </div>
     </div>
   );
 }
+
 

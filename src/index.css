@@ -13,7 +13,7 @@ html {
 }
 
 body {
-  @apply bg-black text-white min-h-screen selection:bg-white/30;
+  @apply bg-black text-white min-h-screen selection:bg-cyan-500/30;
   font-family: var(--font-sans);
 }
 
@@ -39,24 +39,24 @@ body {
 :root {
   --background: 0 0% 0%;
   --foreground: 0 0% 100%;
-  --card: 0 0% 0%;
+  --card: 0 0% 3%;
   --card-foreground: 0 0% 100%;
-  --popover: 0 0% 0%;
+  --popover: 0 0% 2%;
   --popover-foreground: 0 0% 100%;
   --primary: 0 0% 100%;
   --primary-foreground: 0 0% 0%;
-  --secondary: 0 0% 10%;
-  --secondary-foreground: 0 0% 100%;
-  --muted: 0 0% 10%;
-  --muted-foreground: 0 0% 60%;
-  --accent: 0 0% 10%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 84.2% 60.2%;
+  --secondary: 240 5.9% 10%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
   --destructive-foreground: 0 0% 98%;
-  --border: 0 0% 15%;
-  --input: 0 0% 15%;
-  --ring: 0 0% 80%;
-  --radius: 0.5rem;
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 240 4.9% 83.9%;
+  --radius: 1rem;
 }
 
 .glass-bg {
@@ -67,25 +67,26 @@ body {
   height: 100%;
   z-index: -1;
   overflow: hidden;
+  background: black;
 }
 
 .glass-blob {
   position: absolute;
-  width: 500px;
-  height: 500px;
+  width: 600px;
+  height: 600px;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.15;
-  animation: float 20s infinite alternate;
+  filter: blur(120px);
+  opacity: 0.1;
+  animation: float 25s infinite alternate;
 }
 
 @keyframes float {
   from { transform: translate(0, 0) scale(1); }
-  to { transform: translate(100px, 100px) scale(1.1); }
+  to { transform: translate(150px, 150px) scale(1.2); }
 }
 
 @layer base {
   * {
-    @apply border-white/10;
+    @apply border-zinc-800;
   }
 }

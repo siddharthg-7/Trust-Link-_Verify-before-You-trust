@@ -34,11 +34,9 @@ export function UserDashboard() {
     return () => unsub();
   }, [uid]);
 
-  // My reports (Query modified to avoid index requirement)
+  // My reports
   useEffect(() => {
     if (!uid) return;
-    // We use a simple query (single field order) and filter in memory to resolve the 'Failed Precondition' error
-    // until the recommended composite index is created in the Firebase Console.
     const q = query(
       collection(db, "reports"),
       orderBy("timestamp", "desc")
@@ -47,7 +45,6 @@ export function UserDashboard() {
       const allReports = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setMyReports(allReports.filter((r: any) => r.userId === uid));
     }, (err) => {
-      // Graceful handling of permission-denied during auth transitions
       if (err.code === 'permission-denied') {
         console.warn("Permission denied for reports list - awaiting auth...");
       } else {
@@ -66,16 +63,16 @@ export function UserDashboard() {
   });
 
   const stats = [
-    { label: "Reports Submitted", value: userData?.reportsCount || 0,   icon: Shield,        color: "from-blue-500/20 to-blue-600/10   text-blue-400" },
-    { label: "Trust Score",       value: `${userData?.trustScore || 50}%`,icon: Trophy,       color: "from-yellow-500/20 to-yellow-600/10 text-yellow-400" },
-    { label: "Votes Given",       value: userData?.votesCount || 0,      icon: Target,        color: "from-purple-500/20 to-purple-600/10 text-purple-400" },
-    { label: "Comments",          value: userData?.commentsCount || 0,   icon: MessageSquare, color: "from-green-500/20 to-green-600/10   text-green-400" },
+    { label: "Reports Submitted", value: userData?.reportsCount || 0,   icon: Shield,        color: "bg-cyan-500/10 text-cyan-500" },
+    { label: "Trust Score",       value: `${userData?.trustScore || 50}%`,icon: Trophy,       color: "bg-white text-black" },
+    { label: "Votes Given",       value: userData?.votesCount || 0,      icon: Target,        color: "bg-zinc-900 text-zinc-400" },
+    { label: "Comments",          value: userData?.commentsCount || 0,   icon: MessageSquare, color: "bg-blue-500/10 text-blue-500" },
   ];
 
   const badges = [
-    { name: "Top Reporter",    icon: Award,  color: "bg-blue-500/20 text-blue-400",    unlock: (userData?.reportsCount || 0) >= 5,  req: "5+ reports" },
-    { name: "Trust Guardian",  icon: Shield, color: "bg-purple-500/20 text-purple-400",unlock: (userData?.trustScore || 0) >= 70,  req: "70%+ trust" },
-    { name: "Community Star",  icon: Zap,    color: "bg-yellow-500/20 text-yellow-400",unlock: (userData?.commentsCount || 0) >= 10, req: "10+ comments" },
+    { name: "Top Reporter",    icon: Award,  color: "bg-cyan-500/10 text-cyan-500",    unlock: (userData?.reportsCount || 0) >= 5,  req: "5+ reports" },
+    { name: "Trust Guardian",  icon: Shield, color: "bg-white text-black", unlock: (userData?.trustScore || 0) >= 70,  req: "70%+ trust" },
+    { name: "Community Star",  icon: Zap,    color: "bg-zinc-900 text-zinc-400", unlock: (userData?.commentsCount || 0) >= 10, req: "10+ comments" },
   ];
 
   async function saveName() {
@@ -89,160 +86,160 @@ export function UserDashboard() {
   }
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="max-w-5xl mx-auto space-y-12 pb-20 px-6">
       {/* ── Profile Header ─────────────────────────────────── */}
-      <GlassCard gradient className="p-6">
-        <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-2xl font-black shadow-xl">
+      <div className="bg-zinc-950 border border-zinc-900 rounded-[32px] p-8 mt-12">
+        <div className="flex flex-col md:flex-row items-center gap-8">
+          <div className="w-24 h-24 rounded-[32px] bg-white text-black flex items-center justify-center text-3xl font-bold shadow-2xl">
             {(userData?.username || auth.currentUser?.email || "U")[0].toUpperCase()}
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 text-center md:text-left min-w-0">
             {editingName ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center md:justify-start gap-2">
                 <input
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
-                  className="bg-white/10 border border-white/20 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  className="bg-black border border-zinc-800 rounded-full px-4 py-2 text-sm text-white focus:border-cyan-500 outline-none transition-all"
                   onKeyDown={e => e.key === "Enter" && saveName()}
                   autoFocus
                 />
-                <button onClick={saveName} className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30"><Check className="w-4 h-4" /></button>
-                <button onClick={() => setEditingName(false)} className="p-2 bg-white/5 text-white/40 rounded-lg hover:bg-white/10"><X className="w-4 h-4" /></button>
+                <button onClick={saveName} className="p-2 bg-white text-black rounded-full hover:bg-zinc-200 transition-colors"><Check className="w-4 h-4" /></button>
+                <button onClick={() => setEditingName(false)} className="p-2 bg-zinc-900 text-zinc-500 rounded-full hover:bg-zinc-800"><X className="w-4 h-4" /></button>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-black truncate">{userData?.username || "Anonymous"}</h2>
-                <button onClick={() => setEditingName(true)} className="p-1.5 text-white/30 hover:text-white transition-colors">
-                  <Edit3 className="w-3.5 h-3.5" />
+              <div className="flex items-center justify-center md:justify-start gap-3">
+                <h2 className="text-3xl font-bold tracking-tighter text-white truncate">{userData?.username || "Anonymous"}</h2>
+                <button onClick={() => setEditingName(true)} className="p-2 text-zinc-600 hover:text-white transition-colors">
+                  <Edit3 className="w-4 h-4" />
                 </button>
               </div>
             )}
-            <div className="flex items-center gap-2 mt-1 text-sm text-white/40">
-              <Mail className="w-3.5 h-3.5" />
+            <div className="flex items-center justify-center md:justify-start gap-2 mt-2 text-sm text-zinc-500 font-medium">
+              <Mail className="w-4 h-4" />
               {auth.currentUser?.email}
             </div>
           </div>
-          <div className="text-right">
-            <div className={cn("px-3 py-1 rounded-full text-xs font-bold uppercase",
-              userData?.role === "admin" ? "bg-red-500/20 text-red-400" : "bg-blue-500/20 text-blue-400"
+          <div className="flex flex-col items-center md:items-end gap-3">
+            <div className={cn("px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border",
+              userData?.role === "admin" ? "bg-red-500/10 text-red-500 border-red-500/20" : "bg-cyan-500/10 text-cyan-500 border-cyan-500/20"
             )}>
-              {userData?.role || "user"}
+              {userData?.role || "Verified User"}
             </div>
             {userData?.banned && (
-              <div className="mt-2 px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-400">
+              <div className="px-4 py-1.5 rounded-full text-[10px] font-bold bg-white text-black uppercase tracking-widest">
                 ⚠ Account Restricted
               </div>
             )}
           </div>
         </div>
-      </GlassCard>
+      </div>
 
       {/* ── Stats ─────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map(({ label, value, icon: Icon, color }) => {
-          const [bg, text] = color.split("  ");
-          return (
-            <GlassCard key={label} className="p-5">
-              <div className={cn("w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center mb-3", bg)}>
-                <Icon className={cn("w-5 h-5", text)} />
-              </div>
-              <p className="text-2xl font-black">{value}</p>
-              <p className="text-xs text-white/40 mt-0.5">{label}</p>
-            </GlassCard>
-          );
-        })}
+        {stats.map(({ label, value, icon: Icon, color }) => (
+          <div key={label} className="bg-zinc-950 border border-zinc-900 rounded-[32px] p-6 hover:border-zinc-800 transition-all">
+            <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-6", color)}>
+              <Icon className="w-6 h-6" />
+            </div>
+            <p className="text-3xl font-bold tracking-tighter text-white">{value}</p>
+            <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest mt-1">{label}</p>
+          </div>
+        ))}
       </div>
 
       {/* ── Main Grid ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Activity Chart */}
-        <GlassCard className="lg:col-span-2 p-6">
-          <h3 className="font-bold text-sm flex items-center gap-2 mb-5">
-            <TrendingUp className="w-4 h-4 text-blue-400" /> My Submission Activity
+        <div className="lg:col-span-2 bg-zinc-950 border border-zinc-900 rounded-[32px] p-8">
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2 mb-8">
+            <TrendingUp className="w-4 h-4 text-cyan-500" /> Activity Insights
           </h3>
-          <div className="h-48">
+          <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={weekActivity}>
                 <defs>
-                  <linearGradient id="myGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                  <linearGradient id="cyanGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#06b6d4" stopOpacity={0.2} />
+                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ffffff08" vertical={false} />
-                <XAxis dataKey="day" stroke="#ffffff30" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#ffffff30" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
-                <Tooltip contentStyle={{ backgroundColor:"#0f172a", border:"1px solid #ffffff10", borderRadius:"12px", color:"#fff" }} />
-                <Area type="monotone" dataKey="reports" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#myGrad)" name="Reports" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
+                <XAxis dataKey="day" stroke="#52525b" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis stroke="#52525b" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor:"#09090b", border:"1px solid #27272a", borderRadius:"16px", color:"#fff", fontSize: "12px" }}
+                  cursor={{ stroke: '#06b6d4', strokeWidth: 1 }}
+                />
+                <Area type="monotone" dataKey="reports" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#cyanGrad)" name="Reports" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </GlassCard>
+        </div>
 
         {/* Badges */}
-        <GlassCard className="p-6">
-          <h3 className="font-bold text-sm flex items-center gap-2 mb-5">
-            <Award className="w-4 h-4 text-yellow-400" /> Achievements
+        <div className="bg-zinc-950 border border-zinc-900 rounded-[32px] p-8">
+          <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2 mb-8">
+            <Award className="w-4 h-4 text-white" /> Milestones
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {badges.map(({ name, icon: Icon, color, unlock, req }) => (
-              <div key={name} className={cn("flex items-center gap-3 p-3.5 rounded-xl border border-white/5 transition-all",
-                unlock ? "bg-white/5" : "opacity-40 grayscale"
+              <div key={name} className={cn("flex items-center gap-4 p-4 rounded-2xl border transition-all",
+                unlock ? "bg-black border-zinc-800" : "opacity-30 border-transparent grayscale"
               )}>
-                <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center", color)}>
-                  <Icon className="w-4.5 h-4.5" />
+                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0", color)}>
+                  <Icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-bold">{name}</p>
-                  <p className="text-[10px] text-white/30">{unlock ? "✅ Unlocked" : `🔒 Need ${req}`}</p>
+                  <p className="text-sm font-bold text-white">{name}</p>
+                  <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-wider">{unlock ? "Unlocked" : `Locked: ${req}`}</p>
                 </div>
               </div>
             ))}
           </div>
-        </GlassCard>
+        </div>
       </div>
 
-      {/* ── My Complaints / Reports ───────────────────────── */}
-      <div>
-        <h3 className="font-bold text-sm text-white/40 uppercase tracking-widest flex items-center gap-2 mb-4">
-          <BarChart3 className="w-4 h-4" /> My Submitted Reports ({myReports.length})
+      {/* ── My Reports ───────────────────────── */}
+      <div className="space-y-6">
+        <h3 className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500 flex items-center gap-2">
+          <BarChart3 className="w-4 h-4" /> Submission Log ({myReports.length})
         </h3>
 
         {myReports.length === 0 ? (
-          <GlassCard className="p-10 text-center">
-            <Shield className="w-10 h-10 text-white/10 mx-auto mb-3" />
-            <p className="text-white/30 text-sm">No reports submitted yet.</p>
-            <p className="text-white/20 text-xs mt-1">Head to Home to analyze & report suspicious content.</p>
-          </GlassCard>
+          <div className="bg-zinc-950 border border-zinc-900 rounded-[32px] p-20 text-center">
+            <Shield className="w-12 h-12 text-zinc-800 mx-auto mb-4" />
+            <p className="text-zinc-500 text-lg font-medium">No activity recorded yet.</p>
+            <p className="text-zinc-700 text-sm mt-2">Start by analyzing suspicious content in the main dashboard.</p>
+          </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-4">
             {myReports.map(report => (
-              <GlassCard key={report.id} className="p-4 flex items-center gap-4">
-                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-sm font-black",
-                  report.riskScore > 65 ? "bg-red-500/10 text-red-400" :
-                  report.riskScore > 35 ? "bg-yellow-500/10 text-yellow-400" :
-                  "bg-green-500/10 text-green-400"
+              <div key={report.id} className="bg-zinc-950 border border-zinc-900 rounded-[28px] p-6 flex items-center gap-6 hover:border-zinc-700 transition-all">
+                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 text-sm font-bold",
+                  report.riskScore > 65 ? "bg-red-500/10 text-red-500" :
+                  report.riskScore > 35 ? "bg-yellow-500/10 text-yellow-500" :
+                  "bg-cyan-500/10 text-cyan-500"
                 )}>
                   {report.riskScore}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-sm truncate">{report.title || "Scam Analysis Report"}</span>
-                    <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0",
-                      report.status === "Verified" ? "bg-green-500/10 text-green-400" :
-                      report.status === "Scam"     ? "bg-red-500/10 text-red-400" :
-                      "bg-yellow-500/10 text-yellow-400"
+                  <div className="flex items-center gap-3 mb-1">
+                    <span className="font-bold text-white truncate">{report.title || "Scam Analysis"}</span>
+                    <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0 border",
+                      report.status === "Verified" ? "bg-green-500/5 text-green-500 border-green-500/20" :
+                      report.status === "Scam"     ? "bg-red-500/5 text-red-500 border-red-500/20" :
+                      "bg-zinc-900 text-zinc-500 border-zinc-800"
                     )}>
                       {report.status}
                     </span>
                   </div>
-                  <p className="text-xs text-white/30 truncate mt-0.5">{report.content}</p>
+                  <p className="text-sm text-zinc-600 truncate font-medium">{report.content}</p>
                 </div>
-                <div className="flex items-center gap-1 text-xs text-white/20 shrink-0">
-                  <Clock className="w-3 h-3" />
+                <div className="flex items-center gap-2 text-[10px] text-zinc-700 font-bold uppercase tracking-widest shrink-0">
+                  <Clock className="w-3.5 h-3.5" />
                   {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString() : "Recent"}
                 </div>
-              </GlassCard>
+              </div>
             ))}
           </div>
         )}
@@ -250,3 +247,4 @@ export function UserDashboard() {
     </div>
   );
 }
+

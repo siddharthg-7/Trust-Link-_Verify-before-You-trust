@@ -93,10 +93,10 @@ export default function App() {
   // Loading spinner
   if (!isAuthReady) {
     return (
-      <div className="min-h-screen bg-[#020617] flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-          <p className="text-white/30 text-sm">Loading TrustLink...</p>
+          <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-zinc-500 text-sm font-medium">Loading TrustLink...</p>
         </div>
       </div>
     );
@@ -116,7 +116,7 @@ export default function App() {
         ) : (
           /* Authenticated Routes (Common Layout) */
           <Route path="/*" element={
-            <div className="flex min-h-screen bg-[#020617] text-white selection:bg-blue-500/30">
+          <div className="flex min-h-screen bg-black text-zinc-100 selection:bg-cyan-500/30">
               <Sidebar onLogout={handleLogout} isAdmin={isAdmin} />
               <main className="flex-1 p-0 overflow-y-auto">
                 <div className="max-w-7xl mx-auto min-h-screen">
@@ -136,8 +136,8 @@ export default function App() {
 
               {/* Background blobs */}
               <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/8 blur-[120px] rounded-full" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/8 blur-[120px] rounded-full" />
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/5 blur-[120px] rounded-full" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/5 blur-[120px] rounded-full" />
               </div>
             </div>
           } />

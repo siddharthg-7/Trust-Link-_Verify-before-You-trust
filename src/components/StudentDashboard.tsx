@@ -211,42 +211,42 @@ export function StudentDashboard() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-16 px-4">
+    <div className="max-w-5xl mx-auto space-y-12 pb-20 px-6">
       {/* ── Page Header ──────────────────────────────────────── */}
-      <div className="pt-8 space-y-2">
-        <div className="inline-flex items-center px-3 py-1 bg-white/5 border border-white/10 rounded-full text-blue-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">
+      <div className="pt-12 space-y-4">
+        <div className="inline-flex items-center px-3 py-1 bg-cyan-500/5 border border-cyan-500/10 rounded-full text-cyan-500 text-[10px] font-bold uppercase tracking-[0.2em]">
           <BsShieldLock className="w-3 h-3 mr-2" />
-          AI-Powered Scam Detection
+          AI-Powered Protection
         </div>
-        <h1 className="text-5xl font-black tracking-tighter text-white">Verify Content</h1>
-        <p className="text-white/40 text-lg leading-relaxed max-w-2xl font-medium">
-          Advanced linguistic analysis and cross-reference with global threat
-          intelligence databases to identify fraudulent messaging patterns.
+        <h1 className="text-6xl font-bold tracking-tighter text-white">Verify Content</h1>
+        <p className="text-zinc-500 text-xl leading-relaxed max-w-2xl font-medium">
+          Advanced linguistic analysis to identify fraudulent messaging patterns and 
+          protect you from sophisticated phishing attempts.
         </p>
       </div>
 
       {/* ── Stats bar ────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           { label: "Reports Analyzed", value: `${(totalReports + 5).toLocaleString()}+` },
           { label: "Detection Rate", value: "97.3%" },
           { label: "Avg Response", value: "<200ms" },
         ].map(({ label, value }) => (
-          <div key={label} className="bg-[#212124] border border-white/5 rounded-[24px] p-8 flex flex-col justify-between min-h-[160px] shadow-2xl shadow-black/40 text-left">
-            <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] leading-none mb-4">{label}</div>
-            <div className="text-4xl font-black tracking-tighter text-white">{value}</div>
+          <div key={label} className="bg-zinc-950 border border-zinc-900 rounded-3xl p-8 flex flex-col justify-between min-h-[140px] transition-colors hover:border-zinc-800">
+            <div className="text-[10px] font-bold text-zinc-600 uppercase tracking-[0.2em]">{label}</div>
+            <div className="text-4xl font-bold tracking-tighter text-white">{value}</div>
           </div>
         ))}
       </div>
 
       {/* ── Analysis Form ─────────────────────────────────────── */}
-      <div className="bg-[#212124] border border-white/5 rounded-[24px] overflow-hidden shadow-2xl shadow-black/50">
-        <form onSubmit={handleAnalyze} className="p-10 space-y-8 text-left">
+      <div className="bg-zinc-950 border border-zinc-900 rounded-[32px] overflow-hidden">
+        <form onSubmit={handleAnalyze} className="p-10 space-y-8">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-blue-500/10 rounded-xl font-black text-blue-500">
-              <AiOutlineScan className="w-5 h-5" />
+            <div className="p-2 bg-white rounded-lg">
+              <AiOutlineScan className="w-5 h-5 text-black" />
             </div>
-            <h2 className="font-black text-xs uppercase tracking-[0.2em] text-white/60">
+            <h2 className="font-bold text-[10px] uppercase tracking-[0.2em] text-zinc-500">
               Paste Suspicious Content
             </h2>
           </div>
@@ -256,14 +256,14 @@ export function StudentDashboard() {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="Paste a link, email body, SMS, or message text here..."
-              className="w-full h-64 bg-black/20 border border-white/5 rounded-2xl p-8 text-lg text-white placeholder-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none leading-relaxed font-medium"
+              className="w-full h-64 bg-black border border-zinc-900 rounded-2xl p-8 text-lg text-white placeholder-zinc-800 focus:outline-none focus:border-zinc-700 transition-all resize-none leading-relaxed font-medium"
             />
             {content && (
               <div className="absolute bottom-6 right-6">
                 <button
                   type="button"
                   onClick={() => setContent("")}
-                  className="px-3 py-1 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white rounded-lg text-[10px] font-black uppercase transition-all"
+                  className="px-4 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white rounded-full text-[10px] font-bold uppercase transition-all border border-zinc-800"
                 >
                   Clear
                 </button>
@@ -274,14 +274,14 @@ export function StudentDashboard() {
           <button
             type="submit"
             disabled={isAnalyzing || !content.trim()}
-            className="w-full py-5 bg-[#0056D6] hover:bg-[#004dc0] text-white rounded-2xl font-black text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-600/20 disabled:opacity-30 active:scale-[0.99]"
+            className="w-full py-5 bg-white hover:bg-zinc-200 text-black rounded-full font-bold text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all disabled:opacity-30 active:scale-[0.98]"
           >
             {isAnalyzing ? (
-              <CgSpinner className="w-5 h-5 animate-spin font-black" />
+              <CgSpinner className="w-5 h-5 animate-spin" />
             ) : (
-              <BsLightningCharge className="w-5 h-5 font-black" />
+              <BsLightningCharge className="w-5 h-5" />
             )}
-            {isAnalyzing ? "Analyzing..." : "Analyze Content"}
+            {isAnalyzing ? "Analyzing..." : "Check for Risks"}
           </button>
         </form>
       </div>
@@ -289,34 +289,35 @@ export function StudentDashboard() {
       <AnimatePresence>
         {result && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-            <GlassCard className={cn("p-8 border-l-8", result.riskScore > 65 ? "border-l-red-500" : result.riskScore > 35 ? "border-l-yellow-500" : "border-l-green-500")}>
-              <div className="flex flex-col md:flex-row gap-8 items-center text-left">
+            <div className={cn("p-10 rounded-[32px] border bg-zinc-950", 
+              result.riskScore > 65 ? "border-red-500/20" : result.riskScore > 35 ? "border-yellow-500/20" : "border-green-500/20")}>
+              <div className="flex flex-col md:flex-row gap-10 items-center text-left">
                 <RiskGauge score={result.riskScore} />
                 <div className="flex-1 space-y-4">
                   <div className="flex flex-wrap gap-2">
-                    <span className={cn("px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border", riskBg(result.riskScore), riskColor(result.riskScore))}>
+                    <span className={cn("px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border", riskBg(result.riskScore), riskColor(result.riskScore))}>
                       {result.category} Detected
                     </span>
                   </div>
-                  <p className="text-white/70 leading-relaxed text-sm font-medium">{result.explanation}</p>
+                  <p className="text-zinc-400 leading-relaxed text-lg font-medium">{result.explanation}</p>
                 </div>
               </div>
-            </GlassCard>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="bg-white/5 border border-white/10 p-6 rounded-[24px] flex flex-col md:flex-row items-center justify-between gap-6 text-left">
-        <div className="flex items-center gap-4">
-          <div className="p-3 bg-red-500/10 rounded-xl">
-            <RiAlertLine className="w-5 h-5 text-red-500" />
+      <div className="bg-zinc-950 border border-zinc-900 p-8 rounded-[32px] flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex items-center gap-5">
+          <div className="p-4 bg-red-500/10 rounded-2xl">
+            <RiAlertLine className="w-6 h-6 text-red-500" />
           </div>
           <div>
-            <div className="font-black text-xs uppercase tracking-widest text-white mb-1">Found something verified as a scam?</div>
-            <div className="text-[10px] text-white/30 font-black uppercase tracking-wider">Your report helps protect 20,000+ active enterprise nodes.</div>
+            <div className="font-bold text-sm text-white mb-1">Found something dangerous?</div>
+            <div className="text-xs text-zinc-500 font-medium">Your report helps protect 20,000+ active enterprise nodes.</div>
           </div>
         </div>
-        <button onClick={() => setShowComplaintForm(!showComplaintForm)} className="px-8 py-4 bg-white text-black rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-all">
+        <button onClick={() => setShowComplaintForm(!showComplaintForm)} className="px-8 py-4 bg-zinc-900 text-white rounded-full font-bold text-[10px] uppercase tracking-widest hover:bg-zinc-800 transition-all border border-zinc-800">
           {showComplaintForm ? "Close Form" : "Submit Official Complaint"}
         </button>
       </div>
@@ -324,53 +325,53 @@ export function StudentDashboard() {
       <AnimatePresence>
         {showComplaintForm && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-            <GlassCard className="p-8 text-left mt-4">
-              <form onSubmit={handleComplaintSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30">Report Title</label>
-                    <input type="text" value={complaintData.title} onChange={(e) => setComplaintData({ ...complaintData, title: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-sm" />
+            <div className="p-10 bg-zinc-950 border border-zinc-900 rounded-[32px] mt-4">
+              <form onSubmit={handleComplaintSubmit} className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Report Title</label>
+                    <input type="text" value={complaintData.title} onChange={(e) => setComplaintData({ ...complaintData, title: e.target.value })} className="w-full bg-black border border-zinc-900 rounded-2xl py-4 px-6 text-sm focus:border-zinc-700 transition-all outline-none" placeholder="Enter a descriptive title" />
                   </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/30">Category</label>
-                    <select value={complaintData.category} onChange={(e) => setComplaintData({ ...complaintData, category: e.target.value })} className="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-sm appearance-none">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Category</label>
+                    <select value={complaintData.category} onChange={(e) => setComplaintData({ ...complaintData, category: e.target.value })} className="w-full bg-black border border-zinc-900 rounded-2xl py-4 px-6 text-sm appearance-none focus:border-zinc-700 transition-all outline-none">
                       <option value="">Select category...</option>
                       {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-white/30">Description</label>
-                  <textarea value={complaintData.description} onChange={(e) => setComplaintData({ ...complaintData, description: e.target.value })} className="w-full h-32 bg-white/5 border border-white/10 rounded-xl py-4 px-5 text-sm resize-none" />
+                <div className="space-y-3">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Detailed Description</label>
+                  <textarea value={complaintData.description} onChange={(e) => setComplaintData({ ...complaintData, description: e.target.value })} className="w-full h-40 bg-black border border-zinc-900 rounded-2xl py-4 px-6 text-sm resize-none focus:border-zinc-700 transition-all outline-none" placeholder="Provide more context about the threat..." />
                 </div>
-                <button type="submit" className="w-full py-4 bg-white text-black rounded-xl font-black text-xs uppercase tracking-widest">Submit Report</button>
+                <button type="submit" className="w-full py-4 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-colors">Submit Report</button>
               </form>
-            </GlassCard>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div className="flex items-center justify-between">
-          <h2 className="font-black text-xs uppercase tracking-[0.2em] text-white/60">Recent Community Analyses</h2>
-          <button className="text-[10px] font-black uppercase tracking-widest text-blue-500 hover:text-blue-400 transition-all"
+          <h2 className="font-bold text-[10px] uppercase tracking-[0.2em] text-zinc-500">Recent Community Analyses</h2>
+          <button className="text-[10px] font-bold uppercase tracking-widest text-cyan-500 hover:text-cyan-400 transition-all"
             onClick={() => navigate("/app/responses")}>View All Trends →</button>
         </div>
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4">
           {recentReports.map((report) => (
-            <div key={report.id} onClick={() => setSelectedChatReport(report)} className="bg-[#212124] border border-white/5 rounded-[24px] p-6 hover:bg-[#2a2a2d] transition-all group flex items-center gap-6 cursor-pointer text-left">
-              <div className={cn("p-3 rounded-xl shrink-0", report.status === "Scam" ? "bg-red-500/10 text-red-500" : "bg-blue-500/10 text-blue-500")}>
-                {report.status === "Scam" ? <RiAlertLine className="w-5 h-5" /> : <MdOutlineVerified className="w-5 h-5" />}
+            <div key={report.id} onClick={() => setSelectedChatReport(report)} className="bg-zinc-950 border border-zinc-900 rounded-[28px] p-6 hover:border-zinc-700 transition-all group flex items-center gap-6 cursor-pointer">
+              <div className={cn("w-12 h-12 rounded-2xl shrink-0 flex items-center justify-center", report.status === "Scam" ? "bg-red-500/10 text-red-500" : "bg-cyan-500/10 text-cyan-500")}>
+                {report.status === "Scam" ? <RiAlertLine className="w-6 h-6" /> : <MdOutlineVerified className="w-6 h-6" />}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-black text-white truncate mb-1">{report.title}</div>
-                <div className="text-[10px] text-white/30 font-black uppercase tracking-widest">Detected • {report.timestamp?.toDate().toLocaleTimeString()}</div>
+                <div className="text-base font-bold text-white truncate mb-1">{report.title}</div>
+                <div className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest">Detected • {report.timestamp?.toDate().toLocaleTimeString()}</div>
               </div>
               <div className="flex flex-col items-end shrink-0">
-                <div className={cn("text-xs font-black uppercase tracking-widest", report.status === "Scam" ? "text-red-500" : "text-blue-500")}>
+                <div className={cn("text-sm font-bold tracking-tighter", report.status === "Scam" ? "text-red-500" : "text-cyan-500")}>
                   {report.riskScore}% {report.status === "Scam" ? "SCAM" : "RISK"}
                 </div>
-                <div className="text-[9px] text-white/10 font-mono">HASH: {report.id.slice(0, 10)}</div>
+                <div className="text-[9px] text-zinc-800 font-mono">ID: {report.id.slice(0, 8).toUpperCase()}</div>
               </div>
             </div>
           ))}
@@ -379,10 +380,12 @@ export function StudentDashboard() {
 
       <AnimatePresence>
         {selectedChatReport && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="w-full max-w-lg relative">
-              <button onClick={() => setSelectedChatReport(null)} className="absolute -top-12 right-0 p-2 text-white/40 hover:text-white"><MdClose className="w-6 h-6" /></button>
-              <GlassCard className="p-0 overflow-hidden"><ChatSystem reportId={selectedChatReport.id} currentRole="user" contentContext={selectedChatReport.content} /></GlassCard>
+              <button onClick={() => setSelectedChatReport(null)} className="absolute -top-14 right-0 p-3 text-zinc-500 hover:text-white bg-zinc-900 rounded-full transition-colors"><MdClose className="w-6 h-6" /></button>
+              <div className="bg-zinc-950 border border-zinc-900 rounded-[32px] overflow-hidden shadow-2xl">
+                <ChatSystem reportId={selectedChatReport.id} currentRole="user" contentContext={selectedChatReport.content} />
+              </div>
             </motion.div>
           </div>
         )}
@@ -390,3 +393,4 @@ export function StudentDashboard() {
     </div>
   );
 }
+

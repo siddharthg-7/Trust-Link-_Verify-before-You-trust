@@ -159,15 +159,15 @@ export function CommunityPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="max-w-4xl mx-auto space-y-12 pb-20 px-6">
+      <div className="flex items-end justify-between pt-12">
         <div>
-          <h2 className="text-3xl font-bold">Community Hub</h2>
-          <p className="text-white/40">Discuss scams, share experiences, and stay protected together.</p>
+          <h2 className="text-5xl font-bold tracking-tighter text-white mb-4">Community</h2>
+          <p className="text-zinc-500 text-lg font-medium max-w-md leading-relaxed">Discuss scams, share experiences, and stay protected together.</p>
         </div>
         <button
           onClick={() => setIsCreating(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/20"
+          className="flex items-center gap-2 px-8 py-3.5 bg-white text-black rounded-full font-bold hover:bg-zinc-200 transition-all shadow-xl active:scale-95"
         >
           <Plus className="w-5 h-5" />
           Create Post
@@ -175,29 +175,29 @@ export function CommunityPage() {
       </div>
 
       {isCreating && (
-        <GlassCard gradient className="p-6">
-          <form onSubmit={handleCreatePost} className="space-y-4">
-            <div className="flex gap-4 mb-4">
+        <div className="bg-zinc-950 border border-zinc-900 rounded-[32px] p-8">
+          <form onSubmit={handleCreatePost} className="space-y-6">
+            <div className="flex bg-black border border-zinc-900 rounded-full p-1 w-fit mb-4">
               <button
                 type="button"
                 onClick={() => setPostType("post")}
                 className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-bold transition-all",
-                  postType === "post" ? "bg-white text-black" : "bg-white/5 text-white/40"
+                  "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
+                  postType === "post" ? "bg-white text-black" : "text-zinc-500 hover:text-white"
                 )}
               >
-                <MessageCircle className="w-4 h-4 inline mr-2" />
+                <MessageCircle className="w-3.5 h-3.5 inline mr-2" />
                 Discussion
               </button>
               <button
                 type="button"
                 onClick={() => setPostType("poll")}
                 className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-bold transition-all",
-                  postType === "poll" ? "bg-white text-black" : "bg-white/5 text-white/40"
+                  "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
+                  postType === "poll" ? "bg-white text-black" : "text-zinc-500 hover:text-white"
                 )}
               >
-                <BarChart2 className="w-4 h-4 inline mr-2" />
+                <BarChart2 className="w-3.5 h-3.5 inline mr-2" />
                 Poll
               </button>
             </div>
@@ -205,12 +205,12 @@ export function CommunityPage() {
             <textarea
               value={newPostContent}
               onChange={(e) => setNewPostContent(e.target.value)}
-              placeholder={postType === "post" ? "What's on your mind?" : "Ask a question..."}
-              className="w-full h-32 bg-white/5 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none"
+              placeholder={postType === "post" ? "Share your security insights..." : "Ask the community..."}
+              className="w-full h-40 bg-black border border-zinc-900 rounded-2xl p-6 text-white placeholder-zinc-800 focus:border-zinc-700 outline-none transition-all resize-none font-medium"
             />
 
             {postType === "poll" && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {pollOptions.map((opt, i) => (
                   <input
                     key={i}
@@ -221,65 +221,65 @@ export function CommunityPage() {
                       setPollOptions(newOpts);
                     }}
                     placeholder={`Option ${i + 1}`}
-                    className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+                    className="w-full bg-black border border-zinc-900 rounded-xl p-3.5 text-sm text-white focus:border-zinc-700 outline-none transition-all"
                   />
                 ))}
                 <button
                   type="button"
                   onClick={() => setPollOptions([...pollOptions, ""])}
-                  className="text-xs text-blue-400 hover:text-blue-300 font-bold"
+                  className="text-xs text-cyan-500 hover:text-cyan-400 font-bold px-2 py-1"
                 >
                   + Add Option
                 </button>
               </div>
             )}
 
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-end gap-3 pt-4 border-t border-zinc-900">
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="px-6 py-2 text-white/40 hover:text-white font-bold"
+                className="px-8 py-2 text-zinc-500 hover:text-white font-bold text-xs uppercase tracking-widest transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-8 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all"
+                className="px-10 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-all"
               >
-                Post
+                Post Now
               </button>
             </div>
           </form>
-        </GlassCard>
+        </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {posts.map((post) => (
-          <GlassCard key={post.id} className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center">
-                  <UserIcon className="w-5 h-5 text-white/40" />
+          <div key={post.id} className="bg-zinc-950 border border-zinc-900 rounded-[32px] p-8 hover:border-zinc-800 transition-all">
+            <div className="flex items-start justify-between mb-8">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center font-bold text-lg">
+                  {post.username[0].toUpperCase()}
                 </div>
                 <div>
-                  <h4 className="font-bold text-white">{post.username}</h4>
-                  <div className="flex items-center gap-2 text-xs text-white/40">
-                    <Clock className="w-3 h-3" />
+                  <h4 className="font-bold text-white text-lg tracking-tight">{post.username}</h4>
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                    <Clock className="w-3.5 h-3.5" />
                     {post.timestamp?.toDate().toLocaleString()}
                   </div>
                 </div>
               </div>
               {post.type === "poll" && (
-                <div className="px-3 py-1 bg-purple-500/20 text-purple-400 rounded-full text-xs font-bold uppercase tracking-wider">
+                <div className="px-4 py-1.5 bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest">
                   Poll
                 </div>
               )}
             </div>
 
-            <p className="text-white/80 mb-6 leading-relaxed">{post.content}</p>
+            <p className="text-zinc-400 text-lg mb-8 leading-relaxed font-medium whitespace-pre-wrap">{post.content}</p>
 
             {post.type === "poll" && (
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-8">
                 {post.pollOptions.map((opt: any, i: number) => {
                   const totalVotes = post.pollOptions.reduce((acc: number, curr: any) => acc + curr.votes, 0);
                   const percentage = totalVotes > 0 ? (opt.votes / totalVotes) * 100 : 0;
@@ -290,15 +290,15 @@ export function CommunityPage() {
                       key={i}
                       disabled={hasVoted}
                       onClick={() => handleVote(post.id, i)}
-                      className="w-full relative h-12 bg-white/5 border border-white/10 rounded-xl overflow-hidden group transition-all"
+                      className="w-full relative h-14 bg-black border border-zinc-900 rounded-2xl overflow-hidden group transition-all hover:border-zinc-700"
                     >
                       <div 
-                        className="absolute inset-y-0 left-0 bg-blue-600/20 transition-all duration-1000"
+                        className="absolute inset-y-0 left-0 bg-cyan-500/10 transition-all duration-1000"
                         style={{ width: `${percentage}%` }}
                       />
-                      <div className="absolute inset-0 flex items-center justify-between px-4">
-                        <span className="text-sm font-medium">{opt.text}</span>
-                        <span className="text-xs font-bold text-white/40">{Math.round(percentage)}%</span>
+                      <div className="absolute inset-0 flex items-center justify-between px-6">
+                        <span className="text-sm font-bold text-zinc-300">{opt.text}</span>
+                        <span className="text-xs font-bold text-zinc-600 uppercase tracking-widest">{Math.round(percentage)}%</span>
                       </div>
                     </button>
                   );
@@ -306,31 +306,31 @@ export function CommunityPage() {
               </div>
             )}
 
-            <div className="flex items-center gap-6 pt-4 border-t border-white/5">
+            <div className="flex items-center gap-6 pt-8 border-t border-zinc-900 text-left">
               <button 
                 onClick={() => handleVote(post.id)}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all",
+                  "flex items-center gap-2 px-5 py-2 rounded-full transition-all border",
                   post.votes?.[auth.currentUser?.uid || ""] === true 
-                    ? "bg-blue-600/20 text-blue-400" 
-                    : "text-white/40 hover:text-white bg-white/5"
+                    ? "bg-cyan-500 border-cyan-500 text-black shadow-lg shadow-cyan-500/20" 
+                    : "text-zinc-600 border-zinc-900 hover:text-white bg-black"
                 )}
               >
-                <ThumbsUp className="w-4 h-4" />
+                <ThumbsUp className="w-4.5 h-4.5" />
                 <span className="text-xs font-bold leading-none">{Object.values(post.votes || {}).filter(v => v === true).length}</span>
               </button>
 
               <button 
                 onClick={() => setSelectedChatPost(post)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-white/40 hover:text-white bg-white/5 transition-all text-xs font-bold"
+                className="flex items-center gap-2 px-5 py-2 rounded-full text-zinc-600 hover:text-white bg-black border border-zinc-900 transition-all text-xs font-bold uppercase tracking-widest"
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>Join Discussion</span>
+                <MessageCircle className="w-4.5 h-4.5" />
+                <span>Discuss</span>
               </button>
               
               <button 
                 onClick={() => fetchComments(post.id)}
-                className="flex items-center gap-2 text-sm text-white/40 hover:text-white font-bold transition-colors ml-auto"
+                className="flex items-center gap-2 text-[10px] font-bold text-zinc-700 hover:text-white uppercase tracking-widest transition-colors ml-auto"
               >
                 <BarChart2 className="w-4 h-4" />
                 {post.commentsCount || 0} Comments
@@ -338,49 +338,49 @@ export function CommunityPage() {
             </div>
 
             {activeComments === post.id && (
-              <div className="mt-6 pt-6 border-t border-white/5 space-y-4">
+              <div className="mt-8 pt-8 border-t border-zinc-900 space-y-6">
                 <div className="space-y-4">
                   {comments[post.id]?.map((comment) => (
-                    <div key={comment.id} className="flex gap-3">
-                      <div className="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center shrink-0">
-                        <UserIcon className="w-4 h-4 text-white/20" />
+                    <div key={comment.id} className="flex gap-4 items-start">
+                      <div className="w-10 h-10 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center shrink-0 font-bold text-zinc-600">
+                        {comment.username[0].toUpperCase()}
                       </div>
-                      <div className="flex-1 bg-white/5 rounded-2xl p-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-bold">{comment.username}</span>
-                          <span className="text-[10px] text-white/20">{comment.timestamp?.toDate().toLocaleTimeString()}</span>
+                      <div className="flex-1 bg-black border border-zinc-900 rounded-[20px] p-5">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-bold text-white">{comment.username}</span>
+                          <span className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest">{comment.timestamp?.toDate().toLocaleTimeString()}</span>
                         </div>
-                        <p className="text-sm text-white/70">{comment.content}</p>
+                        <p className="text-sm text-zinc-500 font-medium leading-relaxed">{comment.content}</p>
                       </div>
                     </div>
                   ))}
                 </div>
                 
-                <div className="flex gap-3">
+                <div className="flex gap-3 pt-4">
                   <input
                     type="text"
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Write a comment..."
-                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+                    placeholder="Add a comment..."
+                    className="flex-1 bg-black border border-zinc-900 rounded-full px-6 py-3 text-sm text-white focus:border-cyan-500 outline-none transition-all placeholder-zinc-800"
                     onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post.id)}
                   />
                   <button
                     onClick={() => handleAddComment(post.id)}
-                    className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-all"
+                    className="p-3 bg-white text-black rounded-full hover:bg-zinc-200 transition-all shadow-lg active:scale-90"
                   >
-                    <Send className="w-4 h-4" />
+                    <Send className="w-5 h-5" />
                   </button>
                 </div>
               </div>
             )}
-          </GlassCard>
+          </div>
         ))}
       </div>
 
       <AnimatePresence>
         {selectedChatPost && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
             <motion.div 
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -389,17 +389,17 @@ export function CommunityPage() {
             >
               <button 
                 onClick={() => setSelectedChatPost(null)}
-                className="absolute -top-12 right-0 p-2 text-white/40 hover:text-white transition-all bg-white/5 rounded-full hover:bg-white/10"
+                className="absolute -top-14 right-0 p-3 text-zinc-500 hover:text-white transition-all bg-zinc-900 rounded-full"
               >
                 <MdClose className="w-5 h-5" />
               </button>
-              <GlassCard className="p-0 overflow-hidden shadow-2xl shadow-blue-500/10 border-blue-500/20">
+              <div className="bg-zinc-950 border border-zinc-900 rounded-[32px] overflow-hidden shadow-2xl">
                 <ChatSystem 
                   reportId={`comm-${selectedChatPost.id}`} 
                   currentRole="user" 
                   contentContext={selectedChatPost.content} 
                 />
-              </GlassCard>
+              </div>
             </motion.div>
           </div>
         )}
@@ -407,3 +407,4 @@ export function CommunityPage() {
     </div>
   );
 }
+
