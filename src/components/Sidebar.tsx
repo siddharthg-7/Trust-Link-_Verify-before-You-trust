@@ -46,89 +46,89 @@ export function Sidebar({ onLogout, isAdmin, isOpen, setIsOpen }: SidebarProps) 
   const navigate = useNavigate();
 
   const SidebarContent = (
-    <div className="w-full h-full flex flex-col p-6 bg-black">
-      {/* Logo & Close Button (Mobile) */}
-      <div className="flex items-center justify-between mb-12 px-2">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-            <BsShieldLock size={20} className="text-black" onClick={() => navigate("/app/home")} />
+    <div className="w-full h-full flex flex-col bg-black">
+      {/* Logo Section */}
+      <div className="p-8 pb-4">
+        <div 
+          className="flex items-center gap-3 cursor-pointer group"
+          onClick={() => navigate("/app/home")}
+        >
+          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center transition-transform duration-300 group-hover:scale-110">
+            <BsShieldLock size={16} className="text-black" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold tracking-tighter text-white" onClick={() => navigate("/app/home")}  >TrustLink</h1>
-            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider" onClick={() => navigate("/app/home")} >Safety First</p>
+          <div className="flex flex-col">
+            <span className="text-xl font-semibold tracking-tighter text-white leading-none">TrustLink</span>
+            <span className="text-[10px] text-zinc-500 font-medium uppercase tracking-[0.2em] mt-1.5 opacity-70">Safety First</span>
           </div>
         </div>
-
-        {/* Mobile close button */}
-        {setIsOpen && (
-          <button
-            onClick={() => setIsOpen(false)}
-            className="lg:hidden p-2 text-zinc-500 hover:text-white transition-colors"
-          >
-            <FiX size={20} />
-          </button>
-        )}
       </div>
 
-      <nav className="flex-1 space-y-1.5">
-        <div className="mb-4 px-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600 mb-4">Main Menu</p>
-          <div className="space-y-1">
-            {MENU.map(({ id, path, label, icon: Icon }) => {
-              const isActive = location.pathname.startsWith(path);
-              return (
-                <Link
-                  key={id}
-                  to={path}
-                  onClick={() => setIsOpen?.(false)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-4 py-2.5 rounded-full transition-all duration-200 group",
-                    isActive
-                      ? "bg-zinc-900 text-white border border-zinc-800"
-                      : "text-zinc-500 hover:text-white hover:bg-zinc-900/50"
-                  )}
-                >
-                  <Icon className={cn("w-4.5 h-4.5 transition-colors", isActive ? "text-cyan-500" : "group-hover:text-zinc-300")} />
-                  <span className="font-semibold text-sm">{label}</span>
-                  {isActive && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-6 space-y-1">
+        <div className="mb-4 px-4">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 mb-4 opacity-50">Menu</p>
         </div>
+        
+        {MENU.map(({ id, path, label, icon: Icon }) => {
+          const isActive = location.pathname.startsWith(path);
+          return (
+            <Link
+              key={id}
+              to={path}
+              onClick={() => setIsOpen?.(false)}
+              className={cn(
+                "flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-300 group",
+                isActive
+                  ? "bg-zinc-900 text-white shadow-sm"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-900/50"
+              )}
+            >
+              <Icon className={cn("w-4 h-4 transition-colors", isActive ? "text-white" : "group-hover:text-white")} />
+              <span className="font-medium text-sm tracking-tight">{label}</span>
+              {isActive && (
+                <motion.div 
+                  layoutId="sidebar-active"
+                  className="ml-auto w-1 h-4 bg-white rounded-full"
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+            </Link>
+          );
+        })}
 
         {isAdmin && (
-          <div className="pt-6 mt-6 border-t border-zinc-900 px-3">
-            <p className="mb-4 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600">Admin</p>
+          <div className="pt-6 mt-6 border-t border-zinc-900">
+            <div className="mb-4 px-4 text-[10px] font-semibold uppercase tracking-widest text-zinc-500 opacity-50">
+              Admin
+            </div>
             <Link
               to="/admin"
               onClick={() => setIsOpen?.(false)}
               className={cn(
-                "w-full flex items-center gap-3 px-4 py-2.5 rounded-full transition-all duration-200 group",
+                "flex items-center gap-3 px-4 py-2 rounded-lg transition-all duration-300 group",
                 location.pathname.startsWith("/admin")
-                  ? "bg-red-500/10 text-red-400 border border-red-500/20"
-                  : "text-zinc-500 hover:text-red-400 hover:bg-red-500/5"
+                  ? "bg-zinc-900 text-white"
+                  : "text-zinc-400 hover:text-white hover:bg-zinc-900/50"
               )}
             >
-              <MdOutlineAdminPanelSettings className="w-4.5 h-4.5" />
-              <span className="font-semibold text-sm">Portal</span>
+              <MdOutlineAdminPanelSettings className="w-4 h-4" />
+              <span className="font-medium text-sm tracking-tight">Portal</span>
             </Link>
           </div>
         )}
       </nav>
 
-      <div className="pt-6 border-t border-zinc-900 px-3">
+      {/* Footer / Logout */}
+      <div className="p-4 border-t border-zinc-900">
         <button
           onClick={() => {
             onLogout();
             setIsOpen?.(false);
           }}
-          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-full text-zinc-500 hover:text-white hover:bg-zinc-900/50 transition-all font-semibold"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900/50 transition-all duration-300 group"
         >
-          <FiLogOut className="w-4 h-4" />
-          <span className="text-sm">Log out</span>
+          <FiLogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          <span className="text-sm font-medium">Log out</span>
         </button>
       </div>
     </div>

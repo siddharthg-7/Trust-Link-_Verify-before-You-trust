@@ -122,7 +122,7 @@ export default function App() {
         ) : (
           /* Authenticated Routes (Common Layout) */
           <Route path="/*" element={
-            <div className="flex min-h-screen bg-black text-zinc-100 selection:bg-cyan-500/30">
+            <div className="flex min-h-screen bg-black text-zinc-100 selection:bg-white/10">
               <Sidebar 
                 onLogout={handleLogout} 
                 isAdmin={isAdmin} 
@@ -130,14 +130,14 @@ export default function App() {
                 setIsOpen={setIsSidebarOpen} 
               />
               
-              <div className="flex-1 flex flex-col min-h-screen relative">
+              <div className="flex-1 flex flex-col min-h-screen relative overflow-x-hidden">
                 {/* Mobile Top Bar */}
                 <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between px-6 py-4 bg-black/80 backdrop-blur-md border-b border-zinc-900">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
                       <BsShieldLock size={16} className="text-black" />
                     </div>
-                    <span className="font-bold tracking-tighter text-white">TrustLink</span>
+                    <span className="font-bold tracking-tight text-white">TrustLink</span>
                   </div>
                   <button 
                     onClick={() => setIsSidebarOpen(true)}
@@ -147,8 +147,8 @@ export default function App() {
                   </button>
                 </header>
 
-                <main className="flex-1 p-0 overflow-y-auto w-full">
-                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-0">
+                <main className="flex-1 overflow-y-auto w-full">
+                  <div className="p-8 lg:p-12">
                     <Routes>
                       <Route path="/app/home" element={<StudentDashboard />} />
                       <Route path="/app/responses" element={<ResponsesPage />} />
@@ -162,12 +162,6 @@ export default function App() {
                     </Routes>
                   </div>
                 </main>
-              </div>
-
-              {/* Background blobs */}
-              <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/5 blur-[120px] rounded-full" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/5 blur-[120px] rounded-full" />
               </div>
             </div>
           } />

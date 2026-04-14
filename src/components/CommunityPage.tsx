@@ -159,251 +159,271 @@ export function CommunityPage() {
   };
 
   return (
-    <div className="space-y-12 pb-20">
-      <div className="flex items-end justify-between pt-12">
-        <div>
-          <h2 className="text-5xl font-bold tracking-tighter text-white mb-4">Community</h2>
-          <p className="text-zinc-500 text-lg font-medium max-w-md leading-relaxed">Discuss scams, share experiences, and stay protected together.</p>
-        </div>
-        <button
-          onClick={() => setIsCreating(true)}
-          className="flex items-center gap-2 px-8 py-3.5 bg-white text-black rounded-full font-bold hover:bg-zinc-200 transition-all shadow-xl active:scale-95"
-        >
-          <Plus className="w-5 h-5" />
-          Create Post
-        </button>
+    <div className="relative min-h-screen">
+      {/* Background Glow */}
+      <div className="absolute inset-0 flex justify-center overflow-hidden pointer-events-none">
+        <div className="w-[600px] h-[600px] bg-white/5 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
-      {isCreating && (
-        <div className="bg-zinc-950 border border-zinc-900 rounded-[32px] p-8">
-          <form onSubmit={handleCreatePost} className="space-y-6">
-            <div className="flex bg-black border border-zinc-900 rounded-full p-1 w-fit mb-4">
-              <button
-                type="button"
-                onClick={() => setPostType("post")}
-                className={cn(
-                  "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
-                  postType === "post" ? "bg-white text-black" : "text-zinc-500 hover:text-white"
-                )}
-              >
-                <MessageCircle className="w-3.5 h-3.5 inline mr-2" />
-                Discussion
-              </button>
-              <button
-                type="button"
-                onClick={() => setPostType("poll")}
-                className={cn(
-                  "px-6 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest transition-all",
-                  postType === "poll" ? "bg-white text-black" : "text-zinc-500 hover:text-white"
-                )}
-              >
-                <BarChart2 className="w-3.5 h-3.5 inline mr-2" />
-                Poll
-              </button>
+      <div className="relative z-10 max-w-4xl mx-auto space-y-12 pb-20">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-10">
+          <div className="space-y-4">
+            <div className="inline-flex items-center px-3 py-1 bg-white/5 border border-white/10 rounded-full text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em]">
+              Peer Support
             </div>
-
-            <textarea
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              placeholder={postType === "post" ? "Share your security insights..." : "Ask the community..."}
-              className="w-full h-40 bg-black border border-zinc-900 rounded-2xl p-6 text-white placeholder-zinc-800 focus:border-zinc-700 outline-none transition-all resize-none font-medium"
-            />
-
-            {postType === "poll" && (
-              <div className="space-y-3">
-                {pollOptions.map((opt, i) => (
-                  <input
-                    key={i}
-                    value={opt}
-                    onChange={(e) => {
-                      const newOpts = [...pollOptions];
-                      newOpts[i] = e.target.value;
-                      setPollOptions(newOpts);
-                    }}
-                    placeholder={`Option ${i + 1}`}
-                    className="w-full bg-black border border-zinc-900 rounded-xl p-3.5 text-sm text-white focus:border-zinc-700 outline-none transition-all"
-                  />
-                ))}
-                <button
-                  type="button"
-                  onClick={() => setPollOptions([...pollOptions, ""])}
-                  className="text-xs text-cyan-500 hover:text-cyan-400 font-bold px-2 py-1"
-                >
-                  + Add Option
-                </button>
-              </div>
-            )}
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-zinc-900">
-              <button
-                type="button"
-                onClick={() => setIsCreating(false)}
-                className="px-8 py-2 text-zinc-500 hover:text-white font-bold text-xs uppercase tracking-widest transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-10 py-3 bg-white text-black rounded-full font-bold text-xs uppercase tracking-widest hover:bg-zinc-200 transition-all"
-              >
-                Post Now
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      <div className="space-y-8">
-        {posts.map((post) => (
-          <div key={post.id} className="bg-zinc-950 border border-zinc-900 rounded-[32px] p-8 hover:border-zinc-800 transition-all">
-            <div className="flex items-start justify-between mb-8">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white text-black rounded-2xl flex items-center justify-center font-bold text-lg">
-                  {post.username[0].toUpperCase()}
-                </div>
-                <div>
-                  <h4 className="font-bold text-white text-lg tracking-tight">{post.username}</h4>
-                  <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
-                    <Clock className="w-3.5 h-3.5" />
-                    {post.timestamp?.toDate().toLocaleString()}
-                  </div>
-                </div>
-              </div>
-              {post.type === "poll" && (
-                <div className="px-4 py-1.5 bg-cyan-500/10 text-cyan-500 border border-cyan-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                  Poll
-                </div>
-              )}
-            </div>
-
-            <p className="text-zinc-400 text-lg mb-8 leading-relaxed font-medium whitespace-pre-wrap">{post.content}</p>
-
-            {post.type === "poll" && (
-              <div className="space-y-3 mb-8">
-                {post.pollOptions.map((opt: any, i: number) => {
-                  const totalVotes = post.pollOptions.reduce((acc: number, curr: any) => acc + curr.votes, 0);
-                  const percentage = totalVotes > 0 ? (opt.votes / totalVotes) * 100 : 0;
-                  const hasVoted = post.votes?.[auth.currentUser?.uid || ""] !== undefined;
-
-                  return (
-                    <button
-                      key={i}
-                      disabled={hasVoted}
-                      onClick={() => handleVote(post.id, i)}
-                      className="w-full relative h-14 bg-black border border-zinc-900 rounded-2xl overflow-hidden group transition-all hover:border-zinc-700"
-                    >
-                      <div 
-                        className="absolute inset-y-0 left-0 bg-cyan-500/10 transition-all duration-1000"
-                        style={{ width: `${percentage}%` }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-between px-6">
-                        <span className="text-sm font-bold text-zinc-300">{opt.text}</span>
-                        <span className="text-xs font-bold text-zinc-600 uppercase tracking-widest">{Math.round(percentage)}%</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            <div className="flex items-center gap-6 pt-8 border-t border-zinc-900 text-left">
-              <button 
-                onClick={() => handleVote(post.id)}
-                className={cn(
-                  "flex items-center gap-2 px-5 py-2 rounded-full transition-all border",
-                  post.votes?.[auth.currentUser?.uid || ""] === true 
-                    ? "bg-cyan-500 border-cyan-500 text-black shadow-lg shadow-cyan-500/20" 
-                    : "text-zinc-600 border-zinc-900 hover:text-white bg-black"
-                )}
-              >
-                <ThumbsUp className="w-4.5 h-4.5" />
-                <span className="text-xs font-bold leading-none">{Object.values(post.votes || {}).filter(v => v === true).length}</span>
-              </button>
-
-              <button 
-                onClick={() => setSelectedChatPost(post)}
-                className="flex items-center gap-2 px-5 py-2 rounded-full text-zinc-600 hover:text-white bg-black border border-zinc-900 transition-all text-xs font-bold uppercase tracking-widest"
-              >
-                <MessageCircle className="w-4.5 h-4.5" />
-                <span>Discuss</span>
-              </button>
-              
-              <button 
-                onClick={() => fetchComments(post.id)}
-                className="flex items-center gap-2 text-[10px] font-bold text-zinc-700 hover:text-white uppercase tracking-widest transition-colors ml-auto"
-              >
-                <BarChart2 className="w-4 h-4" />
-                {post.commentsCount || 0} Comments
-              </button>
-            </div>
-
-            {activeComments === post.id && (
-              <div className="mt-8 pt-8 border-t border-zinc-900 space-y-6">
-                <div className="space-y-4">
-                  {comments[post.id]?.map((comment) => (
-                    <div key={comment.id} className="flex gap-4 items-start">
-                      <div className="w-10 h-10 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-center shrink-0 font-bold text-zinc-600">
-                        {comment.username[0].toUpperCase()}
-                      </div>
-                      <div className="flex-1 bg-black border border-zinc-900 rounded-[20px] p-5">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-bold text-white">{comment.username}</span>
-                          <span className="text-[10px] font-bold text-zinc-700 uppercase tracking-widest">{comment.timestamp?.toDate().toLocaleTimeString()}</span>
-                        </div>
-                        <p className="text-sm text-zinc-500 font-medium leading-relaxed">{comment.content}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="flex gap-3 pt-4">
-                  <input
-                    type="text"
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Add a comment..."
-                    className="flex-1 bg-black border border-zinc-900 rounded-full px-6 py-3 text-sm text-white focus:border-cyan-500 outline-none transition-all placeholder-zinc-800"
-                    onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post.id)}
-                  />
-                  <button
-                    onClick={() => handleAddComment(post.id)}
-                    className="p-3 bg-white text-black rounded-full hover:bg-zinc-200 transition-all shadow-lg active:scale-90"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            )}
+            <h1 className="text-5xl font-semibold tracking-tighter text-white leading-[1.05]">Community Intelligence</h1>
+            <p className="text-zinc-500 text-lg leading-relaxed max-w-xl">
+              Discuss emerging threats, share security insights, and stay protected through collective awareness.
+            </p>
           </div>
-        ))}
-      </div>
+          <button
+            onClick={() => setIsCreating(true)}
+            className="flex items-center gap-2 px-6 py-2.5 bg-white text-black rounded-xl font-semibold text-sm hover:bg-zinc-200 transition-all hover:scale-[1.02] shadow-xl shrink-0"
+          >
+            <Plus className="w-4 h-4" />
+            Share Intelligence
+          </button>
+        </div>
 
-      <AnimatePresence>
-        {selectedChatPost && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-lg relative"
-            >
-              <button 
-                onClick={() => setSelectedChatPost(null)}
-                className="absolute -top-14 right-0 p-3 text-zinc-500 hover:text-white transition-all bg-zinc-900 rounded-full"
-              >
-                <MdClose className="w-5 h-5" />
-              </button>
-              <div className="bg-zinc-950 border border-zinc-900 rounded-[32px] overflow-hidden shadow-2xl">
-                <ChatSystem 
-                  reportId={`comm-${selectedChatPost.id}`} 
-                  currentRole="user" 
-                  contentContext={selectedChatPost.content} 
-                />
+        {/* Create Post Drawer */}
+        <AnimatePresence>
+          {isCreating && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+              <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 mb-8 shadow-2xl">
+                <form onSubmit={handleCreatePost} className="space-y-6">
+                  <div className="flex bg-black border border-zinc-800 rounded-xl p-1 w-fit">
+                    <button
+                      type="button"
+                      onClick={() => setPostType("post")}
+                      className={cn(
+                        "px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all",
+                        postType === "post" ? "bg-white text-black" : "text-zinc-500 hover:text-white"
+                      )}
+                    >
+                      Discussion
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPostType("poll")}
+                      className={cn(
+                        "px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all",
+                        postType === "poll" ? "bg-white text-black" : "text-zinc-500 hover:text-white"
+                      )}
+                    >
+                      Poll
+                    </button>
+                  </div>
+
+                  <textarea
+                    value={newPostContent}
+                    onChange={(e) => setNewPostContent(e.target.value)}
+                    placeholder={postType === "post" ? "Share your security insights..." : "Ask the community..."}
+                    className="w-full h-32 bg-black border border-zinc-800 rounded-xl p-4 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-white/5 transition-all resize-none font-normal"
+                  />
+
+                  {postType === "poll" && (
+                    <div className="space-y-3">
+                      {pollOptions.map((opt, i) => (
+                        <input
+                          key={i}
+                          value={opt}
+                          onChange={(e) => {
+                            const newOpts = [...pollOptions];
+                            newOpts[i] = e.target.value;
+                            setPollOptions(newOpts);
+                          }}
+                          placeholder={`Option ${i + 1}`}
+                          className="w-full bg-black border border-zinc-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/5 transition-all"
+                        />
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setPollOptions([...pollOptions, ""])}
+                        className="text-[10px] text-zinc-500 hover:text-white font-bold uppercase tracking-widest px-1 py-1 transition-colors"
+                      >
+                        + Add Voting Option
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3 pt-4 border-t border-zinc-800">
+                    <button
+                      type="button"
+                      onClick={() => setIsCreating(false)}
+                      className="px-5 py-2 text-zinc-500 hover:text-white font-medium text-xs transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-white text-black rounded-lg font-semibold text-xs hover:bg-zinc-200 transition-all"
+                    >
+                      Post Entry
+                    </button>
+                  </div>
+                </form>
               </div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+
+        {/* Feed Grid */}
+        <div className="grid grid-cols-1 gap-4">
+          {posts.map((post) => (
+            <div key={post.id} className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 shadow-lg shadow-black/20 hover:border-zinc-700 transition-all duration-300">
+              <div className="flex items-start justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-zinc-800 text-zinc-400 rounded-xl flex items-center justify-center font-bold text-sm border border-zinc-700/50">
+                    {post.username[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white tracking-tight">{post.username}</h4>
+                    <div className="flex items-center gap-2 text-[10px] font-medium text-zinc-500 uppercase tracking-widest opacity-60">
+                      <Clock className="w-3 h-3" />
+                      {post.timestamp?.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {post.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </div>
+                {post.type === "poll" && (
+                  <div className="px-3 py-1 bg-black/50 text-zinc-400 border border-zinc-800 rounded-md text-[9px] font-bold uppercase tracking-widest">
+                    Poll Entry
+                  </div>
+                )}
+              </div>
+
+              <p className="text-zinc-300 text-lg mb-6 leading-relaxed font-normal whitespace-pre-wrap">{post.content}</p>
+
+              {post.type === "poll" && (
+                <div className="space-y-3 mb-6">
+                  {post.pollOptions.map((opt: any, i: number) => {
+                    const totalVotes = post.pollOptions.reduce((acc: number, curr: any) => acc + curr.votes, 0);
+                    const percentage = totalVotes > 0 ? (opt.votes / totalVotes) * 100 : 0;
+                    const hasVoted = post.votes?.[auth.currentUser?.uid || ""] !== undefined;
+
+                    return (
+                      <button
+                        key={i}
+                        disabled={hasVoted}
+                        onClick={() => handleVote(post.id, i)}
+                        className="w-full relative h-12 bg-black border border-zinc-800 rounded-xl overflow-hidden group transition-all hover:border-zinc-700"
+                      >
+                        <div 
+                          className="absolute inset-y-0 left-0 bg-white/5 transition-all duration-1000"
+                          style={{ width: `${percentage}%` }}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-between px-5">
+                          <span className="text-xs font-semibold text-zinc-400">{opt.text}</span>
+                          <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">{Math.round(percentage)}%</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="flex items-center gap-4 pt-6 border-t border-zinc-800/50">
+                <button 
+                  onClick={() => handleVote(post.id)}
+                  className={cn(
+                    "flex items-center gap-2 px-4 py-1.5 rounded-lg transition-all border text-xs font-semibold",
+                    post.votes?.[auth.currentUser?.uid || ""] === true 
+                      ? "bg-white text-black border-white shadow-lg shadow-white/5" 
+                      : "text-zinc-500 border-zinc-800 hover:text-white bg-black/40"
+                  )}
+                >
+                  <ThumbsUp className="w-4 h-4" />
+                  <span>{Object.values(post.votes || {}).filter(v => v === true).length}</span>
+                </button>
+
+                <button 
+                  onClick={() => setSelectedChatPost(post)}
+                  className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-zinc-500 hover:text-white bg-black/40 border border-zinc-800 transition-all text-xs font-semibold"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Connect</span>
+                </button>
+                
+                <button 
+                  onClick={() => fetchComments(post.id)}
+                  className="flex items-center gap-2 text-[10px] font-bold text-zinc-600 hover:text-zinc-400 uppercase tracking-widest transition-colors ml-auto group"
+                >
+                  <BarChart2 className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" />
+                  {post.commentsCount || 0} Responses
+                </button>
+              </div>
+
+              <AnimatePresence>
+                {activeComments === post.id && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="mt-6 pt-6 border-t border-zinc-800 space-y-6 overflow-hidden">
+                    <div className="space-y-4">
+                      {comments[post.id]?.map((comment) => (
+                        <div key={comment.id} className="flex gap-3 items-start">
+                          <div className="w-8 h-8 bg-zinc-800 border border-zinc-700/50 rounded-lg flex items-center justify-center shrink-0 font-bold text-zinc-500 text-xs shadow-inner">
+                            {comment.username[0].toUpperCase()}
+                          </div>
+                          <div className="flex-1 bg-black/40 border border-zinc-800 rounded-xl p-3.5">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-semibold text-white tracking-tight">{comment.username}</span>
+                              <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">{comment.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                            <p className="text-xs text-zinc-400 leading-relaxed">{comment.content}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="flex gap-2 pt-2">
+                      <input
+                        type="text"
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Type a response..."
+                        className="flex-1 bg-black/60 border border-zinc-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-white/10 transition-all placeholder:text-zinc-700"
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post.id)}
+                      />
+                      <button
+                        onClick={() => handleAddComment(post.id)}
+                        className="p-2.5 bg-white text-black rounded-xl hover:bg-zinc-200 transition-all shadow-md active:scale-95"
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
+        </div>
+
+        {/* Chat System Modal */}
+        <AnimatePresence>
+          {selectedChatPost && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98, y: 10 }}
+                className="w-full max-w-xl relative"
+              >
+                <button 
+                  onClick={() => setSelectedChatPost(null)}
+                  className="absolute -top-12 right-0 p-2 text-zinc-400 hover:text-white transition-all transition-colors"
+                >
+                  <MdClose className="w-6 h-6" />
+                </button>
+                <div className="bg-zinc-900/90 backdrop-blur-2xl border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl h-[600px]">
+                  <ChatSystem 
+                    reportId={`comm-${selectedChatPost.id}`} 
+                    currentRole="user" 
+                    contentContext={selectedChatPost.content} 
+                  />
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
