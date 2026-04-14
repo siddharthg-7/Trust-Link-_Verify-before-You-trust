@@ -24,6 +24,9 @@ const firebaseConfig = {
 };
 
 // Validate that the essential config is present
+console.log("Firebase API Key being used:", import.meta.env.VITE_FIREBASE_API_KEY);
+console.log("Firebase Auth Domain:", import.meta.env.VITE_FIREBASE_AUTH_DOMAIN);
+
 if (!firebaseConfig.apiKey) {
   console.error("Firebase API Key is missing. Check your environment variables.");
 }
