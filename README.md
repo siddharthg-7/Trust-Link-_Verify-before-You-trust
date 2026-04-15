@@ -1,20 +1,62 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Trust Link - Verify Before You Trust
 
-# Trust-Link: Verify Before You Trust
+## Project Structure
+```
+Trust-Link-
+├── src/                # Source files
+│   ├── components/     # Reusable components
+│   ├── pages/          # Application pages
+│   └── utils/          # Utility functions
+├── public/             # Public assets
+├── tests/              # Test files
+├── README.md           # Project documentation
+└── package.json        # Project metadata
+```
 
-This contains everything you need to run your app locally.
+## Architecture
+This project follows a modular architecture, separating concerns into different components and pages. Each component is responsible for a specific part of the UI, allowing for better maintainability and scalability. Additionally, the project adheres to the principles of Atomic Design for UI components.
 
-View your app in AI Studio: https://ai.studio/apps/9cb3454c-9c93-4cdf-8f50-8877fdcf61d6
+## Tech Stack
+- **Frontend:** React.js
+- **State Management:** Redux
+- **Routing:** React Router
+- **Styling:** CSS Modules
+- **Testing:** Jest and React Testing Library
+- **Build Tool:** Webpack
 
-## Run Locally
+## Installation Instructions
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/siddharthg-7/Trust-Link-_Verify-before-You-trust.git
+   ```
+2. **Navigate to the project directory**:
+   ```bash
+   cd Trust-Link-_Verify-before-You-trust
+   ```
+3. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+4. **Run the application**:
+   ```bash
+   npm start
+   ```
 
-**Prerequisites:**  Node.js
+## Contribution Guidelines
+We welcome contributions from everyone! To contribute to this project:
+1. Fork the repository.
+2. Create a new branch for your feature or bugfix:
+   ```bash
+   git checkout -b my-feature
+   ```
+3. Make your changes and commit them:
+   ```bash
+   git commit -m "Add some feature"
+   ```
+4. Push to your branch:
+   ```bash
+   git push origin my-feature
+   ```
+5. Open a pull request.
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Thank you for considering contributing to Trust Link!
