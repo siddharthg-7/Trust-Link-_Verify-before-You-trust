@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  MessageCircle, 
-  ThumbsUp, 
-  Share2, 
-  Plus, 
-  BarChart2, 
+import {
+  MessageCircle,
+  ThumbsUp,
+  Share2,
+  Plus,
+  BarChart2,
   Send,
   User as UserIcon,
   Clock,
@@ -17,14 +17,14 @@ import { ChatSystem } from "./ChatSystem";
 import { MdClose as MdCloseRaw } from "react-icons/md";
 const MdClose = MdCloseRaw as any;
 import { db, auth } from "../lib/firebase";
-import { 
-  collection, 
-  addDoc, 
-  query, 
-  orderBy, 
-  onSnapshot, 
-  serverTimestamp, 
-  updateDoc, 
+import {
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
+  updateDoc,
   doc,
   increment
 } from "firebase/firestore";
@@ -45,12 +45,19 @@ export function CommunityPage() {
   const [selectedChatPost, setSelectedChatPost] = useState<any | null>(null);
 
   useEffect(() => {
+    if (!auth.currentUser) return;
     const q = query(collection(db, "community"), orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      if (error.code === 'permission-denied') {
+        console.warn("Community feed: Access denied - awaiting authentication...");
+      } else {
+        console.error("Community Feed Error:", error);
+      }
     });
     return () => unsubscribe();
-  }, []);
+  }, [auth.currentUser]);
 
   const fetchComments = (postId: string) => {
     if (activeComments === postId) {
@@ -64,6 +71,8 @@ export function CommunityPage() {
         ...prev,
         [postId]: snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
       }));
+    }, (err) => {
+      console.error("Comments listener error:", err);
     });
   };
 
@@ -139,7 +148,7 @@ export function CommunityPage() {
 
         const newOptions = [...post.pollOptions];
         newOptions[optionIndex].votes += 1;
-        await updateDoc(postRef, { 
+        await updateDoc(postRef, {
           pollOptions: newOptions,
           [`votes.${userId}`]: optionIndex
         });
@@ -147,7 +156,7 @@ export function CommunityPage() {
         // Post upvote (Toggle logic)
         const post = posts.find(p => p.id === postId);
         const hasVoted = post.votes?.[userId] === true;
-        
+
         await updateDoc(postRef, {
           [`votes.${userId}`]: hasVoted ? null : true
         });
@@ -306,10 +315,10 @@ export function CommunityPage() {
                         key={i}
                         disabled={hasVoted}
                         onClick={() => handleVote(post.id, i)}
-                        className="w-full relative h-12 bg-black border border-zinc-800 rounded-xl overflow-hidden group transition-all hover:border-zinc-700"
+                        className="w-full relative h-12 bg-black border border-zinc-800 rounded-xl overflow-hidden group transition-all hover:border-white"
                       >
-                        <div 
-                          className="absolute inset-y-0 left-0 bg-white/5 transition-all duration-1000"
+                        <div
+                          className="absolute inset-y-0 left-0 bg-white/5 transition-all duration-1000 "
                           style={{ width: `${percentage}%` }}
                         />
                         <div className="absolute inset-0 flex items-center justify-between px-5">
@@ -323,12 +332,12 @@ export function CommunityPage() {
               )}
 
               <div className="flex items-center gap-4 pt-6 border-t border-zinc-800/50">
-                <button 
+                <button
                   onClick={() => handleVote(post.id)}
                   className={cn(
                     "flex items-center gap-2 px-4 py-1.5 rounded-lg transition-all border text-xs font-semibold",
-                    post.votes?.[auth.currentUser?.uid || ""] === true 
-                      ? "bg-white text-black border-white shadow-lg shadow-white/5" 
+                    post.votes?.[auth.currentUser?.uid || ""] === true
+                      ? "bg-white text-black border-white shadow-lg shadow-white/5"
                       : "text-zinc-500 border-zinc-800 hover:text-white bg-black/40"
                   )}
                 >
@@ -336,15 +345,15 @@ export function CommunityPage() {
                   <span>{Object.values(post.votes || {}).filter(v => v === true).length}</span>
                 </button>
 
-                <button 
+                <button
                   onClick={() => setSelectedChatPost(post)}
                   className="flex items-center gap-2 px-4 py-1.5 rounded-lg text-zinc-500 hover:text-white bg-black/40 border border-zinc-800 transition-all text-xs font-semibold"
                 >
                   <MessageCircle className="w-4 h-4" />
                   <span>Connect</span>
                 </button>
-                
-                <button 
+
+                <button
                   onClick={() => fetchComments(post.id)}
                   className="flex items-center gap-2 text-[10px] font-bold text-zinc-600 hover:text-zinc-400 uppercase tracking-widest transition-colors ml-auto group"
                 >
@@ -372,7 +381,7 @@ export function CommunityPage() {
                         </div>
                       ))}
                     </div>
-                    
+
                     <div className="flex gap-2 pt-2">
                       <input
                         type="text"
@@ -400,23 +409,23 @@ export function CommunityPage() {
         <AnimatePresence>
           {selectedChatPost && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.98, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98, y: 10 }}
                 className="w-full max-w-xl relative"
               >
-                <button 
+                <button
                   onClick={() => setSelectedChatPost(null)}
                   className="absolute -top-12 right-0 p-2 text-zinc-400 hover:text-white transition-all transition-colors"
                 >
                   <MdClose className="w-6 h-6" />
                 </button>
                 <div className="bg-zinc-900/90 backdrop-blur-2xl border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl h-[600px]">
-                  <ChatSystem 
-                    reportId={`comm-${selectedChatPost.id}`} 
-                    currentRole="user" 
-                    contentContext={selectedChatPost.content} 
+                  <ChatSystem
+                    reportId={`comm-${selectedChatPost.id}`}
+                    currentRole="user"
+                    contentContext={selectedChatPost.content}
                   />
                 </div>
               </motion.div>

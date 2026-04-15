@@ -18,7 +18,9 @@ export class AdversarialTester {
 
       for (const variant of variations) {
         totals++;
-        const result = await detector.analyze(variant);
+        const result = detector.analyze.constructor.name === 'AsyncFunction' 
+          ? await detector.analyze(variant) 
+          : detector.analyze(variant);
         if (result.riskScore > 50) {
           detections++;
         } else {

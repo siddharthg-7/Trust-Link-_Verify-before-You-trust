@@ -30,6 +30,8 @@ export function UserDashboard() {
         setUserData(d.data());
         setNewName(d.data().username || "");
       }
+    }, (err) => {
+      console.error("User doc listener error:", err);
     });
     return () => unsub();
   }, [uid]);
@@ -54,7 +56,7 @@ export function UserDashboard() {
     return () => unsub();
   }, [uid]);
 
-  const weekActivity = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map((day, i) => {
+  const weekActivity = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, i) => {
     const dayCount = myReports.filter(report => {
       const reportDate = report.timestamp?.toDate ? report.timestamp.toDate() : null;
       return reportDate && reportDate.getDay() === i;
@@ -63,16 +65,16 @@ export function UserDashboard() {
   });
 
   const stats = [
-    { label: "Reports Submitted", value: userData?.reportsCount || 0,   icon: Shield,        color: "bg-cyan-500/10 text-cyan-500" },
-    { label: "Trust Score",       value: `${userData?.trustScore || 50}%`,icon: Trophy,       color: "bg-white text-black" },
-    { label: "Votes Given",       value: userData?.votesCount || 0,      icon: Target,        color: "bg-zinc-900 text-zinc-400" },
-    { label: "Comments",          value: userData?.commentsCount || 0,   icon: MessageSquare, color: "bg-blue-500/10 text-blue-500" },
+    { label: "Reports Submitted", value: userData?.reportsCount || 0, icon: Shield, color: "bg-cyan-500/10 text-cyan-500" },
+    { label: "Trust Score", value: `${userData?.trustScore || 50}%`, icon: Trophy, color: "bg-black text-white" },
+    { label: "Votes Given", value: userData?.votesCount || 0, icon: Target, color: "bg-zinc-900 text-zinc-400" },
+    { label: "Comments", value: userData?.commentsCount || 0, icon: MessageSquare, color: "bg-blue-500/10 text-blue-500" },
   ];
 
   const badges = [
-    { name: "Top Reporter",    icon: Award,  color: "bg-cyan-500/10 text-cyan-500",    unlock: (userData?.reportsCount || 0) >= 5,  req: "5+ reports" },
-    { name: "Trust Guardian",  icon: Shield, color: "bg-white text-black", unlock: (userData?.trustScore || 0) >= 70,  req: "70%+ trust" },
-    { name: "Community Star",  icon: Zap,    color: "bg-zinc-900 text-zinc-400", unlock: (userData?.commentsCount || 0) >= 10, req: "10+ comments" },
+    { name: "Top Reporter", icon: Award, color: "bg-cyan-500/10 text-cyan-500", unlock: (userData?.reportsCount || 0) >= 5, req: "5+ reports" },
+    { name: "Trust Guardian", icon: Shield, color: "bg-white text-black", unlock: (userData?.trustScore || 0) >= 70, req: "70%+ trust" },
+    { name: "Community Star", icon: Zap, color: "bg-zinc-900 text-zinc-400", unlock: (userData?.commentsCount || 0) >= 10, req: "10+ comments" },
   ];
 
   async function saveName() {
@@ -165,15 +167,15 @@ export function UserDashboard() {
                 <AreaChart data={weekActivity}>
                   <defs>
                     <linearGradient id="cyanGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#ffffff" stopOpacity={0.1} />
+                      <stop offset="5%" stopColor="#ffffff" stopOpacity={0.1} />
                       <stop offset="95%" stopColor="#ffffff" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} strokeOpacity={0.1} />
                   <XAxis dataKey="day" stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} />
                   <YAxis stroke="#52525b" fontSize={10} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor:"#0a0a0a", border:"1px solid #27272a", borderRadius:"12px", color:"#fff", fontSize: "10px", fontWeight: "bold" }}
+                  <Tooltip
+                    contentStyle={{ backgroundColor: "#0a0a0a", border: "1px solid #27272a", borderRadius: "12px", color: "#fff", fontSize: "10px", fontWeight: "bold" }}
                     cursor={{ stroke: '#ffffff', strokeWidth: 1, strokeDasharray: '4 4' }}
                   />
                   <Area type="monotone" dataKey="reports" stroke="#ffffff" strokeWidth={2} fillOpacity={1} fill="url(#cyanGrad)" name="Activity" />
@@ -226,8 +228,8 @@ export function UserDashboard() {
                 <div key={report.id} className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-5 flex flex-col md:flex-row items-center gap-6 hover:border-zinc-700 transition-all duration-300 shadow-lg group">
                   <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center shrink-0 text-sm font-black border border-zinc-800/50 shadow-inner",
                     report.riskScore > 65 ? "text-red-400 bg-red-400/5" :
-                    report.riskScore > 35 ? "text-yellow-400 bg-yellow-400/5" :
-                    "text-zinc-400 bg-zinc-400/5"
+                      report.riskScore > 35 ? "text-yellow-400 bg-yellow-400/5" :
+                        "text-zinc-400 bg-zinc-400/5"
                   )}>
                     {report.riskScore}%
                   </div>
@@ -237,8 +239,8 @@ export function UserDashboard() {
                       <div className="flex justify-center md:justify-start">
                         <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-tight border",
                           report.status === "Verified" ? "bg-black/40 text-green-400 border-green-500/20" :
-                          report.status === "Scam"     ? "bg-black/40 text-red-400 border-red-500/20" :
-                          "bg-black/40 text-zinc-500 border-zinc-800"
+                            report.status === "Scam" ? "bg-black/40 text-red-400 border-red-500/20" :
+                              "bg-black/40 text-zinc-500 border-zinc-800"
                         )}>
                           {report.status}
                         </span>

@@ -662,7 +662,7 @@ class ScamDetector {
 //  Initialize NLP Services
 // ═══════════════════════════════════════════════════════════════
 
-import { EnhancedScamDetector } from "./src/enhanced-detector.js";
+import { EnhancedScamDetector } from "./src/enhanced-detector";
 
 const scamDetector = new EnhancedScamDetector();
 

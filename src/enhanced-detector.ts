@@ -21,14 +21,13 @@ export class TemporalAnalyzer {
     // Density Risk: 10 msgs in 5 mins = max risk (100)
     const densityRisk = Math.min((recentTimes.length / 10) * 100, 100);
 
-    // Time-of-day Risk: 2 AM - 4 AM = higher risk
+    // Time-of-day Risk: 1 AM - 5 AM = high risk, late night = medium risk, 2 PM - 4 PM = low risk
     const hour = new Date(now).getHours();
     let timeOfDayRisk = 0;
-    if (hour >= 1 && hour <= 4) {
-      timeOfDayRisk = 40; // High suspicious hours
-    } else if (hour >= 23 || hour === 0) {
-      timeOfDayRisk = 20; // Late night
-    }
+    
+    if (hour >= 1 && hour <= 5) timeOfDayRisk = 40;      // 1 AM - 5 AM (High risk)
+    else if (hour >= 22 || hour === 0) timeOfDayRisk = 25; // 10 PM - midnight (Suspicious)
+    else if (hour >= 14 && hour <= 16) timeOfDayRisk = 15; // 2 PM - 4 PM (Work hours / distracted)
 
     return { densityRisk, timeOfDayRisk };
   }
@@ -39,9 +38,7 @@ export class EnhancedScamDetector {
   private bert = new BertEmbeddings();
   private temporal = new TemporalAnalyzer();
   private classifier = new natural.BayesClassifier();
-  private isTrained = false;
-  
-  // Reference embeddings for scam semantic matching
+  private isInitialized = false;
   private scamEmbeddings: number[][] = [];
 
   constructor() {
@@ -49,25 +46,36 @@ export class EnhancedScamDetector {
   }
 
   private async init() {
-    await this.bert.init();
-    // In a real app, we'd load these from a DB or pre-computed file
-    // For now, we'll initialize with some basics
-    const baseScams = [
-      "Congratulations! You won a gift card. Click here.",
-      "Urgent: Account suspended. Verify now.",
-      "Send money to claim your prize."
-    ];
-    
-    for (const scam of baseScams) {
-      const emb = await this.bert.getEmbedding(scam);
-      this.scamEmbeddings.push(emb);
+    try {
+      await this.bert.init();
+      // In a real app, we'd load these from a DB or pre-computed file
+      // For now, we'll initialize with some basics
+      const baseScams = [
+        "Congratulations! You won a gift card. Click here.",
+        "Urgent: Account suspended. Verify now.",
+        "Send money to claim your prize."
+      ];
+      
+      for (const scam of baseScams) {
+        const emb = await this.bert.getEmbedding(scam);
+        this.scamEmbeddings.push(emb);
+      }
+      this.isInitialized = true;
+      console.log('✅ EnhancedScamDetector initialized.');
+    } catch (error) {
+      console.error('❌ Failed to initialize EnhancedScamDetector:', error);
     }
   }
 
   async analyze(content: string, senderId: string = 'anonymous', timestamp: number = Date.now()) {
+    // Await initialization if calling too early
+    while (!this.isInitialized) {
+      await new Promise(r => setTimeout(r, 100));
+    }
+
     // 1. Semantic Vector Match
     const semanticSimilarity = await this.bert.calculateMatch(content, this.scamEmbeddings);
-    const vectorRisk = semanticSimilarity * 100;
+    const vectorRisk = Math.min(semanticSimilarity, 1.0) * 100;
 
     // 2. Linguistic Analysis
     const linguisticRisk = this.analyzeLinguistics(content);
@@ -93,29 +101,25 @@ export class EnhancedScamDetector {
   }
 
   private analyzeMetadata(senderId: string): boolean {
-    // Mock metadata analysis
-    // In production, this would call external APIs like:
-    // - AbuseIPDB for IP reputation
-    // - Hunter.io for email domain verification
-    // - Device fingerprinting services
-    
-    const suspiciousDomains = ['tempmail.com', 'throwaway.io', 'secure-bank.tk', 'paypal-login.cf'];
-    return suspiciousDomains.some(domain => senderId.includes(domain));
+    const suspiciousPatterns = [/tempmail\./i, /throwaway\./i, /\.tk$/i, /secure-bank/i, /paypal-login/i, /urgent-bank/i];
+    return suspiciousPatterns.some(pattern => pattern.test(senderId));
   }
 
   private analyzeLinguistics(text: string): number {
     let score = 0;
     const lower = text.toLowerCase();
 
-    // Passive voice detection (e.g., "You have been selected")
-    if (/\b(have|has|had)\s+been\s+\w+ed\b/i.test(text)) {
+    // Passive voice detection (broadened)
+    if (/\b(have|has|had|was|were|is|are)\s+been?\s+\w+(ed|en)?\b/i.test(text)) {
       score += 25;
     }
 
-    // Emotional triggers (fear, excitement, urgency)
+    // Emotional triggers (Word boundaries + Count weighting)
     const triggers = ['immediately', 'arrest', 'police', 'urgent', 'limited', 'won', 'congratulations', 'prize', 'gift'];
     triggers.forEach(t => {
-      if (lower.includes(t)) score += 10;
+      const regex = new RegExp(`\\b${t}\\b`, 'gi');
+      const matches = lower.match(regex);
+      if (matches) score += matches.length * 10;
     });
 
     // Readability (Simple language/Broken English detection)

@@ -153,16 +153,24 @@ export function StudentDashboard() {
       const q = query(collection(db, "reports"), orderBy("timestamp", "desc"), limit(10));
       const unsubscribe = onSnapshot(q, (snap) => {
         setRecentReports(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      }, (err) => {
+        if (err.code === 'permission-denied') {
+          console.warn("Real-time feed: Permission denied - awaiting auth sync...");
+        } else {
+          console.error("Feed Error:", err);
+        }
       });
 
       // Fetch absolute total count for analytics
       getCountFromServer(collection(db, "reports")).then((snapshot) => {
         setTotalReports(snapshot.data().count);
+      }).catch(err => {
+        console.warn("Total count fetch error (potential auth race):", err.message);
       });
 
       return () => unsubscribe();
     } catch (err) {
-      console.error("Listener failed:", err);
+      console.error("Critical listener init error:", err);
     }
   }, []);
 
@@ -172,7 +180,7 @@ export function StudentDashboard() {
     setIsAnalyzing(true);
     setResult(null);
     try {
-      const response = await axios.post("http://localhost:3001/api/analyze", { content });
+      const response = await axios.post("http://localhost:3000/api/analyze", { content });
       setResult(response.data);
       toast.success("Analysis complete!");
     } catch (error) {
