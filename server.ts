@@ -662,7 +662,9 @@ class ScamDetector {
 //  Initialize NLP Services
 // ═══════════════════════════════════════════════════════════════
 
-const scamDetector = new ScamDetector();
+import { EnhancedScamDetector } from "./src/enhanced-detector.js";
+
+const scamDetector = new EnhancedScamDetector();
 
 console.log('✅ NLP Service Layer initialized');
 console.log('   - NLPPipeline: Advanced preprocessing');
@@ -677,14 +679,14 @@ console.log('   - ScamDetector: Unified analysis API');
 // ═══════════════════════════════════════════════════════════════
 
 // Main analysis endpoint
-app.post('/api/analyze', (req, res) => {
+app.post('/api/analyze', async (req, res) => {
   const { content } = req.body;
   if (!content || typeof content !== 'string' || !content.trim()) {
     return res.status(400).json({ error: 'Content is required' });
   }
   
   try {
-    const result = scamDetector.analyze(content);
+    const result = await scamDetector.analyze(content);
     res.json(result);
   } catch (error) {
     console.error('Analysis error:', error);
@@ -704,8 +706,8 @@ app.get('/api/nlp/metrics', (req, res) => {
 });
 
 // NLP health check
-app.get('/api/nlp/health', (req, res) => {
-  const result = scamDetector.analyze('This is a test message about a free prize lottery winning money immediately');
+app.get('/api/nlp/health', async (req, res) => {
+  const result = await scamDetector.analyze('This is a test message about a free prize lottery winning money immediately');
   
   res.json({
     status: 'healthy',
@@ -732,7 +734,7 @@ let reportsStore: any[] = [];
 
 app.get('/api/reports', (req, res) => res.json(reportsStore));
 
-app.post('/api/reports', (req, res) => {
+app.post('/api/reports', async (req, res) => {
   const report = {
     id: Math.random().toString(36).substr(2, 9),
     ...req.body,
@@ -741,12 +743,12 @@ app.post('/api/reports', (req, res) => {
   reportsStore.push(report);
   
   if (report.category === 'Scam' || report.status === 'Scam') {
-    scamDetector.learnFromScam(report.content);
+    await scamDetector.learnFromScam(report.content);
   }
   res.status(201).json(report);
 });
 
-app.patch('/api/reports/:id', (req, res) => {
+app.patch('/api/reports/:id', async (req, res) => {
   const { id } = req.params;
   const idx = reportsStore.findIndex(r => r.id === id);
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
@@ -755,7 +757,7 @@ app.patch('/api/reports/:id', (req, res) => {
   reportsStore[idx] = { ...reportsStore[idx], ...req.body };
   
   if (reportsStore[idx].status === 'Scam' && oldStatus !== 'Scam') {
-    scamDetector.learnFromScam(reportsStore[idx].content);
+    await scamDetector.learnFromScam(reportsStore[idx].content);
   }
   res.json(reportsStore[idx]);
 });
