@@ -10,6 +10,7 @@ import {
 import { Button } from "../ui/button";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../../lib/firebase";
+import internshipIllustration from "../../assets/internship-illustration.jpg";
 
 const FaInfoCircle = FaInfoCircleRaw as any;
 const FaCheckCircle = FaCheckCircleRaw as any;
@@ -139,9 +140,9 @@ export function InternshipTypesSection() {
             <div className="absolute inset-0 bg-white/5 rounded-2xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             <div className="relative border border-zinc-900 rounded-2xl overflow-hidden bg-black/40">
               <img 
-                src="/internship-illustration.jpg" 
+                src={internshipIllustration} 
                 alt="Internship Analysis Illustration" 
-                className="w-full h-auto grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-1000 ease-in-out scale-105 group-hover:scale-100"
+                className="w-full h-auto opacity-90 group-hover:opacity-100 transition-all duration-1000 ease-in-out scale-105 group-hover:scale-100"
               />
             </div>
             {/* Minimal Label */}
