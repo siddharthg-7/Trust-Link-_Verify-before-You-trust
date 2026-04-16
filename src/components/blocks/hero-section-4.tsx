@@ -18,7 +18,7 @@ const BsLock = BsLockRaw as any;
 const AiOutlineEye = AiOutlineEyeRaw as any;
 const RiAlertLine = RiAlertLineRaw as any;
 
-export function HeroSection() {
+export function HeroSection({ onLearnMore }: { onLearnMore?: () => void }) {
   const navigate = useNavigate();
 
   return (
@@ -86,13 +86,20 @@ export function HeroSection() {
               <Button
                 variant="ghost"
                 className="text-white text-lg font-bold px-8 hover:bg-white/10"
-                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                onClick={() => {
+                  if (onLearnMore) {
+                    onLearnMore();
+                  } else {
+                    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
               >
                 Learn More
               </Button>
             </div>
           </motion.div>
         </div>
+
 
         {/* Right Animation */}
         <div className="lg:w-1/2 flex justify-center mt-20 lg:mt-0 relative lg:translate-x-12">
