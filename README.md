@@ -89,7 +89,7 @@ This project follows a **modular and scalable architecture**, ensuring clean sep
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/siddharthg-7/Trust-Link-_Verify-before-You-trust.git](https://github.com/siddharthg-7/Trust-Link-_Verify-before-You-trust.git)
+git clone https://github.com/siddharthg-7/Trust-Link-_Verify-before-You-trust.git
 ```
 
 ### 2. Navigate to Project Directory
