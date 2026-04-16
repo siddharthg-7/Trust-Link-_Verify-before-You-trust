@@ -139,7 +139,7 @@ export function InternshipTypesSection() {
             <div className="absolute inset-0 bg-white/5 rounded-2xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             <div className="relative border border-zinc-900 rounded-2xl overflow-hidden bg-black/40">
               <img 
-                src="/src/assets/internship-illustration.jpg" 
+                src="/internship-illustration.jpg" 
                 alt="Internship Analysis Illustration" 
                 className="w-full h-auto grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-1000 ease-in-out scale-105 group-hover:scale-100"
               />
