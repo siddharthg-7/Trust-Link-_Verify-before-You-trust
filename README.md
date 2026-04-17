@@ -9,7 +9,14 @@
   <img src="https://img.shields.io/badge/Frontend-React-61DAFB?style=flat-square&logo=react" />
   <img src="https://img.shields.io/badge/State-Redux-764ABC?style=flat-square&logo=redux" />
   <img src="https://img.shields.io/badge/Routing-React%20Router-CA4245?style=flat-square&logo=react-router" />
-  <img src="https://img.shields.io/badge/Testing-Jest-C21325?style=flat-square&logo=jest" />
+  <img src="https://img.shields.io/badge/Styling-TailwindCSS-38B2AC?style=flat-square&logo=tailwind-css" />
+  <img src="https://img.shields.io/badge/UI-shadcn/ui-black?style=flat-square" />
+  <img src="https://img.shields.io/badge/Backend-Express-000000?style=flat-square&logo=express" />
+  <img src="https://img.shields.io/badge/Database-Firebase-FFCA28?style=flat-square&logo=firebase" />
+  <img src="https://img.shields.io/badge/AI-Gemini_API-4285F4?style=flat-square&logo=google" />
+  <img src="https://img.shields.io/badge/ML-TensorFlow.js-FF6F00?style=flat-square&logo=tensorflow" />
+  <img src="https://img.shields.io/badge/Build-Vite-646CFF?style=flat-square&logo=vite" />
+  <img src="https://img.shields.io/badge/Language-TypeScript-3178C6?style=flat-square&logo=typescript" />
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square" />
 </p>
 
