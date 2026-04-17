@@ -260,5 +260,6 @@ This project is licensed under the **MIT License**.
 
 ##  Author
 
-**Gilakathi Siddhartha Goud** *Building systems that solve real-world problems.*
-```
+**Gilakathi Siddhartha Goud** 
+<br>
+*Building systems that solve real-world problems.*
