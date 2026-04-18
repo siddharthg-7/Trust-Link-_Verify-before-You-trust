@@ -3,6 +3,7 @@
 
 <p align="center">
   <b>An AI-powered platform to detect scams, verify links, and validate digital content before you take action.</b>
+  <hr/>
 </p>
 
 <p align="center">
