@@ -206,7 +206,7 @@ export function StudentDashboard() {
 
       // Trigger Admin Email via Resend Service
       try {
-        await sendAdminEmail({
+        const adminEmailResult = await sendAdminEmail({
           title: payload.title,
           userName: payload.userName,
           userEmail: payload.userEmail,
@@ -214,8 +214,25 @@ export function StudentDashboard() {
           content: payload.content,
           reportId: reportRef.id
         });
-      } catch (e) {
-        console.error("Admin Email Failure:", e);
+
+        if (adminEmailResult.success) {
+          await updateDoc(reportRef, {
+            adminEmailStatus: "sent",
+            adminEmailSentAt: serverTimestamp(),
+            adminEmailId: adminEmailResult.id
+          });
+        } else {
+          await updateDoc(reportRef, {
+            adminEmailStatus: "failed",
+            adminEmailError: adminEmailResult.error
+          });
+        }
+      } catch (e: any) {
+        console.error("Admin Email Critical Failure:", e);
+        await updateDoc(reportRef, {
+          adminEmailStatus: "failed",
+          adminEmailError: e.message
+        });
       }
 
       toast.success("Report submitted and admin notified!");

@@ -509,13 +509,16 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
 
   async function submitDetailedReview() {
     if (!reviewingReport) return;
-    setUpdatingId(reviewingReport.id);
+    const reportId = reviewingReport.id;
+    const reportRef = doc(db, "reports", reportId);
+    setUpdatingId(reportId);
+    
     try {
       const aiScore = reviewingReport.riskScore || 0;
       const weightedScore = Math.round((aiScore * 0.7) + (adminScore * 0.3));
       const status = weightedScore > 50 ? "Scam" : "Verified";
 
-      await updateDoc(doc(db, "reports", reviewingReport.id), {
+      await updateDoc(reportRef, {
         adminScore,
         weightedScore,
         adminFeedback,
@@ -524,10 +527,16 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
         reviewedBy: user?.email
       });
 
-      // Trigger User Email via Resend Service
+      // ── Email Trigger Mechanism with Tracking ──
       if (reviewingReport.userEmail) {
+        // Initial state: Pending
+        await updateDoc(reportRef, {
+          emailStatus: "pending",
+          adminFeedback: adminFeedback || 'System: No specific feedback provided.'
+        });
+
         try {
-          await sendUserEmail({
+          const emailResult = await sendUserEmail({
             to: reviewingReport.userEmail,
             userName: reviewingReport.userName || 'User',
             trustScore: weightedScore,
@@ -535,9 +544,34 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
             feedback: adminFeedback || 'No specific feedback provided.',
             reportId: reviewingReport.id
           });
-        } catch (e) {
-          console.error("User Email Failure:", e);
+
+          if (emailResult.success) {
+            await updateDoc(reportRef, {
+              emailStatus: "sent",
+              emailSentAt: serverTimestamp(),
+              emailRetries: 0,
+              resendId: emailResult.id
+            });
+            toast.success("Review submitted and confirmation email sent!");
+          } else {
+            await updateDoc(reportRef, {
+              emailStatus: "failed",
+              lastEmailError: emailResult.error,
+              emailRetries: increment(1)
+            });
+            toast.error(`Review saved, but email failed: ${emailResult.error}`);
+          }
+        } catch (e: any) {
+          console.error("User Email Critical Failure:", e);
+          await updateDoc(reportRef, {
+            emailStatus: "failed",
+            lastEmailError: e.message,
+            emailRetries: increment(1)
+          });
+          toast.error("Review saved, but a network error occurred while sending email.");
         }
+      } else {
+        toast.success("Review submitted! (No user email found to notify)");
       }
 
       await logAudit("detailed_review_submitted", `Review submitted for ${reviewingReport.id}. Weighted Score: ${weightedScore}`, reviewingReport.id);
@@ -741,14 +775,28 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={cn("text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider",
-                      r.status === "Pending"  ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/10" :
-                      r.status === "Verified" ? "bg-green-500/10 text-green-500 border border-green-500/10"   :
-                      r.status === "Scam"     ? "bg-red-500/10 text-red-400 border border-red-500/10"       :
-                      "bg-white/5 text-white/40"
-                    )}>
-                      {r.status || "Unknown"}
-                    </span>
+                    <div className="flex flex-col gap-1 items-start">
+                      <span className={cn("text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider",
+                        r.status === "Pending"  ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/10" :
+                        r.status === "Verified" ? "bg-green-500/10 text-green-500 border border-green-500/10"   :
+                        r.status === "Scam"     ? "bg-red-500/10 text-red-400 border border-red-500/10"       :
+                        "bg-white/5 text-white/40"
+                      )}>
+                        {r.status || "Unknown"}
+                      </span>
+                      {r.emailStatus && (
+                        <span className={cn("text-[8px] font-black uppercase flex items-center gap-1.5 px-1 opacity-70",
+                          r.emailStatus === "sent" ? "text-green-400" :
+                          r.emailStatus === "failed" ? "text-red-500" :
+                          "text-zinc-500"
+                        )}>
+                          {r.emailStatus === "sent" ? <Check className="w-2 h-2" /> :
+                           r.emailStatus === "failed" ? <X className="w-2 h-2" /> :
+                           <Clock className="w-2 h-2" />}
+                          Email {r.emailStatus}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     {r.reviewedBy ? (
