@@ -10,7 +10,7 @@ import {
 import { Button } from "../ui/button";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../../lib/firebase";
-import internshipIllustration from "../../assets/internship-illustration.jpg";
+
 
 const FaInfoCircle = FaInfoCircleRaw as any;
 const FaCheckCircle = FaCheckCircleRaw as any;
@@ -85,13 +85,13 @@ export function InternshipTypesSection() {
 
       <div className="bg-zinc-950 border border-zinc-900 p-10 md:p-14 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 blur-[120px] rounded-full translate-x-1/3 -translate-y-1/3 pointer-events-none" />
-        
+
         <div className="grid lg:grid-cols-2 gap-16 items-center relative z-10">
           <div>
             <h3 className="text-3xl md:text-4xl font-black mb-10 tracking-tighter leading-none">
               How to Identify a Genuine Internship
             </h3>
-            
+
             <ul className="space-y-8">
               <li className="flex items-start gap-6 group/item">
                 <div className="bg-white p-2 rounded-full text-black flex items-center justify-center shrink-0 mt-1 transition-transform group-hover/item:scale-110">
@@ -139,10 +139,10 @@ export function InternshipTypesSection() {
           <div className="hidden lg:block relative group">
             <div className="absolute inset-0 bg-white/5 rounded-2xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             <div className="relative border border-zinc-900 rounded-2xl overflow-hidden bg-black/40">
-              <img 
-                src={internshipIllustration} 
-                alt="Internship Analysis Illustration" 
-                className="w-full h-auto opacity-90 group-hover:opacity-100 transition-all duration-1000 ease-in-out scale-105 group-hover:scale-100"
+              <img
+                src="/internship-illustration.jpg"
+                alt="Internship Analysis Illustration"
+                className="w-full h-auto grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-1000 ease-in-out scale-105 group-hover:scale-100"
               />
             </div>
             {/* Minimal Label */}
