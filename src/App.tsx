@@ -19,7 +19,7 @@ const FiMenu = FiMenuRaw as any;
 const BsShieldLock = BsShieldLockRaw as any;
 
 // ─── Admin email — must match Firebase Auth account ──────────
-const ADMIN_EMAIL = "siddharth@gmail.com";
+const ADMIN_EMAIL = "siddharthexam21@gmail.com";
 
 export default function App() {
   const [user, setUser]             = useState<any>(null);

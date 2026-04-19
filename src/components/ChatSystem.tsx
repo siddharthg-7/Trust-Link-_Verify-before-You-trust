@@ -11,7 +11,7 @@ import { cn } from "../lib/utils";
 interface Message {
   id: string;
   text: string;
-  senderId: string;
+  userId: string;
   senderEmail: string;
   senderRole: "user" | "admin" | "ai";
   timestamp: Timestamp;
@@ -38,7 +38,10 @@ export function ChatSystem({ reportId, currentRole, contentContext }: ChatSystem
     );
 
     const unsub = onSnapshot(q, (snap) => {
-      setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() } as Message)));
+      setMessages(snap.docs.map(d => ({ 
+        id: d.id, 
+        ...d.data() 
+      } as Message)));
       setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
     });
 
@@ -53,7 +56,7 @@ export function ChatSystem({ reportId, currentRole, contentContext }: ChatSystem
     try {
       await addDoc(collection(db, "reports", reportId, "messages"), {
         text: newMessage,
-        senderId: auth.currentUser.uid,
+        userId: auth.currentUser.uid,
         senderEmail: auth.currentUser.email,
         senderRole: currentRole,
         timestamp: serverTimestamp(),
@@ -93,7 +96,7 @@ export function ChatSystem({ reportId, currentRole, contentContext }: ChatSystem
               key={msg.id}
               className={cn(
                 "flex flex-col max-w-[85%]",
-                msg.senderId === auth.currentUser?.uid ? "ml-auto items-end" : "mr-auto items-start"
+                msg.userId === auth.currentUser?.uid ? "ml-auto items-end" : "mr-auto items-start"
               )}
             >
               <div className="flex items-center gap-1.5 mb-1 px-1">
@@ -111,7 +114,7 @@ export function ChatSystem({ reportId, currentRole, contentContext }: ChatSystem
               <div
                 className={cn(
                   "px-4 py-2.5 rounded-2xl text-sm leading-relaxed",
-                  msg.senderId === auth.currentUser?.uid
+                  msg.userId === auth.currentUser?.uid
                     ? "bg-blue-600 text-white rounded-tr-none shadow-lg shadow-blue-900/20"
                     : msg.senderRole === "admin"
                     ? "bg-red-500/10 border border-red-500/20 text-red-50 rounded-tl-none"

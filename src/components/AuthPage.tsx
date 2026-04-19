@@ -63,7 +63,7 @@ async function ensureUserDoc(u: any, overrideRole?: string) {
   if (!userDoc.exists()) {
     const role =
       overrideRole ||
-      (u.email === "siddharth@gmail.com" ? "admin" : "user");
+      (u.email === "siddharthexam21@gmail.com" ? "admin" : "user");
     await setDoc(userRef, {
       uid: u.uid,
       email: u.email,
@@ -100,7 +100,7 @@ export function AuthPage() {
         if (result?.user) {
           await ensureUserDoc(result.user);
           toast.success("Welcome to TrustLink!");
-          navigate(result.user.email === "siddharth@gmail.com" ? "/admin" : "/app/home", { replace: true });
+          navigate(result.user.email === "siddharthexam21@gmail.com" ? "/admin" : "/app/home", { replace: true });
         }
       })
       .catch((err) => {
@@ -177,7 +177,7 @@ export function AuthPage() {
       const result = await signInWithPopup(auth, googleProvider);
       await ensureUserDoc(result.user);
       toast.success("Welcome to TrustLink!");
-      navigate(result.user.email === "siddharth@gmail.com" ? "/admin" : "/app/home", { replace: true });
+      navigate(result.user.email === "siddharthexam21@gmail.com" ? "/admin" : "/app/home", { replace: true });
     } catch (err: any) {
       if (err.code === "auth/popup-blocked" || err.code === "auth/popup-cancelled") {
         // Popup blocked by browser — fall back to redirect
@@ -207,7 +207,7 @@ export function AuthPage() {
       const userDoc = await getDoc(userRef);
       const role = userDoc.exists() ? userDoc.data().role : null;
       const isAdminEmail =
-        result.user.email === "siddharth@gmail.com";
+        result.user.email === "siddharthexam21@gmail.com";
 
       if (role === "admin" || isAdminEmail) {
         await ensureUserDoc(result.user, "admin");

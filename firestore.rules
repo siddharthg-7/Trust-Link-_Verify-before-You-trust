@@ -2,7 +2,8 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper functions
+    // ─── HELPER FUNCTIONS ──────────────────────────────────────────────
+    
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -13,56 +14,83 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() && (
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-        request.auth.token.email == 'siddharth@gmail.com'
+        request.auth.token.admin == true ||
+        request.auth.token.email == 'siddharthexam21@gmail.com'
       );
     }
 
-    // --- Users Collection ---
+    // ─── USERS COLLECTION ──────────────────────────────────────────────
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isOwner(userId);
       allow update: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow delete: if isAdmin();
     }
 
-    // --- Reports Collection ---
+    // ─── REPORTS COLLECTION ───────────────────────────────────────────
     match /reports/{reportId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
+      // Ensure the creator records their own UID
+      allow create: if isAuthenticated() && 
+                    request.resource.data.userId == request.auth.uid;
+      // Only owner or admin can modify
+      allow update: if isAuthenticated() && 
+                    (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
       
+      // Subcollection: Messages
       match /messages/{messageId} {
-        allow read, write: if isAuthenticated();
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAuthenticated() && 
+                              (resource.data.userId == request.auth.uid || isAdmin());
       }
     }
 
-    // --- Community Collection ---
+    // ─── COMMUNITY COLLECTION ─────────────────────────────────────────
     match /community/{postId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated();
+      allow create: if isAuthenticated() && 
+                    request.resource.data.userId == request.auth.uid;
+      allow update: if isAuthenticated() && 
+                    (resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
 
+      // Subcollection: Comments
       match /comments/{commentId} {
-        allow read, write: if isAuthenticated();
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && 
+                      request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAuthenticated() && 
+                              (resource.data.userId == request.auth.uid || isAdmin());
       }
     }
 
-    // --- Audit Logs ---
+    // ─── AUDIT LOGS ───────────────────────────────────────────────────
     match /auditLogs/{logId} {
       allow read: if isAdmin();
-      allow create: if isAuthenticated();
-    }
-
-    // --- Platform Alerts ---
-    match /platformAlerts/{alertId} {
-      allow read: if isAuthenticated();
+      // Restrict log creation to admin/system only to prevent spam
       allow create: if isAdmin();
     }
 
-    // --- Settings ---
+    // ─── PLATFORM ALERTS ──────────────────────────────────────────────
+    match /platformAlerts/{alertId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ─── SETTINGS ─────────────────────────────────────────────────────
     match /settings/{settingId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
+    }
+
+    // ─── MAIL COLLECTION (TRIGGER EMAIL EXTENSION) ────────────────────
+    match /mail/{mailId} {
+      allow create: if isAuthenticated();
+      // Prevent reading or modifying sent emails for privacy and security
+      allow read, update, delete: if false;
     }
   }
 }
