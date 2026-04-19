@@ -438,9 +438,19 @@ export function StudentDashboard() {
                     {report.timestamp?.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {report.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
                 </div>
-                <div className="flex flex-col items-end shrink-0">
-                  <div className={cn("text-xs font-bold tracking-tight px-2 py-1 rounded-md bg-black/40", report.status === "Scam" ? "text-red-400" : "text-zinc-400")}>
-                    {report.riskScore}% {report.status === "Scam" ? "SCAM" : "LOW RISK"}
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <div className={cn(
+                    "text-[9px] font-black tracking-widest px-2 py-0.5 rounded border uppercase",
+                    report.status === "Verified" ? "bg-green-500/10 text-green-400 border-green-500/20" :
+                    report.status === "Scam" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                    "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                  )}>
+                    {report.status || "Pending"}
+                  </div>
+                  <div className={cn("text-[10px] font-bold tracking-tight px-2 py-1 rounded-md bg-black/40", 
+                    report.riskScore > 65 ? "text-red-400" : report.riskScore > 35 ? "text-yellow-400" : "text-green-400"
+                  )}>
+                    {report.riskScore}% Risk
                   </div>
                 </div>
               </div>

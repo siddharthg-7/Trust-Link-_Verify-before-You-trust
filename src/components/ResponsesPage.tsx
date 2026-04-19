@@ -154,11 +154,21 @@ export function ResponsesPage() {
                         Intelligence logged • {report.timestamp?.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </div>
                     </div>
-                    <div className={cn(
-                      "px-3 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border border-zinc-700/50 bg-black/40",
-                      report.category === "Scam" ? "text-red-400" : "text-zinc-400"
-                    )}>
-                      {report.category} • {report.riskScore}% Risk
+                    <div className="flex flex-col items-end gap-2">
+                       <div className={cn(
+                        "px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest border",
+                        report.status === "Verified" ? "bg-green-500/10 text-green-400 border-green-500/20" :
+                        report.status === "Scam" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                        "bg-yellow-500/10 text-yellow-500 border-yellow-500/20 whitespace-nowrap"
+                      )}>
+                        {report.status || "PENDING"}
+                      </div>
+                      <div className={cn(
+                        "px-3 py-1 rounded-md text-[9px] font-bold uppercase tracking-widest border border-zinc-700/50 bg-black/40",
+                        report.riskScore > 65 ? "text-red-400" : report.riskScore > 35 ? "text-yellow-400" : "text-green-400"
+                      )}>
+                        {report.category} • {report.riskScore}% Risk
+                      </div>
                     </div>
                   </div>
                   

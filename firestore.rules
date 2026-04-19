@@ -46,5 +46,23 @@ service cloud.firestore {
         allow read, write: if isAuthenticated();
       }
     }
+
+    // --- Audit Logs ---
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+    }
+
+    // --- Platform Alerts ---
+    match /platformAlerts/{alertId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+    }
+
+    // --- Settings ---
+    match /settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
   }
 }

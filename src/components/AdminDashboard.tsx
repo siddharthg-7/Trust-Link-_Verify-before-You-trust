@@ -13,7 +13,7 @@ import { db, auth } from "../lib/firebase";
 import {
   collection, query, orderBy, onSnapshot, updateDoc, doc,
   deleteDoc, where, getDocs, writeBatch, addDoc, serverTimestamp,
-  limit, getDoc, setDoc, Timestamp
+  limit, getDoc, setDoc, Timestamp, increment
 } from "firebase/firestore";
 import toast from "react-hot-toast";
 import { cn } from "../lib/utils";
@@ -90,21 +90,33 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
 
   // Live Firestore subscriptions
   useEffect(() => {
+    const handleError = (collection: string) => (err: any) => {
+      if (err.code === 'permission-denied') {
+        console.warn(`Admin ${collection} feed: Permission denied - syncing auth state...`);
+      } else {
+        console.error(`Admin ${collection} error:`, err);
+      }
+    };
+
     const unsubReports = onSnapshot(
       query(collection(db, "reports"), orderBy("timestamp", "desc")),
-      snap => setReports(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      snap => setReports(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      handleError("reports")
     );
     const unsubUsers = onSnapshot(
       query(collection(db, "users"), orderBy("createdAt", "desc")),
-      snap => setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      snap => setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      handleError("users")
     );
     const unsubComm = onSnapshot(
       query(collection(db, "community"), orderBy("timestamp", "desc")),
-      snap => setCommunity(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      snap => setCommunity(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      handleError("community")
     );
     const unsubAudit = onSnapshot(
       query(collection(db, "auditLogs"), orderBy("timestamp", "desc"), limit(100)),
-      snap => setAuditLogs(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+      snap => setAuditLogs(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      handleError("audit")
     );
     return () => { unsubReports(); unsubUsers(); unsubComm(); unsubAudit(); };
   }, []);
@@ -289,13 +301,13 @@ function OverviewTab({ reports, users, community }: { reports: any[]; users: any
     datasets: [
       {
         label: 'Scams',
-        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.riskScore > 65 && r.timestamp?.toDate().getDay() === (i + 1) % 7).length),
+        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.riskScore > 65 && r.timestamp?.toDate && r.timestamp.toDate().getDay() === (i + 1) % 7).length),
         backgroundColor: '#ef4444',
         borderRadius: 4,
       },
       {
         label: 'Safe',
-        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.riskScore <= 35 && r.timestamp?.toDate().getDay() === (i + 1) % 7).length),
+        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.riskScore <= 35 && r.timestamp?.toDate && r.timestamp.toDate().getDay() === (i + 1) % 7).length),
         backgroundColor: '#22c55e',
         borderRadius: 4,
       }
@@ -1007,13 +1019,23 @@ function ReportsTab({ reports }: { reports: any[] }) {
   const sorted = [...reports].sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0));
 
   async function warnUser(report: any) {
+    if (!report.userId) {
+      toast.error("User ID missing from report");
+      return;
+    }
+    
     try {
-      if (report.userId) {
-        await updateDoc(doc(db, "users", report.userId), { warned: true, warnCount: (report.warnCount || 0) + 1 });
-        await logAudit("user_warned", `Warning sent for report ${report.id}`, report.id);
-        toast.success("User warned");
-      }
-    } catch { toast.error("Failed"); }
+      const userRef = doc(db, "users", report.userId);
+      await updateDoc(userRef, { 
+        warned: true, 
+        warnCount: increment(1) 
+      });
+      await logAudit("user_warned", `Warning sent for report ${report.id}`, report.id);
+      toast.success("User warned successfully");
+    } catch (e: any) { 
+      console.error("Warn User Error:", e);
+      toast.error("Failed to warn user: " + (e.message || "Unknown error")); 
+    }
   }
 
   return (
@@ -1104,7 +1126,7 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
     datasets: [
       {
         label: 'Reports',
-        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.timestamp?.toDate().getDay() === (i + 1) % 7).length),
+        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.timestamp?.toDate && r.timestamp.toDate().getDay() === (i + 1) % 7).length),
         borderColor: '#ef4444',
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         fill: true,
@@ -1112,7 +1134,7 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
       },
       {
         label: 'Users',
-        data: [0,0,0,0,0,0,0].map((_, i) => users.filter(u => u.createdAt?.toDate().getDay() === (i + 1) % 7).length),
+        data: [0,0,0,0,0,0,0].map((_, i) => users.filter(u => u.createdAt?.toDate && u.createdAt.toDate().getDay() === (i + 1) % 7).length),
         borderColor: '#3b82f6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         fill: true,
