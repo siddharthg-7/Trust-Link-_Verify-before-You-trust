@@ -3,13 +3,21 @@
 
 <p align="center">
   <b>An AI-powered platform to detect scams, verify links, and validate digital content before you take action.</b>
+  <hr/>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Frontend-React-61DAFB?style=flat-square&logo=react" />
   <img src="https://img.shields.io/badge/State-Redux-764ABC?style=flat-square&logo=redux" />
   <img src="https://img.shields.io/badge/Routing-React%20Router-CA4245?style=flat-square&logo=react-router" />
-  <img src="https://img.shields.io/badge/Testing-Jest-C21325?style=flat-square&logo=jest" />
+  <img src="https://img.shields.io/badge/Styling-TailwindCSS-38B2AC?style=flat-square&logo=tailwind-css" />
+  <img src="https://img.shields.io/badge/UI-shadcn/ui-black?style=flat-square" />
+  <img src="https://img.shields.io/badge/Backend-Express-000000?style=flat-square&logo=express" />
+  <img src="https://img.shields.io/badge/Database-Firebase-FFCA28?style=flat-square&logo=firebase" />
+  <img src="https://img.shields.io/badge/AI-Gemini_API-4285F4?style=flat-square&logo=google" />
+  <img src="https://img.shields.io/badge/ML-TensorFlow.js-FF6F00?style=flat-square&logo=tensorflow" />
+  <img src="https://img.shields.io/badge/Build-Vite-646CFF?style=flat-square&logo=vite" />
+  <img src="https://img.shields.io/badge/Language-TypeScript-3178C6?style=flat-square&logo=typescript" />
   <img src="https://img.shields.io/badge/Status-Active-brightgreen?style=flat-square" />
 </p>
 
@@ -62,16 +70,117 @@ This project follows a **modular and scalable architecture**, ensuring clean sep
 
 ---
 
-##  Tech Stack
+## 🔧 Tech Stack (Detailed)
 
-| Layer | Technology |
-| :--- | :--- |
-| **Frontend** | React.js |
-| **State Management** | Redux |
-| **Routing** | React Router |
-| **Styling** | CSS Modules |
-| **Testing** | Jest + React Testing Library |
-| **Build Tool** | Webpack |
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Technology</th>
+      <th>Version / Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>Frontend Framework</b></td>
+      <td>React.js</td>
+      <td>^19.0.0 — UI library with hooks & components</td>
+    </tr>
+    <tr>
+      <td><b>Routing</b></td>
+      <td>React Router DOM</td>
+      <td>^7.14.0 — Client-side routing</td>
+    </tr>
+    <tr>
+      <td><b>State Management</b></td>
+      <td>Redux</td>
+      <td>Centralized state management</td>
+    </tr>
+    <tr>
+      <td><b>Styling</b></td>
+      <td>Tailwind CSS + CSS Modules</td>
+      <td>Utility-first + scoped styling</td>
+    </tr>
+    <tr>
+      <td><b>UI Components</b></td>
+      <td>shadcn/ui, Radix UI</td>
+      <td>Accessible & headless components</td>
+    </tr>
+    <tr>
+      <td><b>Icons</b></td>
+      <td>Lucide React, React Icons</td>
+      <td>SVG-based icon libraries</td>
+    </tr>
+    <tr>
+      <td><b>Animations</b></td>
+      <td>Framer Motion</td>
+      <td>Advanced UI animations</td>
+    </tr>
+    <tr>
+      <td><b>Charts</b></td>
+      <td>Recharts, Chart.js</td>
+      <td>Data visualization</td>
+    </tr>
+    <tr>
+      <td><b>Backend</b></td>
+      <td>Express.js</td>
+      <td>Node.js server framework</td>
+    </tr>
+    <tr>
+      <td><b>Security</b></td>
+      <td>Helmet, CORS</td>
+      <td>HTTP security & cross-origin control</td>
+    </tr>
+    <tr>
+      <td><b>AI / ML</b></td>
+      <td>TensorFlow.js, Transformers, Gemini API</td>
+      <td>Client & server-side ML</td>
+    </tr>
+    <tr>
+      <td><b>Database / BaaS</b></td>
+      <td>Firebase</td>
+      <td>Auth + Realtime DB</td>
+    </tr>
+    <tr>
+      <td><b>HTTP Client</b></td>
+      <td>Axios</td>
+      <td>API requests</td>
+    </tr>
+    <tr>
+      <td><b>Build Tool</b></td>
+      <td>Vite</td>
+      <td>Fast bundler</td>
+    </tr>
+    <tr>
+      <td><b>Language</b></td>
+      <td>TypeScript</td>
+      <td>Type-safe development</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## 📊 Project Stats
+
+<table>
+  <tr>
+    <td><b>Language</b></td>
+    <td>TypeScript — 281,652 bytes</td>
+  </tr>
+  <tr>
+    <td><b>Markup</b></td>
+    <td>HTML — 418 bytes</td>
+  </tr>
+  <tr>
+    <td><b>Styling</b></td>
+    <td>CSS — 1,768 bytes</td>
+  </tr>
+  <tr>
+    <td><b>Architecture</b></td>
+    <td>React + Express + Firebase</td>
+  </tr>
+</table>
 
 ---
 
@@ -152,5 +261,6 @@ This project is licensed under the **MIT License**.
 
 ##  Author
 
-**Gilakathi Siddhartha Goud** *Building systems that solve real-world problems.*
-```
+**Gilakathi Siddhartha Goud** 
+<br>
+*Building systems that solve real-world problems.*
