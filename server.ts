@@ -6,9 +6,11 @@ import helmet from "helmet";
 import natural from "natural";
 import axios from "axios";
 import 'dotenv/config';
+import { Resend } from 'resend';
 
 const app = express();
 const PORT = 3000;
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
@@ -677,6 +679,77 @@ console.log('   - ScamDetector: Unified analysis API');
 // ═══════════════════════════════════════════════════════════════
 //  API ROUTES
 // ═══════════════════════════════════════════════════════════════
+
+// ── Email Endpoints (Resend) ─────────────────────────────────
+
+app.post('/api/email/admin-complaint', async (req, res) => {
+  const { title, userName, userEmail, riskScore, content, reportId } = req.body;
+  const ADMIN_EMAIL = "siddharthexam21@gmail.com";
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'TrustLink AI <onboarding@resend.dev>', // Default Resend test address
+      to: ADMIN_EMAIL,
+      subject: `🚨 New Complaint: ${title}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px;">
+          <h2 style="color: #dc2626;">🚨 New Complaint Reported</h2>
+          <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
+            <p><strong>Report ID:</strong> ${reportId}</p>
+            <p><strong>User:</strong> ${userName} (${userEmail})</p>
+            <p><strong>Risk Score:</strong> <span style="color: ${riskScore > 65 ? '#dc2626' : '#10b981'}; font-weight: bold;">${riskScore}%</span></p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p><strong>Content Overview:</strong></p>
+            <p style="color: #555; background: #f0f0f0; padding: 15px; border-left: 4px solid #dc2626;">${content}</p>
+          </div>
+          <div style="text-align: center; margin-top: 20px;">
+            <a href="https://trust-link-4151a.web.app/admin" style="display:inline-block; padding: 10px 20px; background: #3b82f6; color: white; text-decoration: none; border-radius: 5px;">View in Dashboard</a>
+          </div>
+        </div>
+      `
+    });
+    
+    if (error) return res.status(400).json({ success: false, error });
+    res.json({ success: true, id: data?.id });
+  } catch (error) {
+    res.status(500).json({ success: false, error });
+  }
+});
+
+app.post('/api/email/user-feedback', async (req, res) => {
+  const { to, userName, trustScore, status, feedback, reportId } = req.body;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: 'TrustLink Verification <onboarding@resend.dev>',
+      to: to,
+      subject: `✅ Your Report Has Been Reviewed - Score: ${trustScore}%`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px;">
+          <h2 style="color: #3b82f6;">✅ Report Verified</h2>
+          <p>Hi ${userName},</p>
+          <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee; text-align: center;">
+            <p>Official Trust Score Assigned:</p>
+            <div style="background: linear-gradient(to right, #ef4444, #f59e0b, #22c55e); padding: 20px; border-radius: 8px; color: white; font-size: 32px; font-weight: bold; margin: 10px 0;">
+              ${trustScore}%
+            </div>
+            <p>Final Status: <strong>${status}</strong></p>
+          </div>
+          <div style="background: #f0f7ff; padding: 15px; border-left: 4px solid #3b82f6; margin: 20px 0;">
+            <p><strong>Moderator Comments:</strong></p>
+            <p style="font-style: italic;">"${feedback}"</p>
+          </div>
+          <p style="font-size: 11px; color: #999; text-align: center;">This is an automated intelligence update from TrustLink.</p>
+        </div>
+      `
+    });
+    
+    if (error) return res.status(400).json({ success: false, error });
+    res.json({ success: true, id: data?.id });
+  } catch (error) {
+    res.status(500).json({ success: false, error });
+  }
+});
 
 // Main analysis endpoint
 app.post('/api/analyze', async (req, res) => {

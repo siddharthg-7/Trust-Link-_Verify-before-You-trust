@@ -85,12 +85,5 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
-
-    // ─── MAIL COLLECTION (TRIGGER EMAIL EXTENSION) ────────────────────
-    match /mail/{mailId} {
-      allow create: if isAuthenticated();
-      // Prevent reading or modifying sent emails for privacy and security
-      allow read, update, delete: if false;
-    }
   }
 }

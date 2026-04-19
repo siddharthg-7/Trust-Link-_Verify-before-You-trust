@@ -20,6 +20,7 @@ import { cn } from "../lib/utils";
 import axios from "axios";
 import { logAudit } from "../lib/audit";
 import { ChatSystem } from "./ChatSystem";
+import { sendUserEmail } from "../services/emailService";
 import { motion, AnimatePresence } from "framer-motion";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import {
@@ -523,36 +524,20 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
         reviewedBy: user?.email
       });
 
-      // Trigger User Email
+      // Trigger User Email via Resend Service
       if (reviewingReport.userEmail) {
-        await addDoc(collection(db, "mail"), {
-          to: reviewingReport.userEmail,
-          message: {
-            subject: `✅ Your Report Has Been Reviewed - Trust Score: ${weightedScore}%`,
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
-                <h2 style="color: #333; border-bottom: 3px solid #3b82f6; padding-bottom: 10px;">✅ Report Reviewed - Trust Intelligence Update</h2>
-                <p>Hi ${reviewingReport.userName || 'User'},</p>
-                <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #e5e7eb; text-align: center;">
-                  <p><strong>Trust Score Assigned:</strong></p>
-                  <div style="background: linear-gradient(to right, #ef4444, #f59e0b, #22c55e); padding: 20px; border-radius: 8px; color: white; font-weight: bold; font-size: 32px; margin: 10px 0;">
-                    ${weightedScore}%
-                  </div>
-                  <p style="font-size: 14px; color: #666; margin-top: 10px;">Status: <strong>${status}</strong></p>
-                </div>
-                <div style="background-color: #f0f7ff; padding: 15px; border-left: 4px solid #3b82f6; margin: 20px 0;">
-                  <h4 style="margin: 0 0 10px 0;">Moderator Feedback:</h4>
-                  <p style="color: #555; font-style: italic;">"${adminFeedback || 'No specific feedback provided.'}"</p>
-                </div>
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="https://trust-link-4151a.web.app/dashboard" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View My Dashboard</a>
-                </div>
-                <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
-                <p style="font-size: 10px; color: #999; text-align: center;">Thank you for contributing to collective security. This is an automated notification.</p>
-              </div>
-            `
-          }
-        });
+        try {
+          await sendUserEmail({
+            to: reviewingReport.userEmail,
+            userName: reviewingReport.userName || 'User',
+            trustScore: weightedScore,
+            status,
+            feedback: adminFeedback || 'No specific feedback provided.',
+            reportId: reviewingReport.id
+          });
+        } catch (e) {
+          console.error("User Email Failure:", e);
+        }
       }
 
       await logAudit("detailed_review_submitted", `Review submitted for ${reviewingReport.id}. Weighted Score: ${weightedScore}`, reviewingReport.id);

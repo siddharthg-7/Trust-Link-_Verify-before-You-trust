@@ -45,24 +45,13 @@ const CgSpinner = CgSpinnerRaw as any;
 
 import { ChatSystem } from "./ChatSystem";
 import { GlassCard } from "./ui/GlassCard";
-import axios from "axios";
-import toast from "react-hot-toast";
 import { auth, db, handleFirestoreError, OperationType } from "../lib/firebase";
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  doc,
-  updateDoc,
-  increment,
-  query,
-  orderBy,
-  limit,
-  onSnapshot,
-  getCountFromServer,
-} from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, query, orderBy, limit, onSnapshot, getCountFromServer } from "firebase/firestore";
+import { sendAdminEmail } from "../services/emailService";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
+import toast from "react-hot-toast";
+import axios from "axios";
 
 // ── Types ──────────────────────────────────────────────────────
 interface AnalysisResult {
@@ -215,31 +204,19 @@ export function StudentDashboard() {
       const userRef = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userRef, { reportsCount: increment(1) });
 
-      // Trigger Admin Email
-      const ADMIN_EMAIL = "siddharthexam21@gmail.com";
-      await addDoc(collection(db, "mail"), {
-        to: ADMIN_EMAIL,
-        message: {
-          subject: `@🚨 New Complaint: ${payload.title}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
-              <h2 style="color: #333; border-bottom: 3px solid #dc2626; padding-bottom: 10px;">🚨 New Complaint Report Submitted</h2>
-              <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p><strong>Report ID:</strong> ${reportRef.id}</p>
-                <p><strong>Submitted By:</strong> ${payload.userName} (${payload.userEmail})</p>
-                <p><strong>Category:</strong> ${payload.category}</p>
-                <p><strong>Risk Score:</strong> <span style="background-color: ${payload.riskScore > 65 ? '#dc2626' : payload.riskScore > 35 ? '#f59e0b' : '#10b981'}; color: white; padding: 4px 8px; border-radius: 4px;">${payload.riskScore}%</span></p>
-              </div>
-              <div style="background-color: #f0f0f0; padding: 15px; border-left: 4px solid #dc2626; margin: 20px 0;">
-                <p style="color: #555;">${payload.content.substring(0, 500)}...</p>
-              </div>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="https://trust-link-4151a.web.app/admin" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Review in Dashboard</a>
-              </div>
-            </div>
-          `
-        }
-      });
+      // Trigger Admin Email via Resend Service
+      try {
+        await sendAdminEmail({
+          title: payload.title,
+          userName: payload.userName,
+          userEmail: payload.userEmail,
+          riskScore: payload.riskScore,
+          content: payload.content,
+          reportId: reportRef.id
+        });
+      } catch (e) {
+        console.error("Admin Email Failure:", e);
+      }
 
       toast.success("Report submitted and admin notified!");
       setContent("");
