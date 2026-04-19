@@ -21,6 +21,7 @@ import axios from "axios";
 import { logAudit } from "../lib/audit";
 import { ChatSystem } from "./ChatSystem";
 import { motion, AnimatePresence } from "framer-motion";
+import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -77,13 +78,17 @@ const NAV = [
 interface AdminDashboardProps { user: any; onLogout: () => void; }
 
 export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
-  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const navigate = useNavigate();
+  const location = useLocation();
   const [reports, setReports]     = useState<any[]>([]);
   const [users, setUsers]         = useState<any[]>([]);
   const [community, setCommunity] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [notifications, setNotifications] = useState<any[]>([]);
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
+
+  // Derive active tab from URL path
+  const pathParts = location.pathname.split('/');
+  const activeTab = pathParts[2] || "overview";
 
   const pendingCount  = reports.filter(r => r.status === "Pending").length;
   const highRiskCount = reports.filter(r => r.riskScore > 65).length;
@@ -121,18 +126,6 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
     return () => { unsubReports(); unsubUsers(); unsubComm(); unsubAudit(); };
   }, []);
 
-  const tabs: Record<AdminTab, React.ReactNode> = {
-    overview:      <OverviewTab reports={reports} users={users} community={community} />,
-    moderation:    <ModerationTab reports={reports} user={user} />,
-    "scam-analysis": <ScamAnalysisTab />,
-    users:         <UsersTab users={users} />,
-    reports:       <ReportsTab reports={reports} />,
-    analytics:     <AnalyticsTab reports={reports} users={users} community={community} />,
-    settings:      <SettingsTab />,
-    audit:         <AuditTab logs={auditLogs} />,
-    notifications: <NotificationsTab reports={reports} />,
-  };
-
   const AdminSidebarContent = (
     <div className="flex flex-col h-full bg-black">
       {/* Logo */}
@@ -159,7 +152,10 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
           return (
             <button
               key={id}
-              onClick={() => { setActiveTab(id as AdminTab); setIsAdminSidebarOpen(false); }}
+              onClick={() => { 
+                navigate(`/admin/${id === 'overview' ? '' : id}`); 
+                setIsAdminSidebarOpen(false); 
+              }}
               className={cn(
                 "w-full flex items-center justify-between px-4 py-2 rounded-xl text-sm transition-all duration-300 group",
                 isActive
@@ -279,7 +275,18 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
 
         <div className="flex-1 overflow-y-auto relative z-10">
           <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-8">
-            {tabs[activeTab]}
+            <Routes>
+              <Route path="/" element={<OverviewTab reports={reports} users={users} community={community} />} />
+              <Route path="/moderation" element={<ModerationTab reports={reports} user={user} />} />
+              <Route path="/scam-analysis" element={<ScamAnalysisTab />} />
+              <Route path="/users" element={<UsersTab users={users} />} />
+              <Route path="/reports" element={<ReportsTab reports={reports} />} />
+              <Route path="/analytics" element={<AnalyticsTab reports={reports} users={users} community={community} />} />
+              <Route path="/settings" element={<SettingsTab />} />
+              <Route path="/audit" element={<AuditTab logs={auditLogs} />} />
+              <Route path="/notifications" element={<NotificationsTab reports={reports} />} />
+              <Route path="*" element={<Navigate to="/admin" replace />} />
+            </Routes>
           </div>
         </div>
       </main>
@@ -1016,6 +1023,8 @@ function UsersTab({ users }: { users: any[] }) {
 //  5. REPORTS TAB (Flag Handling)
 // ═══════════════════════════════════════════════════════════════
 function ReportsTab({ reports }: { reports: any[] }) {
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [actionType, setActionType] = useState<"warn" | "verify" | null>(null);
   const sorted = [...reports].sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0));
 
   async function warnUser(report: any) {
@@ -1024,17 +1033,41 @@ function ReportsTab({ reports }: { reports: any[] }) {
       return;
     }
     
+    setUpdatingId(report.id);
+    setActionType("warn");
     try {
       const userRef = doc(db, "users", report.userId);
+      // Update user doc
       await updateDoc(userRef, { 
         warned: true, 
         warnCount: increment(1) 
       });
+      // Also update report status to 'Scam' if it was verified/pending
+      await updateDoc(doc(db, "reports", report.id), { status: "Scam" });
+      
       await logAudit("user_warned", `Warning sent for report ${report.id}`, report.id);
-      toast.success("User warned successfully");
+      toast.success("User warned and report flagged as Scam");
     } catch (e: any) { 
       console.error("Warn User Error:", e);
       toast.error("Failed to warn user: " + (e.message || "Unknown error")); 
+    } finally {
+      setUpdatingId(null);
+      setActionType(null);
+    }
+  }
+
+  async function markSafe(id: string) {
+    setUpdatingId(id);
+    setActionType("verify");
+    try {
+      await updateDoc(doc(db, "reports", id), { status: "Verified" });
+      await logAudit("report_approved", `Report marked safe: ${id}`, id);
+      toast.success("Marked as Safe");
+    } catch (e: any) {
+      toast.error("Failed to update status");
+    } finally {
+      setUpdatingId(null);
+      setActionType(null);
     }
   }
 
@@ -1075,11 +1108,37 @@ function ReportsTab({ reports }: { reports: any[] }) {
               )}
             </div>
             <div className="flex flex-col gap-1.5 shrink-0">
-              <button onClick={() => warnUser(r)} className="text-xs px-2.5 py-1.5 bg-yellow-500/10 text-yellow-400 rounded-lg hover:bg-yellow-500/20 transition-all font-semibold">
-                ⚠ Warn User
+              <button 
+                onClick={() => warnUser(r)} 
+                disabled={updatingId === r.id}
+                className={cn(
+                  "text-xs px-2.5 py-1.5 rounded-lg transition-all font-semibold flex items-center justify-center gap-2",
+                  r.status === "Scam" ? "bg-red-500/20 text-red-400" : "bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20"
+                )}
+              >
+                {updatingId === r.id && actionType === "warn" ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : r.status === "Scam" ? (
+                   <AlertTriangle className="w-3 h-3" />
+                ) : (
+                  "⚠ Warn User"
+                )}
               </button>
-              <button onClick={() => updateDoc(doc(db, "reports", r.id), { status: "Verified" })} className="text-xs px-2.5 py-1.5 bg-green-500/10 text-green-400 rounded-lg hover:bg-green-500/20 transition-all font-semibold">
-                ✅ Mark Safe
+              <button 
+                onClick={() => markSafe(r.id)} 
+                disabled={updatingId === r.id}
+                className={cn(
+                  "text-xs px-2.5 py-1.5 rounded-lg transition-all font-semibold flex items-center justify-center gap-2",
+                  r.status === "Verified" ? "bg-green-500/20 text-green-400" : "bg-green-500/10 text-green-400 hover:bg-green-500/20"
+                )}
+              >
+                {updatingId === r.id && actionType === "verify" ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : r.status === "Verified" ? (
+                  <CheckCircle className="w-3 h-3" />
+                ) : (
+                  "✅ Mark Safe"
+                )}
               </button>
             </div>
           </div>
