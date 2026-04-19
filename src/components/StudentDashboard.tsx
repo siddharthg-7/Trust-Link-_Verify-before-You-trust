@@ -337,36 +337,36 @@ export function StudentDashboard() {
               )}
             >
               <div className="flex flex-col md:flex-row gap-8 items-center text-left">
-                <RiskGauge score={result.riskScore} />
+                <RiskGauge score={result?.riskScore || 0} />
                 <div className="flex-1 space-y-4">
                   <div className="flex flex-wrap gap-2">
-                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border", riskBg(result.riskScore), riskColor(result.riskScore))}>
-                      {result.category} Analysis Complete
+                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border", riskBg(result?.riskScore || 0), riskColor(result?.riskScore || 0))}>
+                      {result?.category} Analysis Complete
                     </span>
-                    {result.details.metadataRisk === 'Flagged source' && (
+                    {result?.details?.metadataRisk === 'Flagged source' && (
                       <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border bg-red-500/10 text-red-500 border-red-500/20">
                         Suspicious Origin
                       </span>
                     )}
                   </div>
-                  <p className="text-zinc-300 leading-relaxed text-lg font-normal">{result.explanation}</p>
+                  <p className="text-zinc-300 leading-relaxed text-lg font-normal">{result?.explanation}</p>
                   
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                     <div className="p-3 bg-black/40 rounded-xl border border-zinc-800">
                       <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Vector Match</div>
-                      <div className="text-sm font-semibold text-white">{result.details.vectorSimilarity}%</div>
+                      <div className="text-sm font-semibold text-white">{result?.details?.vectorSimilarity}%</div>
                     </div>
                     <div className="p-3 bg-black/40 rounded-xl border border-zinc-800">
                       <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Linguistics</div>
-                      <div className="text-xs font-semibold text-white truncate">{result.details.linguisticMarkers}</div>
+                      <div className="text-xs font-semibold text-white truncate">{result?.details?.linguisticMarkers}</div>
                     </div>
                     <div className="p-3 bg-black/40 rounded-xl border border-zinc-800">
                       <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Density</div>
-                      <div className="text-sm font-semibold text-white">{result.details.messageDensity}% Risk</div>
+                      <div className="text-sm font-semibold text-white">{result?.details?.messageDensity}% Risk</div>
                     </div>
                     <div className="p-3 bg-black/40 rounded-xl border border-zinc-800">
                       <div className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest mb-1">Context</div>
-                      <div className="text-xs font-semibold text-white">{result.details.timeContext}</div>
+                      <div className="text-xs font-semibold text-white">{result?.details?.timeContext}</div>
                     </div>
                   </div>
                 </div>
