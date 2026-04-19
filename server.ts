@@ -9,7 +9,7 @@ import 'dotenv/config';
 import { Resend } from 'resend';
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.use(helmet({ contentSecurityPolicy: false }));

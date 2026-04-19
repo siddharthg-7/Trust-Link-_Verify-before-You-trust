@@ -169,7 +169,7 @@ export function StudentDashboard() {
     setIsAnalyzing(true);
     setResult(null);
     try {
-      const response = await axios.post("http://localhost:3000/api/analyze", { content });
+      const response = await axios.post("/api/analyze", { content });
       setResult(response.data);
       toast.success("Analysis complete!");
     } catch (error) {
