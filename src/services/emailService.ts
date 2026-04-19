@@ -28,8 +28,9 @@ export async function sendAdminEmail(data: AdminEmailData) {
   const ADMIN_EMAIL = "siddharthexam21@gmail.com";
   
   return resend.emails.send({
-    from: 'TrustLink AI <onboarding@resend.dev>',
+    from: 'TrustLink System <onboarding@resend.dev>',
     to: ADMIN_EMAIL,
+    replyTo: ADMIN_EMAIL,
     subject: `🚨 New Complaint: ${data.title}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px;">
@@ -52,9 +53,12 @@ export async function sendAdminEmail(data: AdminEmailData) {
 
 // Send email to user after admin review
 export async function sendUserEmail(data: UserEmailData) {
+  const ADMIN_EMAIL = "siddharthexam21@gmail.com";
+
   return resend.emails.send({
-    from: 'TrustLink Verification <onboarding@resend.dev>',
+    from: 'TrustLink Admin <onboarding@resend.dev>',
     to: data.to,
+    replyTo: ADMIN_EMAIL,
     subject: `✅ Your Report Has Been Reviewed - Score: ${data.trustScore}%`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px;">
