@@ -1,7 +1,8 @@
 import { pipeline, env } from '@xenova/transformers';
 
-// Configure transformers to use remote CDN and browser cache
-// This prevents the "JSON parse error" caused by fetching local HTML 404 pages
+// ── CRITICAL: Force CDN loading, never local filesystem ──────────
+// Without these, the browser fetches /tokenizer.json from your own
+// hosting server, which returns the SPA index.html → JSON parse error.
 env.allowLocalModels = false;
 env.useBrowserCache = true;
 env.remoteHost = 'https://huggingface.co/';
@@ -14,11 +15,20 @@ export class BertEmbeddings {
   async init() {
     if (this.isReady) return;
     
-    console.log('⏳ Initializing BERT Embedding model...');
-    // Using a multilingual model for global scam detection support
-    this.extractor = await pipeline('feature-extraction', 'Xenova/paraphrase-multilingual-MiniLM-L12-v2');
-    this.isReady = true;
-    console.log('✅ BERT Embedding model loaded');
+    console.log('⏳ Initializing BERT Embedding model (loading from HuggingFace CDN)...');
+    try {
+      // Multilingual MiniLM: fast, accurate, and CDN-cached after first load
+      this.extractor = await pipeline(
+        'feature-extraction',
+        'Xenova/paraphrase-multilingual-MiniLM-L12-v2',
+        { quantized: true } // Use quantized model for ~4x faster load
+      );
+      this.isReady = true;
+      console.log('✅ BERT Embedding model loaded');
+    } catch (err) {
+      console.error('❌ BERT model failed to load. Verify your network can reach huggingface.co.', err);
+      throw err;
+    }
   }
 
   async getEmbedding(text: string): Promise<number[]> {
@@ -37,7 +47,8 @@ export class BertEmbeddings {
       normA += vecA[i] * vecA[i];
       normB += vecB[i] * vecB[i];
     }
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    const denom = Math.sqrt(normA) * Math.sqrt(normB);
+    return denom === 0 ? 0 : dotProduct / denom;
   }
 
   async calculateMatch(text: string, referenceEmbeddings: number[][]): Promise<number> {

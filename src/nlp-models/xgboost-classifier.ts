@@ -1,4 +1,4 @@
-import * as ort from 'onnxruntime-node';
+import * as ort from 'onnxruntime-web';
 
 export class XGBoostClassifier {
   private session: ort.InferenceSession | null = null;
@@ -6,6 +6,9 @@ export class XGBoostClassifier {
 
   async loadModel(modelPath: string) {
     try {
+      // Configure WASM paths for onnxruntime-web
+      ort.env.wasm.numThreads = 1;
+      ort.env.wasm.simd = true;
       this.session = await ort.InferenceSession.create(modelPath);
       this.isLoaded = true;
       console.log('✅ XGBoost model (ONNX) loaded successfully');
