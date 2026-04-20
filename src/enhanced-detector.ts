@@ -1,6 +1,4 @@
 import { BertEmbeddings } from './nlp-models/bert-embeddings';
-import { DataAugmentor } from './data-pipeline/data-augmentation';
-import natural from 'natural';
 
 // ── TEMPORAL ANALYZER ──────────────────────────────────────────
 export class TemporalAnalyzer {
@@ -37,7 +35,6 @@ export class TemporalAnalyzer {
 export class EnhancedScamDetector {
   private bert = new BertEmbeddings();
   private temporal = new TemporalAnalyzer();
-  private classifier = new natural.BayesClassifier();
   private isInitialized = false;
   private scamEmbeddings: number[][] = [];
 
@@ -48,8 +45,6 @@ export class EnhancedScamDetector {
   private async init() {
     try {
       await this.bert.init();
-      // In a real app, we'd load these from a DB or pre-computed file
-      // For now, we'll initialize with some basics
       const baseScams = [
         "Congratulations! You won a gift card. Click here.",
         "Urgent: Account suspended. Verify now.",
@@ -84,8 +79,7 @@ export class EnhancedScamDetector {
     const { densityRisk, timeOfDayRisk } = this.temporal.analyze(senderId, timestamp);
 
     // 4. Composite Scoring
-    // Weights: Vector (35%), Density (25%), Linguistics (20%), TimeOfDay (10%), Bayesian/Other (10%)
-    const compositeScore = (vectorRisk * 0.35) + (linguisticRisk * 0.3) + (densityRisk * 0.25) + (timeOfDayRisk * 0.1);
+    const compositeScore = (vectorRisk * 0.40) + (linguisticRisk * 0.35) + (densityRisk * 0.15) + (timeOfDayRisk * 0.1);
     
     return {
       riskScore: Math.round(Math.min(compositeScore, 100)),
@@ -109,12 +103,10 @@ export class EnhancedScamDetector {
     let score = 0;
     const lower = text.toLowerCase();
 
-    // Passive voice detection (broadened)
     if (/\b(have|has|had|was|were|is|are)\s+been?\s+\w+(ed|en)?\b/i.test(text)) {
       score += 25;
     }
 
-    // Emotional triggers (Word boundaries + Count weighting)
     const triggers = ['immediately', 'arrest', 'police', 'urgent', 'limited', 'won', 'congratulations', 'prize', 'gift'];
     triggers.forEach(t => {
       const regex = new RegExp(`\\b${t}\\b`, 'gi');
@@ -122,31 +114,16 @@ export class EnhancedScamDetector {
       if (matches) score += matches.length * 10;
     });
 
-    // Readability (Simple language/Broken English detection)
     const words = text.split(/\s+/).length;
     const uniqueWords = new Set(lower.split(/\s+/)).size;
     if (words > 10 && (uniqueWords / words) < 0.5) {
-      score += 15; // Repetitive or suspicious structure
+      score += 15;
     }
 
     return Math.min(score, 100);
   }
 
-  // ── GRAPH ANALYSIS (STUB) ──────────────────────────────────
-  private analyzeGraph(senderId: string): number {
-    // Build graph: sender A -> recipient B
-    // Detect pyramid/multi-level scam networks
-    // Calculate centrality scores: how "central" is this account?
-    
-    // Simple mock logic:
-    const highCentralityAttackers = ['attacker_global_01', 'botnet_x_99'];
-    if (highCentralityAttackers.includes(senderId)) return 80;
-    return 0;
-  }
-
-  // Legacy compatibility
   async learnFromScam(content: string) {
-    console.log('📘 Learning from new scam report...');
     const emb = await this.bert.getEmbedding(content);
     this.scamEmbeddings.push(emb);
   }
@@ -154,8 +131,8 @@ export class EnhancedScamDetector {
   getMetrics() {
     return {
       totalEmbeddings: this.scamEmbeddings.length,
-      isMultilingual: true,
-      modelReady: true
+      modelReady: this.isInitialized
     };
   }
 }
+

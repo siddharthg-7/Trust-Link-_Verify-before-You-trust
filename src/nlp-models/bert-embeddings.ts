@@ -1,4 +1,11 @@
-import { pipeline } from '@xenova/transformers';
+import { pipeline, env } from '@xenova/transformers';
+
+// Configure transformers to use remote CDN and browser cache
+// This prevents the "JSON parse error" caused by fetching local HTML 404 pages
+env.allowLocalModels = false;
+env.useBrowserCache = true;
+env.remoteHost = 'https://huggingface.co/';
+env.remotePathTemplate = '{model}/resolve/{revision}/';
 
 export class BertEmbeddings {
   private extractor: any = null;
@@ -7,11 +14,11 @@ export class BertEmbeddings {
   async init() {
     if (this.isReady) return;
     
+    console.log('⏳ Initializing BERT Embedding model...');
     // Using a multilingual model for global scam detection support
-    // 'Xenova/paraphrase-multilingual-MiniLM-L12-v2' supports 50+ languages
     this.extractor = await pipeline('feature-extraction', 'Xenova/paraphrase-multilingual-MiniLM-L12-v2');
     this.isReady = true;
-    console.log('✅ BERT Embedding model (MiniLM-L6-v2) loaded');
+    console.log('✅ BERT Embedding model loaded');
   }
 
   async getEmbedding(text: string): Promise<number[]> {

@@ -51,7 +51,10 @@ import { sendAdminEmail } from "../services/emailService";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 import toast from "react-hot-toast";
-import axios from "axios";
+import { EnhancedScamDetector } from "../enhanced-detector";
+
+// Singleton instance of the detector to avoid reloading the model on every render
+const detector = new EnhancedScamDetector();
 
 // ── Types ──────────────────────────────────────────────────────
 interface AnalysisResult {
@@ -169,11 +172,12 @@ export function StudentDashboard() {
     setIsAnalyzing(true);
     setResult(null);
     try {
-      const response = await axios.post("/api/analyze", { content });
-      setResult(response.data);
+      const result = await detector.analyze(content);
+      setResult(result as any);
       toast.success("Analysis complete!");
     } catch (error) {
-      toast.error("Analysis failed. Is the server running?");
+      console.error("Analysis Error:", error);
+      toast.error("Analysis failed. Please check your connection.");
     } finally {
       setIsAnalyzing(false);
     }
