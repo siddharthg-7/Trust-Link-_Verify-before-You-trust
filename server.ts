@@ -663,12 +663,13 @@ class ScamDetector {
 // ═══════════════════════════════════════════════════════════════
 //  Initialize NLP Services
 // ═══════════════════════════════════════════════════════════════
+// NOTE: EnhancedScamDetector (BERT/transformers) is browser-only.
+// The server uses the native ScamDetector defined above — same
+// Bayes + keyword + pattern accuracy, no browser-cache dependency.
 
-import { EnhancedScamDetector } from "./src/enhanced-detector";
+const scamDetector = new ScamDetector();
 
-const scamDetector = new EnhancedScamDetector();
-
-console.log('✅ NLP Service Layer initialized');
+console.log('✅ NLP Service Layer initialized (server-side ScamDetector)');
 console.log('   - NLPPipeline: Advanced preprocessing');
 console.log('   - FeatureExtractor: Multi-dimensional analysis');
 console.log('   - EnsembleClassifier: Bayesian + Sentiment ensemble');

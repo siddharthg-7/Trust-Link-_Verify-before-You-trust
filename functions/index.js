@@ -6,8 +6,6 @@ const helmet = require('helmet');
 const natural = require('natural');
 const axios = require('axios');
 const { Resend } = require('resend');
-const { pipeline } = require('@xenova/transformers');
-
 admin.initializeApp();
 
 const app = express();
@@ -17,139 +15,112 @@ app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({ origin: true }));
 app.use(express.json());
 
-// ── NLP CLASSES (Ported from src and server.ts) ──────────────────
+// ── NLP CLASSES ──────────────────────────────────────────────────
+// NOTE: @xenova/transformers requires browser Cache/IndexedDB APIs and
+// cannot run in Cloud Functions. Using a Node.js-native detector instead:
+// keyword weighting + Bayes classification + regex patterns.
 
-class BertEmbeddings {
+class ScamKeywords {
   constructor() {
-    this.extractor = null;
-    this.isReady = false;
+    this.keywords = new Map([
+      ['urgent', 18], ['winner', 22], ['congratulations', 20], ['prize', 20],
+      ['won', 16], ['claim', 18], ['reward', 14], ['gift', 14], ['free', 12],
+      ['crypto', 16], ['bitcoin', 16], ['wallet', 14], ['seedphrase', 30],
+      ['airdrop', 22], ['suspended', 18], ['verify', 12], ['password', 16],
+      ['bank', 12], ['transfer', 14], ['wire', 18], ['zelle', 22], ['paypal', 14],
+      ['refund', 14], ['overpayment', 18], ['irs', 28], ['fbi', 28], ['police', 22],
+      ['arrest', 22], ['immediately', 20], ['asap', 16], ['warning', 20],
+      ['alert', 16], ['inheritance', 22], ['beneficiary', 22], ['prince', 22],
+      ['virus', 18], ['infected', 18], ['hacked', 18], ['pharmacy', 20],
+    ]);
   }
-
-  async init() {
-    if (this.isReady) return;
-    try {
-      this.extractor = await pipeline('feature-extraction', 'Xenova/paraphrase-multilingual-MiniLM-L12-v2');
-      this.isReady = true;
-      console.log('✅ BERT Embedding model loaded');
-    } catch (error) {
-      console.error('❌ Failed to load BERT model:', error);
-    }
-  }
-
-  async getEmbedding(text) {
-    if (!this.isReady) await this.init();
-    const output = await this.extractor(text, { pooling: 'mean', normalize: true });
-    return Array.from(output.data);
-  }
-
-  cosineSimilarity(vecA, vecB) {
-    let dotProduct = 0, normA = 0, normB = 0;
-    for (let i = 0; i < vecA.length; i++) {
-      dotProduct += vecA[i] * vecB[i];
-      normA += vecA[i] * vecA[i];
-      normB += vecB[i] * vecB[i];
-    }
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
-  }
-
-  async calculateMatch(text, referenceEmbeddings) {
-    const queryEmbedding = await this.getEmbedding(text);
-    let maxSimilarity = 0;
-    for (const ref of referenceEmbeddings) {
-      const similarity = this.cosineSimilarity(queryEmbedding, ref);
-      if (similarity > maxSimilarity) maxSimilarity = similarity;
-    }
-    return maxSimilarity;
-  }
-}
-
-class TemporalAnalyzer {
-  constructor() {
-    this.messageHistory = new Map();
-  }
-  analyze(senderId, timestamp) {
-    const now = timestamp || Date.now();
-    const times = this.messageHistory.get(senderId) || [];
-    times.push(now);
-    const fiveMinutesAgo = now - 300000;
-    const recentTimes = times.filter(t => t > fiveMinutesAgo);
-    this.messageHistory.set(senderId, recentTimes);
-    const densityRisk = Math.min((recentTimes.length / 10) * 100, 100);
-    const hour = new Date(now).getHours();
-    let timeOfDayRisk = (hour >= 1 && hour <= 5) ? 40 : (hour >= 22 || hour === 0) ? 25 : (hour >= 14 && hour <= 16) ? 15 : 0;
-    return { densityRisk, timeOfDayRisk };
-  }
-}
-
-class EnhancedScamDetector {
-  constructor() {
-    this.bert = new BertEmbeddings();
-    this.temporal = new TemporalAnalyzer();
-    this.isInitialized = false;
-    this.scamEmbeddings = [];
-    this.init();
-  }
-
-  async init() {
-    try {
-      await this.bert.init();
-      const baseScams = [
-        "Congratulations! You won a gift card. Click here.",
-        "Urgent: Account suspended. Verify now.",
-        "Send money to claim your prize."
-      ];
-      for (const scam of baseScams) {
-        const emb = await this.bert.getEmbedding(scam);
-        this.scamEmbeddings.push(emb);
-      }
-      this.isInitialized = true;
-      console.log('✅ EnhancedScamDetector initialized.');
-    } catch (error) {
-      console.error('❌ Failed to initialize EnhancedScamDetector:', error);
-    }
-  }
-
-  async analyze(content, senderId = 'anonymous', timestamp = Date.now()) {
-    while (!this.isInitialized) await new Promise(r => setTimeout(r, 100));
-    const semanticSimilarity = await this.bert.calculateMatch(content, this.scamEmbeddings);
-    const vectorRisk = Math.min(semanticSimilarity, 1.0) * 100;
-    const linguisticRisk = this.analyzeLinguistics(content);
-    const { densityRisk, timeOfDayRisk } = this.temporal.analyze(senderId, timestamp);
-    const compositeScore = (vectorRisk * 0.35) + (linguisticRisk * 0.3) + (densityRisk * 0.25) + (timeOfDayRisk * 0.1);
-    
-    return {
-      riskScore: Math.round(Math.min(compositeScore, 100)),
-      details: {
-        vectorSimilarity: Math.round(vectorRisk),
-        linguisticMarkers: linguisticRisk > 50 ? 'Highly suspicious language' : 'Normal language',
-        messageDensity: Math.round(densityRisk),
-        timeContext: timeOfDayRisk > 0 ? 'Suspicious timing' : 'Normal timing',
-        metadataRisk: this.analyzeMetadata(senderId) ? 'Flagged source' : 'Trusted source'
-      },
-      category: compositeScore > 65 ? 'Scam' : (compositeScore > 35 ? 'Suspicious' : 'Safe'),
-      explanation: compositeScore > 65 ? '⚠️ High risk detected. Suspicious patterns match known scam vectors.' : (compositeScore > 35 ? '⚡ Caution advised. Some suspicious linguistics or timing patterns detected.' : '✅ Appears safe.')
-    };
-  }
-
-  analyzeMetadata(senderId) {
-    const suspiciousPatterns = [/tempmail\./i, /throwaway\./i, /\.tk$/i, /secure-bank/i, /paypal-login/i, /urgent-bank/i];
-    return suspiciousPatterns.some(pattern => pattern.test(senderId));
-  }
-
-  analyzeLinguistics(text) {
+  getScore(text) {
     let score = 0;
     const lower = text.toLowerCase();
-    if (/\b(have|has|had|was|were|is|are)\s+been?\s+\w+(ed|en)?\b/i.test(text)) score += 25;
-    const triggers = ['immediately', 'urgent', 'won', 'congratulations', 'prize', 'gift'];
-    triggers.forEach(t => {
-      const matches = lower.match(new RegExp(`\\b${t}\\b`, 'gi'));
-      if (matches) score += matches.length * 10;
+    this.keywords.forEach((weight, keyword) => {
+      if (lower.includes(keyword)) score += weight * 0.06;
     });
-    return Math.min(score, 100);
+    return Math.min(score, 40);
   }
 }
 
-const scamDetector = new EnhancedScamDetector();
+class PatternDetector {
+  constructor() {
+    this.patterns = [
+      { regex: /(bit\.ly|tinyurl\.com|goo\.gl|rb\.gy)/i, score: 2.2 },
+      { regex: /(?:\d{4}[-\s]?){3}\d{4}/, score: 2.8 },
+      { regex: /\b\d{3}-\d{2}-\d{4}\b/, score: 3.0 },
+      { regex: /\b(?:seed|recovery|mnemonic)\s+phrase\b/i, score: 3.5 },
+      { regex: /\bgift\s+card\b/i, score: 2.5 },
+      { regex: /\bwire\s+transfer\b/i, score: 2.2 },
+      { regex: /\$[\d,]+(?:\.\d{2})?\s*(?:million|billion)/i, score: 2.5 },
+      { regex: /(?:100|guaranteed?)\s*%\s*(?:return|profit)/i, score: 2.8 },
+      { regex: /(?:earn|make)\s+\$[\d,]+\s+(?:per|a)\s+(?:day|week)/i, score: 2.6 },
+    ];
+  }
+  getScore(text) {
+    return this.patterns.reduce((sum, p) => p.regex.test(text) ? sum + p.score : sum, 0);
+  }
+}
+
+class NodeScamDetector {
+  constructor() {
+    this.keywords = new ScamKeywords();
+    this.patterns = new PatternDetector();
+    this.bayesClassifier = new natural.BayesClassifier();
+    this._trainBayes();
+  }
+  _trainBayes() {
+    const scams = [
+      "Congratulations! You have won a $1000 Walmart gift card. Click here to claim your prize now before it expires.",
+      "URGENT: Your bank account has been suspended. Verify your details immediately.",
+      "FINAL NOTICE: Your Netflix subscription will be cancelled. Update your payment info now.",
+      "IRS Notice: You owe $2,400 in back taxes. Call within 24 hours or face arrest.",
+      "BITCOIN INVESTMENT OPPORTUNITY: Turn $100 into $10,000 in 7 days! Guaranteed returns!",
+      "You are a winner! Send your bank details to claim your $50,000 lottery prize.",
+      "FBI CYBER DIVISION: Your IP has been flagged. Pay $300 fine immediately.",
+    ];
+    const safes = [
+      "Hi, just wanted to confirm our meeting tomorrow at 3pm.",
+      "Your order has been shipped! Track at amazon.com/orders",
+      "The quarterly report is attached for your review.",
+      "Your GitHub pull request has been approved and merged.",
+      "Monthly newsletter: product updates and community highlights.",
+    ];
+    scams.forEach(s => this.bayesClassifier.addDocument(s, 'scam'));
+    safes.forEach(s => this.bayesClassifier.addDocument(s, 'safe'));
+    this.bayesClassifier.train();
+  }
+  analyze(content) {
+    const classifications = this.bayesClassifier.getClassifications(content);
+    const scamProb = Math.max(0, Math.min(1, classifications.find(c => c.label === 'scam')?.value || 0));
+    const safeProb = Math.max(0, Math.min(1, classifications.find(c => c.label === 'safe')?.value || 0));
+    const total = scamProb + safeProb || 1;
+    const bayesScore = scamProb / total;
+
+    const keywordScore = this.keywords.getScore(content);
+    const patternScore = this.patterns.getScore(content);
+
+    let rawScore = -1.5 + (bayesScore - 0.5) * 8 * 0.4 + keywordScore * 0.35 + patternScore * 0.25;
+    const riskScore = Math.round((1 / (1 + Math.exp(-rawScore))) * 100);
+
+    return {
+      riskScore,
+      riskLevel: riskScore > 65 ? 'high' : riskScore > 35 ? 'medium' : 'low',
+      category: riskScore > 50 ? 'Scam' : 'Safe',
+      explanation: riskScore > 65
+        ? '⚠️ High risk detected. Suspicious patterns match known scam vectors.'
+        : riskScore > 35
+        ? '⚡ Caution advised. Some suspicious patterns detected.'
+        : '✅ Appears safe based on analysis.',
+      bayesScore: Math.round(bayesScore * 100),
+      confidence: Math.abs(bayesScore - 0.5) * 2,
+    };
+  }
+  learnFromScam() { /* no-op: keyword learning not persisted in Cloud Functions */ }
+}
+
+const scamDetector = new NodeScamDetector();
 
 // ── API ROUTES ───────────────────────────────────────────────────
 
