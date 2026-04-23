@@ -30,6 +30,27 @@
 The platform combines:
 - **Intelligent UI design** - **Scalable frontend architecture** - **Future-ready AI integration** ---
 
+##  Literature Survey Analysis
+
+The development of **TrustLink** is backed by extensive research into phishing detection, URL analysis, and deep learning techniques.
+
+| #  | Paper Title | Authors | Journal / Year | Algorithms Used | Pros | Cons | Link |
+| -- | ------------------------------------------------------------------------ | ------------------- | ----------------------- | --------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------- |
+| 1  | Phishing Detection Using Machine Learning Techniques | V. Shahrivari | arXiv, 2020 | Random Forest, SVM, XGBoost, ANN | Multiple ML comparison; High accuracy | Feature engineering needed | [Link](https://arxiv.org/abs/2009.11116) |
+| 2  | URLNet: Learning a URL Representation with Deep Learning | H. Le et al. | arXiv, 2018 | CNN (char + word embeddings) | No manual features; Scalable | High compute cost | [Link](https://arxiv.org/pdf/1802.03162) |
+| 3  | Phishing URL Detection: A Network-Based Approach Robust to Evasion | Taeri Kim et al. | arXiv, 2022 | Graph-based inference | Handles evasion attacks; High F1 | Complex graph modeling | [Link](https://arxiv.org/pdf/2209.01454) |
+| 4  | Precise URL Phishing Detection Using Neural Networks | A. Rangapur et al. | arXiv, 2021 | LSTM, GRU, RNN models | High accuracy; Works on sequence | Training complexity | [Link](https://arxiv.org/pdf/2110.13424) |
+| 5  | Detecting Phishing Web Pages Using Raw URL and HTML Features (WebPhish) | C. Opara et al. | arXiv, 2020 | CNN, Deep Neural Networks | Uses both HTML + URL | Higher computation | [Link](https://arxiv.org/pdf/2011.04412) |
+| 6  | A Transformer-Based Model to Detect Phishing URLs | Pingfan Xu | arXiv, 2021 | Transformer model | High accuracy (~97%); Context-aware | Heavy computation | [Link](https://arxiv.org/abs/2109.02138) |
+| 7  | VisualPhishNet: Zero-Day Phishing Website Detection by Visual Similarity | Abdelnabi et al. | arXiv, 2019 | CNN, Visual similarity | Detects unseen attacks | Requires image data | [Link](https://arxiv.org/abs/1909.00300) |
+| 8  | Detecting Phishing Sites — An Overview | Kalaharsha & Mehtre | arXiv, 2021 | Survey of ML, blacklist, heuristic | Covers 18 models; Strong base | No implementation; Survey only | [Link](https://arxiv.org/abs/2103.12739) |
+| 9  | Web Phishing Net (WPN): Scalable ML-Based Detection | M.F. Zia et al. | arXiv, 2025 | Hash-based clustering, ML | Scalable; Handles modern phishing | Limited real-world deployment | [Link](https://arxiv.org/pdf/2502.13171) |
+| 10 | Least-to-Most Prompting for Phishing URL Detection (LLM-Based) | H. Trikilis et al.  | arXiv, 2026 | LLM reasoning, Prompt engineering | Low data requirement; Explainable AI | New approach; Limited validation | [Link](https://arxiv.org/pdf/2601.20270) |
+
+For a more detailed analysis, see [Literature_Survey.md](./Literature-Survey-Analysis/Literature%20Survey/Literature_Survey.md).
+
+---
+
 ##  Project Structure
 
 ```text
