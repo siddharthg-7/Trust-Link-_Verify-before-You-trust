@@ -505,7 +505,8 @@ class PatternEngine {
 interface AnalysisResult {
   riskScore: number;
   riskLevel: 'low' | 'medium' | 'high';
-  category: 'Scam' | 'Safe';
+  category: 'Scam' | 'Safe' | 'Fraud' | 'Service Issue' | 'Dispute';
+  complaintType?: 'Fraud' | 'Service Issue' | 'Dispute' | 'General';
   findings: string[];
   bayesScore: number;
   featureScores: {
@@ -599,8 +600,11 @@ class ScamDetector {
       findings.push(`Brand impersonation detected (+${features.impersonationScore})`);
     }
     
+    // Determine complaint type
+    const complaintType = this.classifyComplaintType(content, riskScore);
+
     // Generate explanation
-    const explanation = this.generateExplanation(riskScore, classification);
+    const explanation = this.generateExplanation(riskScore, classification, complaintType);
     
     // Sentiment (basic)
     const sentiment = this.classifier.getSentiment(content);
@@ -609,6 +613,7 @@ class ScamDetector {
       riskScore,
       riskLevel,
       category: riskScore > 50 ? 'Scam' : 'Safe',
+      complaintType,
       findings: Array.from(new Set(findings)).slice(0, 12),
       bayesScore: Math.round(bayesScore * 100),
       featureScores: {
@@ -619,18 +624,39 @@ class ScamDetector {
         keywordScore: Math.round(keywordScore * 10) / 10,
       },
       explanation,
-      confidence: classification.confidence,
+      confidence: Math.round(classification.confidence * 100),
       sentiment: Math.round(sentiment * 100) / 100
     };
   }
+
+  private classifyComplaintType(content: string, riskScore: number): 'Fraud' | 'Service Issue' | 'Dispute' | 'General' {
+    const lower = content.toLowerCase();
+    
+    // Fraud markers
+    if (riskScore > 60 || /\b(scam|fraud|fake|impersonat|stole|lost|money|bank|login|password|verify)\b/i.test(lower)) {
+      return 'Fraud';
+    }
+    
+    // Service Issue markers
+    if (/\b(slow|broken|not working|failed|error|connection|service|support|help|issue|bug)\b/i.test(lower)) {
+      return 'Service Issue';
+    }
+    
+    // Dispute markers
+    if (/\b(refund|dispute|chargeback|money back|wrong|incorrect|disagree|claim|order)\b/i.test(lower)) {
+      return 'Dispute';
+    }
+    
+    return 'General';
+  }
   
-  private generateExplanation(riskScore: number, classification: ClassificationResult): string {
+  private generateExplanation(riskScore: number, classification: ClassificationResult, complaintType: string): string {
     if (riskScore > 65) {
-      return '⚠️ This content shows strong scam indicators. Our multi-layer AI analysis and pattern detection flagged high-risk signals. Do not click any links or share personal information.';
+      return `⚠️ Detected ${complaintType}-related language with high-risk markers. Our multi-layer AI analysis flagged significant scam patterns.`;
     } else if (riskScore > 35) {
-      return '⚡ This content contains suspicious patterns that warrant caution. Review carefully before taking any action.';
+      return `⚡ Possible ${complaintType} detected. Content contains suspicious patterns that warrant caution.`;
     } else {
-      return '✅ This content appears safe based on our comprehensive analysis. No significant scam patterns detected.';
+      return `✅ Content appears to be a legitimate ${complaintType} report or inquiry. No significant scam patterns detected.`;
     }
   }
   

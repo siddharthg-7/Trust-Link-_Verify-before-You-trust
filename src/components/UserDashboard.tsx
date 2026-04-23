@@ -233,24 +233,53 @@ export function UserDashboard() {
                   )}>
                     {report.riskScore}%
                   </div>
-                  <div className="flex-1 min-w-0 w-full text-center md:text-left">
-                    <div className="flex flex-col md:flex-row md:items-center gap-3 mb-1">
-                      <span className="font-semibold text-white tracking-tight truncate">{report.title || "Intelligence Entry"}</span>
-                      <div className="flex justify-center md:justify-start">
-                        <span className={cn("text-[9px] font-bold px-2 py-0.5 rounded-md uppercase tracking-tight border",
-                          report.status === "Verified" ? "bg-black/40 text-green-400 border-green-500/20" :
-                            report.status === "Scam" ? "bg-black/40 text-red-400 border-red-500/20" :
-                              "bg-black/40 text-zinc-500 border-zinc-800"
+                  <div className="flex-1 min-w-0 w-full">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-white tracking-tight truncate uppercase text-sm">{report.title || "Intelligence Entry"}</span>
+                        <span className="text-[10px] text-zinc-600 font-bold uppercase tracking-widest flex items-center gap-1.5 mt-1">
+                          <Clock className="w-3 h-3" />
+                          {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "Recently Logged"}
+                        </span>
+                      </div>
+                      
+                      <div className={cn("text-[10px] font-black tracking-widest px-3 py-1 rounded border uppercase",
+                        report.status === "Approved" || report.status === "Verified" ? "bg-green-500/10 text-green-400 border-green-500/20" :
+                        report.status === "Rejected" || report.status === "Scam" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                        "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                      )}>
+                        {report.status || "Pending Review"}
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 bg-black/40 p-4 rounded-xl border border-zinc-800/50">
+                      <div className="flex flex-col">
+                        <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-[0.1em] mb-1">NLP Confidence</span>
+                        <span className="text-xs font-semibold text-white">{report.nlpConfidence ?? 0}%</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-[0.1em] mb-1">Risk Level</span>
+                        <span className={cn("text-xs font-semibold", 
+                          report.riskScore > 65 ? "text-red-400" : report.riskScore > 35 ? "text-yellow-400" : "text-green-400"
                         )}>
-                          {report.status}
+                          {report.riskScore > 65 ? "High" : report.riskScore > 35 ? "Medium" : "Low"}
+                        </span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-[0.1em] mb-1">Complaint Type</span>
+                        <span className="text-xs font-semibold text-zinc-300">{report.complaintType || "General"}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-[0.1em] mb-1">Next Action</span>
+                        <span className="text-xs font-semibold text-zinc-400">
+                          {report.status === "Pending Review" ? "Verification" : 
+                           report.status === "Pending (Analyzed)" ? "Pattern Review" :
+                           report.status === "Pending Verification" ? "Admin Review" :
+                           report.status === "Approved" || report.status === "Verified" ? "Complete" :
+                           report.status === "Rejected" || report.status === "Scam" ? "Alerted" : "Active"}
                         </span>
                       </div>
                     </div>
-                    <p className="text-xs text-zinc-500 truncate font-normal opacity-70">{report.content}</p>
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-bold uppercase tracking-widest shrink-0 opacity-60">
-                    <Clock className="w-3.5 h-3.5" />
-                    {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "Recently Logged"}
                   </div>
                 </div>
               ))}

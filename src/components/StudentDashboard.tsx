@@ -60,9 +60,11 @@ const detector = new EnhancedScamDetector();
 interface AnalysisResult {
   riskScore: number;
   riskLevel: "low" | "medium" | "high";
-  category: "Scam" | "Safe";
+  category: "Scam" | "Safe" | "Suspicious";
   findings: string[];
   explanation: string;
+  confidence?: number;
+  complaintType?: string;
   details: {
     vectorSimilarity: number;
     linguisticMarkers: string;
@@ -189,7 +191,8 @@ export function StudentDashboard() {
     if (!auth.currentUser || !finalContent) return;
     setIsSubmitting(true);
     try {
-      const payload = {
+      // 1. Initial Submission State
+      const initialPayload = {
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
         userName: auth.currentUser.displayName || auth.currentUser.email?.split("@")[0] || "Anonymous",
@@ -197,25 +200,43 @@ export function StudentDashboard() {
         title: complaintData.title || "Official Complaint",
         description: complaintData.description || "User reported content for manual review.",
         category: complaintData.category || "Other",
-        aiScore: result ? (result.bayesScore ?? 0) : 0,
-        riskScore: result?.riskScore ?? 0,
-        status: "Pending",
+        status: "Pending Review",
         timestamp: serverTimestamp(),
-        chatEnabled: true
+        chatEnabled: true,
+        riskScore: result?.riskScore ?? 0,
+        nlpConfidence: result?.confidence ?? 0,
+        complaintType: result?.complaintType ?? "General"
       };
       
-      const reportRef = await addDoc(collection(db, "reports"), payload);
+      const reportRef = await addDoc(collection(db, "reports"), initialPayload);
       const userRef = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userRef, { reportsCount: increment(1) });
 
-      // Trigger Admin Email via Resend Service
+      // 2. Trigger NLP Evaluation immediately if not already done for this content
+      let finalResult = result;
+      if (!result || content !== finalContent) {
+        finalResult = await detector.analyze(finalContent) as any;
+      }
+
+      // 3. Update with NLP Analysis Results
+      const status = finalResult && finalResult.riskScore > 80 ? "Pending Verification" : "Pending (Analyzed)";
+      
+      await updateDoc(reportRef, {
+        riskScore: finalResult?.riskScore ?? 0,
+        nlpConfidence: finalResult?.confidence ?? 0,
+        complaintType: finalResult?.complaintType ?? "General",
+        status: status,
+        analysisExplanation: finalResult?.explanation
+      });
+
+      // 4. Trigger Admin Email via Resend Service
       try {
         const adminEmailResult = await sendAdminEmail({
-          title: payload.title,
-          userName: payload.userName,
-          userEmail: payload.userEmail,
-          riskScore: payload.riskScore,
-          content: payload.content,
+          title: initialPayload.title,
+          userName: initialPayload.userName,
+          userEmail: initialPayload.userEmail,
+          riskScore: finalResult?.riskScore ?? initialPayload.riskScore,
+          content: initialPayload.content,
           reportId: reportRef.id
         });
 
@@ -225,18 +246,9 @@ export function StudentDashboard() {
             adminEmailSentAt: serverTimestamp(),
             adminEmailId: adminEmailResult.id
           });
-        } else {
-          await updateDoc(reportRef, {
-            adminEmailStatus: "failed",
-            adminEmailError: adminEmailResult.error
-          });
         }
       } catch (e: any) {
-        console.error("Admin Email Critical Failure:", e);
-        await updateDoc(reportRef, {
-          adminEmailStatus: "failed",
-          adminEmailError: e.message
-        });
+        console.error("Admin Email Failure:", e);
       }
 
       toast.success("Report submitted and admin notified!");
@@ -460,25 +472,51 @@ export function StudentDashboard() {
                   {report.status === "Scam" ? <RiAlertLine className="w-5 h-5" /> : <MdOutlineVerified className="w-5 h-5" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-white truncate leading-tight">{report.title}</div>
-                  <div className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider mt-1">
+                  <div className="text-sm font-semibold text-white truncate leading-tight uppercase tracking-tight">{report.title}</div>
+                  <div className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider mt-1 mb-3">
                     {report.timestamp?.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {report.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </div>
-                </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  <div className={cn(
-                    "text-[9px] font-black tracking-widest px-2 py-0.5 rounded border uppercase",
-                    report.status === "Verified" ? "bg-green-500/10 text-green-400 border-green-500/20" :
-                    report.status === "Scam" ? "bg-red-500/10 text-red-400 border-red-500/20" :
-                    "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
-                  )}>
-                    {report.status || "Pending"}
+                  
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
+                    <div className="flex flex-col">
+                      <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-widest">Status</span>
+                      <span className={cn("text-[10px] font-bold", 
+                        report.status === "Approved" || report.status === "Verified" ? "text-green-400" :
+                        report.status === "Rejected" || report.status === "Scam" ? "text-red-400" : "text-yellow-500"
+                      )}>{report.status || "Pending Review"}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-widest">NLP Confidence</span>
+                      <span className="text-[10px] font-bold text-white">{report.nlpConfidence ?? 0}%</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-widest">Risk Level</span>
+                      <span className={cn("text-[10px] font-bold", 
+                        report.riskScore > 65 ? "text-red-400" : report.riskScore > 35 ? "text-yellow-400" : "text-green-400"
+                      )}>
+                        {report.riskScore > 65 ? "High" : report.riskScore > 35 ? "Medium" : "Low"}
+                      </span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-widest">Action</span>
+                      <span className="text-[10px] font-bold text-zinc-400">
+                        {report.status === "Pending Review" ? "Awaiting Verification" : 
+                         report.status === "Pending (Analyzed)" ? "Reviewing Patterns" :
+                         report.status === "Pending Verification" ? "Human Review Required" :
+                         report.status === "Approved" || report.status === "Verified" ? "No Action Required" :
+                         report.status === "Rejected" || report.status === "Scam" ? "Security Alert" : "Processing"}
+                      </span>
+                    </div>
                   </div>
-                  <div className={cn("text-[10px] font-bold tracking-tight px-2 py-1 rounded-md bg-black/40", 
+                </div>
+                
+                <div className="flex flex-col items-end shrink-0">
+                  <div className={cn("text-lg font-black tracking-tighter", 
                     report.riskScore > 65 ? "text-red-400" : report.riskScore > 35 ? "text-yellow-400" : "text-green-400"
                   )}>
-                    {report.riskScore}% Risk
+                    {report.riskScore || 0}%
                   </div>
+                  <div className="text-[8px] uppercase font-bold text-zinc-600 tracking-widest">Risk</div>
                 </div>
               </div>
             ))}

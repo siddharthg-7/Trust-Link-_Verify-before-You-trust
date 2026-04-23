@@ -80,9 +80,13 @@ export class EnhancedScamDetector {
 
     // 4. Composite Scoring
     const compositeScore = (vectorRisk * 0.40) + (linguisticRisk * 0.35) + (densityRisk * 0.15) + (timeOfDayRisk * 0.1);
+    const finalRiskScore = Math.round(Math.min(compositeScore, 100));
+
+    // 5. Complaint Classification
+    const complaintType = this.classifyComplaintType(content, finalRiskScore);
     
     return {
-      riskScore: Math.round(Math.min(compositeScore, 100)),
+      riskScore: finalRiskScore,
       details: {
         vectorSimilarity: Math.round(vectorRisk),
         linguisticMarkers: linguisticRisk > 50 ? 'Highly suspicious language' : 'Normal language',
@@ -90,8 +94,35 @@ export class EnhancedScamDetector {
         timeContext: timeOfDayRisk > 0 ? 'Suspicious timing' : 'Normal timing',
         metadataRisk: this.analyzeMetadata(senderId) ? 'Flagged source' : 'Trusted source'
       },
-      category: compositeScore > 65 ? 'Scam' : (compositeScore > 35 ? 'Suspicious' : 'Safe')
+      category: finalRiskScore > 65 ? 'Scam' : (finalRiskScore > 35 ? 'Suspicious' : 'Safe'),
+      complaintType,
+      confidence: Math.round(Math.max(vectorRisk, linguisticRisk)), // Simple confidence metric
+      explanation: this.generateExplanation(finalRiskScore, complaintType)
     };
+  }
+
+  private classifyComplaintType(content: string, riskScore: number): 'Fraud' | 'Service Issue' | 'Dispute' | 'General' {
+    const lower = content.toLowerCase();
+    if (riskScore > 60 || /\b(scam|fraud|fake|impersonat|stole|lost|money|bank|login|password|verify)\b/i.test(lower)) {
+      return 'Fraud';
+    }
+    if (/\b(slow|broken|not working|failed|error|connection|service|support|help|issue|bug)\b/i.test(lower)) {
+      return 'Service Issue';
+    }
+    if (/\b(refund|dispute|chargeback|money back|wrong|incorrect|disagree|claim|order)\b/i.test(lower)) {
+      return 'Dispute';
+    }
+    return 'General';
+  }
+
+  private generateExplanation(riskScore: number, complaintType: string): string {
+    if (riskScore > 65) {
+      return `⚠️ Detected ${complaintType}-related language with high-risk markers. Our multi-layer AI analysis flagged significant scam patterns.`;
+    } else if (riskScore > 35) {
+      return `⚡ Possible ${complaintType} detected. Content contains suspicious patterns that warrant caution.`;
+    } else {
+      return `✅ Content appears to be a legitimate ${complaintType} report or inquiry. No significant scam patterns detected.`;
+    }
   }
 
   private analyzeMetadata(senderId: string): boolean {
