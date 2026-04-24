@@ -144,7 +144,7 @@ export function StudentDashboard() {
   useEffect(() => {
     if (!auth.currentUser) return;
     try {
-      const q = query(collection(db, "reports"), orderBy("timestamp", "desc"), limit(10));
+      const q = query(collection(db, "reports"), orderBy("timestamp", "desc"), limit(4));
       const unsubscribe = onSnapshot(q, (snap) => {
         setRecentReports(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
       }, (err) => {
@@ -476,71 +476,86 @@ export function StudentDashboard() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {recentReports.map((report) => (
-              <div
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            {recentReports.map((report, idx) => (
+              <motion.div
                 key={report.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: idx * 0.1 }}
+                whileHover={{ y: -5, scale: 1.01 }}
                 onClick={() => setSelectedChatReport(report)}
-                className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-5 hover:border-zinc-700 transition-all duration-300 group flex items-center gap-4 cursor-pointer shadow-lg shadow-black/20"
+                className="group cursor-pointer"
               >
-                <div className={cn("w-10 h-10 rounded-xl shrink-0 flex items-center justify-center bg-black/50 border border-zinc-800",
-                  report.status === "Scam" ? "text-red-400" : "text-zinc-400")}>
-                  {report.status === "Scam" ? <RiAlertLine className="w-5 h-5" /> : <MdOutlineVerified className="w-5 h-5" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-white truncate leading-tight uppercase tracking-tight">{report.title}</div>
-                  <div className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider mt-1 mb-3">
-                    {report.timestamp?.toDate ? (
-                      <>
-                        {report.timestamp.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {report.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </>
-                    ) : (
-                      "Just now"
-                    )}
-                  </div>
+                <GlassCard className="h-full bg-zinc-900/40 border-zinc-800/50 group-hover:border-zinc-500/50 group-hover:bg-zinc-900/60 transition-all duration-500 p-6 flex flex-col justify-between overflow-hidden relative">
+                  {/* Subtle background glow on hover */}
+                  <div className="absolute -inset-px bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                   
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
-                    <div className="flex flex-col">
-                      <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-widest">Status</span>
-                      <span className={cn("text-[10px] font-bold", 
-                        report.status === "Approved" || report.status === "Verified" ? "text-green-400" :
-                        report.status === "Rejected" || report.status === "Scam" ? "text-red-400" : "text-yellow-500"
-                      )}>{report.status || "Pending Review"}</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-widest">NLP Confidence</span>
-                      <span className="text-[10px] font-bold text-white">{report.nlpConfidence ?? 0}%</span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-widest">Risk Level</span>
-                      <span className={cn("text-[10px] font-bold", 
-                        report.riskScore > 65 ? "text-red-400" : report.riskScore > 35 ? "text-yellow-400" : "text-green-400"
+                  <div className="relative z-10">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className={cn(
+                        "w-12 h-12 rounded-2xl flex items-center justify-center border transition-transform duration-500 group-hover:rotate-6",
+                        report.riskScore > 65 ? "bg-red-500/10 border-red-500/20 text-red-500" : 
+                        report.riskScore > 35 ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-500" : 
+                        "bg-green-500/10 border-green-500/20 text-green-500"
                       )}>
-                        {report.riskScore > 65 ? "High" : report.riskScore > 35 ? "Medium" : "Low"}
-                      </span>
+                        {report.riskScore > 65 ? <RiAlertLine className="w-6 h-6" /> : <MdOutlineVerified className="w-6 h-6" />}
+                      </div>
+                      
+                      <div className="text-right">
+                        <div className={cn(
+                          "text-2xl font-black tracking-tighter",
+                          report.riskScore > 65 ? "text-red-500" : report.riskScore > 35 ? "text-yellow-500" : "text-green-500"
+                        )}>
+                          {report.riskScore || 0}%
+                        </div>
+                        <div className="text-[10px] uppercase font-black text-zinc-600 tracking-[0.2em] -mt-1">Risk Index</div>
+                      </div>
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-[8px] uppercase font-bold text-zinc-600 tracking-widest">Action</span>
-                      <span className="text-[10px] font-bold text-zinc-400">
-                        {report.status === "Pending Review" ? "Awaiting Verification" : 
-                         report.status === "Pending (Analyzed)" ? "Reviewing Patterns" :
-                         report.status === "Pending Verification" ? "Human Review Required" :
-                         report.status === "Approved" || report.status === "Verified" ? "No Action Required" :
-                         report.status === "Rejected" || report.status === "Scam" ? "Security Alert" : "Processing"}
-                      </span>
+
+                    <h3 className="text-lg font-bold text-white mb-2 leading-tight group-hover:text-cyan-400 transition-colors">
+                      {report.title || "Uncategorized Threat"}
+                    </h3>
+                    
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-6">
+                      <FiClock className="w-3 h-3" />
+                      {report.timestamp?.toDate ? (
+                        <>
+                          {report.timestamp.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {report.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </>
+                      ) : (
+                        "Just now"
+                      )}
                     </div>
                   </div>
-                </div>
-                
-                <div className="flex flex-col items-end shrink-0">
-                  <div className={cn("text-lg font-black tracking-tighter", 
-                    report.riskScore > 65 ? "text-red-400" : report.riskScore > 35 ? "text-yellow-400" : "text-green-400"
-                  )}>
-                    {report.riskScore || 0}%
+
+                  <div className="relative z-10 grid grid-cols-2 gap-4 border-t border-white/5 pt-6">
+                    <div className="space-y-1">
+                      <div className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.15em]">Analysis Status</div>
+                      <div className={cn(
+                        "text-[11px] font-bold px-2 py-0.5 rounded-full inline-block border",
+                        report.status === "Approved" || report.status === "Verified" ? "bg-green-500/10 text-green-500 border-green-500/20" :
+                        report.status === "Rejected" || report.status === "Scam" ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                        "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                      )}>
+                        {report.status || "Pending Verification"}
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.15em]">NLP Confidence</div>
+                      <div className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                        <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden flex-1 max-w-[40px]">
+                          <div 
+                            className="h-full bg-cyan-500" 
+                            style={{ width: `${report.nlpConfidence ?? 0}%` }}
+                          />
+                        </div>
+                        {report.nlpConfidence ?? 0}%
+                      </div>
+                    </div>
                   </div>
-                  <div className="text-[8px] uppercase font-bold text-zinc-600 tracking-widest">Risk</div>
-                </div>
-              </div>
+                </GlassCard>
+              </motion.div>
             ))}
           </div>
         </div>
