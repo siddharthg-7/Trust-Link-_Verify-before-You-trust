@@ -151,7 +151,7 @@ export function ResponsesPage() {
                       <h3 className="text-lg font-semibold text-white truncate tracking-tight">{report.title || "Intelligence Entry"}</h3>
                       <div className="flex items-center gap-2 text-[10px] font-medium text-zinc-500 uppercase tracking-widest opacity-60">
                         <Clock className="w-3.5 h-3.5" />
-                        Intelligence logged • {report.timestamp?.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        Intelligence logged • {report.timestamp?.toDate ? report.timestamp.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : "Recently logged"}
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">

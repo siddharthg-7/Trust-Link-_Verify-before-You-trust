@@ -290,7 +290,13 @@ export function CommunityPage() {
                     <h4 className="font-semibold text-white tracking-tight">{post.username}</h4>
                     <div className="flex items-center gap-2 text-[10px] font-medium text-zinc-500 uppercase tracking-widest opacity-60">
                       <Clock className="w-3 h-3" />
-                      {post.timestamp?.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {post.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {post.timestamp?.toDate ? (
+                        <>
+                          {post.timestamp.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {post.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </>
+                      ) : (
+                        "Just now"
+                      )}
                     </div>
                   </div>
                 </div>
@@ -374,7 +380,7 @@ export function CommunityPage() {
                           <div className="flex-1 bg-black/40 border border-zinc-800 rounded-xl p-3.5">
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-xs font-semibold text-white tracking-tight">{comment.username}</span>
-                              <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">{comment.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">{comment.timestamp?.toDate ? comment.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Just now"}</span>
                             </div>
                             <p className="text-xs text-zinc-400 leading-relaxed">{comment.content}</p>
                           </div>
