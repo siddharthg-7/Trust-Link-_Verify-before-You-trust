@@ -525,24 +525,22 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
     setUpdatingId(reportId);
 
     try {
-      const idToken = await auth.currentUser?.getIdToken();
-      
-      const response = await fetch(`/api/complaint/${reportId}/resolve`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
-        body: JSON.stringify({
-          resolution: adminFeedback,
-          score: adminScore
-        })
+      const aiScore = reviewingReport.riskScore || 0;
+      const weightedScore = Math.round((aiScore * 0.7) + (adminScore * 0.3));
+      const status = weightedScore > 50 ? "Scam" : "Verified"; 
+
+      // Update directly in Firestore
+      await updateDoc(doc(db, "reports", reportId), {
+        adminScore,
+        weightedScore,
+        adminFeedback,
+        status,
+        lastReviewedAt: serverTimestamp(),
+        reviewedBy: auth.currentUser?.email
       });
 
-      if (!response.ok) throw new Error('Resolution failed');
-
-      await logAudit("detailed_review_submitted", `Review submitted for ${reportId} via API.`, reportId);
-      toast.success("Review submitted and email sent!");
+      await logAudit("detailed_review_submitted", `Review submitted for ${reportId}. Weighted Score: ${weightedScore}`, reportId);
+      toast.success("Review submitted successfully!");
       setReviewingReport(null);
     } catch (error) {
       console.error("Review Error:", error);

@@ -190,30 +190,31 @@ export function StudentDashboard() {
     if (!auth.currentUser || !finalContent) return;
     setIsSubmitting(true);
     try {
-      const payload = {
-        name: auth.currentUser.displayName || auth.currentUser.email?.split("@")[0] || "Anonymous",
-        email: auth.currentUser.email,
-        message: finalContent,
+      const initialPayload = {
+        userId: auth.currentUser.uid,
+        userEmail: auth.currentUser.email,
+        userName: auth.currentUser.displayName || auth.currentUser.email?.split("@")[0] || "Anonymous",
+        content: finalContent,
         title: complaintData.title || "Official Complaint",
-        category: complaintData.category || "Other"
+        description: complaintData.description || "User reported content for manual review.",
+        category: complaintData.category || "Other",
+        status: "Pending Review",
+        timestamp: serverTimestamp(),
+        chatEnabled: true,
+        riskScore: result?.riskScore ?? 0,
+        nlpConfidence: result?.confidence ?? 0,
+        complaintType: result?.complaintType ?? "General"
       };
 
-      const response = await fetch('/api/complaint', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      // 1. Submit directly to Firestore for instant appearing in Responses Page
+      const reportRef = await addDoc(collection(db, "reports"), initialPayload);
 
-      if (!response.ok) throw new Error('Submission failed');
-
-      const data = await response.json();
-
-      // Update local user stats (can still be client-side if rules allow)
+      // 2. Update user stats in Firestore
       const userRef = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userRef, { reportsCount: increment(1) });
 
-      toast.success("Report submitted! Check your email for confirmation.");
-      console.log("Complaint created via API:", data.complaintId);
+      toast.success("Report submitted successfully! View it in the Responses page.");
+      console.log("Report created in Firestore:", reportRef.id);
 
       setContent("");
       setComplaintData({ title: "", description: "", category: "" });

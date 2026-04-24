@@ -17,9 +17,20 @@ const JWT_SECRET = process.env.JWT_SECRET || 'trust-link-secret-2024';
 
 // ── FIREBASE ADMIN INITIALIZATION ──────────────────────────
 if (!admin.apps.length) {
-  admin.initializeApp({
-    projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'trust-link-4151a',
-  });
+  try {
+    // If running locally, you can explicitly point to the service account
+    const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "./serviceAccountKey.json";
+    
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccountPath),
+      projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'trust-link-4151a'
+    });
+    console.log("✅ Firebase Admin initialized with Service Account");
+  } catch (error) {
+    // Fallback for Cloud environments (Vercel/Firebase Functions)
+    admin.initializeApp();
+    console.log("✅ Firebase Admin initialized with Default Credentials");
+  }
 }
 const db = admin.firestore();
 
@@ -755,6 +766,15 @@ app.post('/api/analyze', (req, res) => {
 });
 
 
+app.get('/api/health', async (req, res) => {
+  try {
+    const snapshot = await db.collection('health-check').limit(1).get();
+    res.json({ status: 'ok', firebase: 'connected', collections: snapshot.size });
+  } catch (error: any) {
+    res.status(500).json({ status: 'error', firebase: 'disconnected', details: error.message });
+  }
+});
+
 // ── 7. Complaint Lifecycle Management ──────────────────────
 
 // 1. Create Complaint (Submission)
@@ -800,8 +820,13 @@ app.post('/api/complaint', async (req, res) => {
       }
     });
   } catch (error: any) {
-    console.error('Error creating complaint:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('❌ Error creating complaint:', error);
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      details: error.message,
+      code: error.code,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 
