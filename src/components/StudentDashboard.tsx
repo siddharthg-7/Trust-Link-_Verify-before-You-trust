@@ -213,7 +213,20 @@ export function StudentDashboard() {
         body: JSON.stringify(initialPayload),
       });
 
-      if (!response.ok) throw new Error("Failed to submit report via API");
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Server returned error HTML/Text:", errorText);
+        throw new Error(`Server Error (${response.status}): ${errorText.substring(0, 100)}`);
+      }
+
+      // Check content type before parsing JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await response.text();
+        console.error("Expected JSON but received:", text);
+        throw new Error("Server returned non-JSON response. Check console for details.");
+      }
+
       const report = await response.json();
 
       // 2. Update user stats in Firestore

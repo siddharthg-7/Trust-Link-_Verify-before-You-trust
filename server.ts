@@ -765,6 +765,40 @@ app.get('/api/auth/verify-token', (req, res) => {
 // ── Main Reports API with Workflow Triggers ─────────────────
 app.get('/api/reports', (req, res) => res.json(reportsStore));
 
+// ── Update Report Endpoint (Admin Review) ─────────────────────
+app.patch('/api/reports/:id', async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+  
+  // Update local store if exists
+  const index = reportsStore.findIndex(r => r.id === id);
+  if (index !== -1) {
+    reportsStore[index] = { ...reportsStore[index], ...updates };
+  }
+
+  // Trigger Email if status is 'resolved' or 'Scam'
+  if (updates.status === 'resolved' || updates.status === 'Scam' || updates.status === 'Verified') {
+    try {
+      // Fetch report details (ideally from DB, but we use the updates/payload here)
+      // For a real app, you'd fetch the full report from Firestore first.
+      // We'll assume the payload contains what we need for the email.
+      if (updates.userEmail) {
+        await EmailService.sendResolutionEmail(
+          updates.userEmail, 
+          updates.userName || 'User', 
+          id, 
+          updates.adminFeedback || 'No feedback provided.', 
+          updates.weightedScore || 0
+        );
+      }
+    } catch (error) {
+      console.error("Failed to send resolution email:", error);
+    }
+  }
+
+  res.json({ success: true, id });
+});
+
 app.post('/api/reports', async (req, res) => {
   const reportId = Math.random().toString(36).substr(2, 9);
   const userToken = crypto.randomBytes(16).toString('hex');

@@ -527,6 +527,8 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
           weightedScore,
           adminFeedback,
           status,
+          userEmail: reviewingReport.userEmail,
+          userName: reviewingReport.userName,
           lastReviewedAt: new Date().toISOString(),
           reviewedBy: user?.email
         }),
