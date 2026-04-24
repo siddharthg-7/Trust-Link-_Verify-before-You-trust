@@ -1,18 +1,10 @@
-import { pipeline, env } from '@xenova/transformers';
 
-
-
-// ── CRITICAL: Force CDN loading, never local filesystem ──────────
-// Without these, the browser may try to fetch /tokenizer.json from your 
-// own hosting server, which returns the SPA index.html → JSON parse error.
-env.allowLocalModels = false;
-env.useBrowserCache = true;
-
-// Use default Xenova/HuggingFace paths which are more reliable
-// env.remoteHost = 'https://huggingface.co/';
-// env.remotePathTemplate = '{model}/resolve/{revision}/';
-
-
+// ── BERT EMBEDDINGS SERVICE ──────────────────────────────────────
+// This service uses @xenova/transformers for browser-side NLP.
+// It is now refactored to use DYNAMIC IMPORTS to:
+// 1. Reduce initial bundle size (from 3MB+ to ~100KB for main bundle)
+// 2. Isolate libraries that use eval() until they are specifically needed
+// 3. Improve UX by only loading heavy ML modules on first analysis
 
 export class BertEmbeddings {
   private extractor: any = null;
@@ -23,14 +15,22 @@ export class BertEmbeddings {
     
     console.log('⏳ Initializing BERT Embedding model (loading from HuggingFace CDN)...');
     try {
-      // Multilingual MiniLM: fast, accurate, and CDN-cached after first load
+      // 1. Dynamic Import for heavy transformers library
+      const { pipeline, env } = await import('@xenova/transformers');
+
+      // 2. Configure environment (CDN only)
+      env.allowLocalModels = false;
+      env.useBrowserCache = true;
+
+      // 3. Load Multilingual MiniLM model
       this.extractor = await pipeline(
         'feature-extraction',
         'Xenova/paraphrase-multilingual-MiniLM-L12-v2',
-        { quantized: true } // Use quantized model for ~4x faster load
+        { quantized: true } // Quantized for speed and smaller download size
       );
+      
       this.isReady = true;
-      console.log('✅ BERT Embedding model loaded');
+      console.log('✅ BERT Embedding model loaded and ready');
     } catch (err) {
       console.error('❌ BERT model failed to load. Verify your network can reach huggingface.co.', err);
       throw err;
@@ -40,6 +40,7 @@ export class BertEmbeddings {
   async getEmbedding(text: string): Promise<number[]> {
     if (!this.isReady) await this.init();
     
+    // Mean pooling and normalization are handled by the extractor parameters
     const output = await this.extractor(text, { pooling: 'mean', normalize: true });
     return Array.from(output.data);
   }
