@@ -33,9 +33,14 @@ service cloud.firestore {
       // Ensure the creator records their own UID
       allow create: if isAuthenticated() && 
                     request.resource.data.userId == request.auth.uid;
-      // Only owner or admin can modify
-      allow update: if isAuthenticated() && 
-                    (resource.data.userId == request.auth.uid || isAdmin());
+      // Allow update if:
+      // 1. User is the owner or admin
+      // 2. User is just adding/changing their own vote (any authenticated user)
+      allow update: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isAdmin() ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes']))
+      );
       allow delete: if isAdmin();
       
       // Subcollection: Messages
@@ -53,8 +58,14 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && 
                     request.resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() && 
-                    (resource.data.userId == request.auth.uid || isAdmin());
+      // Allow update if:
+      // 1. User is owner or admin
+      // 2. User is just voting/polling (any authenticated user)
+      allow update: if isAuthenticated() && (
+        resource.data.userId == request.auth.uid || 
+        isAdmin() ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes', 'pollOptions', 'commentsCount']))
+      );
       allow delete: if isAdmin();
 
       // Subcollection: Comments
