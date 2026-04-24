@@ -516,28 +516,20 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
     try {
       const aiScore = reviewingReport.riskScore || 0;
       const weightedScore = Math.round((aiScore * 0.7) + (adminScore * 0.3));
-      const status = weightedScore > 50 ? "Scam" : "resolved"; // Using 'resolved' for workflow trigger
+      const status = weightedScore > 50 ? "Scam" : "Resolved"; 
 
-      // Update via Backend API to trigger the final user email
-      const response = await fetch(`/api/reports/${reportId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          adminScore,
-          weightedScore,
-          adminFeedback,
-          status,
-          userEmail: reviewingReport.userEmail,
-          userName: reviewingReport.userName,
-          lastReviewedAt: new Date().toISOString(),
-          reviewedBy: user?.email
-        }),
+      // Update directly in Firestore (Reverting to original direct-to-db logic)
+      await updateDoc(doc(db, "reports", reportId), {
+        adminScore,
+        weightedScore,
+        adminFeedback,
+        status,
+        lastReviewedAt: serverTimestamp(),
+        reviewedBy: user?.email
       });
 
-      if (!response.ok) throw new Error("Failed to update report via API");
-
       await logAudit("detailed_review_submitted", `Review submitted for ${reportId}. Weighted Score: ${weightedScore}`, reportId);
-      toast.success("Review submitted and user notified!");
+      toast.success("Review submitted successfully!");
       setReviewingReport(null);
     } catch (error) {
       console.error("Review Error:", error);

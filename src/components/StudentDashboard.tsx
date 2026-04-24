@@ -206,35 +206,15 @@ export function StudentDashboard() {
         complaintType: result?.complaintType ?? "General"
       };
 
-      // 1. Submit to Backend API (which handles DB storage and Email triggers)
-      const response = await fetch('/api/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(initialPayload),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Server returned error HTML/Text:", errorText);
-        throw new Error(`Server Error (${response.status}): ${errorText.substring(0, 100)}`);
-      }
-
-      // Check content type before parsing JSON
-      const contentType = response.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const text = await response.text();
-        console.error("Expected JSON but received:", text);
-        throw new Error("Server returned non-JSON response. Check console for details.");
-      }
-
-      const report = await response.json();
+      // 1. Submit directly to Firestore (Reverting to original direct-to-db logic)
+      const reportRef = await addDoc(collection(db, "reports"), initialPayload);
 
       // 2. Update user stats in Firestore
       const userRef = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userRef, { reportsCount: increment(1) });
 
       toast.success("Report submitted successfully!");
-      console.log("Report created with tokens and triggers:", report.id);
+      console.log("Report created in Firestore:", reportRef.id);
 
       setContent("");
       setComplaintData({ title: "", description: "", category: "" });

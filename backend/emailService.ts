@@ -42,8 +42,17 @@ async function logEmail(log: Omit<EmailLog, 'id' | 'sentAt'>) {
 async function withRetry<T>(fn: () => Promise<T>, retries = 3): Promise<T> {
   try {
     return await fn();
-  } catch (error) {
-    if (retries <= 0) throw error;
+  } catch (error: any) {
+    // If it's a permission/activation error, don't waste time retrying
+    const isPermissionError = error.message?.includes('403') || error.message?.includes('401') || error.message?.includes('activation');
+    
+    if (retries <= 0 || isPermissionError) {
+      if (isPermissionError) {
+        console.error('🚫 Brevo Permission/Activation Error: Transactional emails are disabled in your Brevo account.');
+      }
+      throw error;
+    }
+    
     console.log(`Retrying email send... (${retries} attempts left)`);
     await new Promise(resolve => setTimeout(resolve, 1000));
     return withRetry(fn, retries - 1);

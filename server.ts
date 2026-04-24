@@ -6,9 +6,6 @@ import helmet from "helmet";
 import natural from "natural";
 import axios from "axios";
 import 'dotenv/config';
-import crypto from "crypto";
-import jwt from "jsonwebtoken";
-import { EmailService } from "./backend/emailService";
 
 
 const app = express();
@@ -699,18 +696,7 @@ class ScamDetector {
 //  Initialize NLP Services
 // ═══════════════════════════════════════════════════════════════
 // NOTE: EnhancedScamDetector (BERT/transformers) is browser-only.
-// The server uses the native ScamDetector defined above — same
-// Bayes + keyword + pattern accuracy, no browser-cache dependency.
-
 const scamDetector = new ScamDetector();
-
-console.log('✅ NLP Service Layer initialized (server-side ScamDetector)');
-console.log('   - NLPPipeline: Advanced preprocessing');
-console.log('   - FeatureExtractor: Multi-dimensional analysis');
-console.log('   - EnsembleClassifier: Bayesian + Sentiment ensemble');
-console.log('   - KeywordDatabase: Dynamic weighted keywords');
-console.log('   - PatternEngine: Regex-based detection');
-console.log('   - ScamDetector: Unified analysis API');
 
 // ═══════════════════════════════════════════════════════════════
 //  API ROUTES
@@ -725,162 +711,8 @@ app.post('/api/analyze', (req, res) => {
   res.json(result);
 });
 
-// ── Email Endpoints (Resend) ─────────────────────────────────
 
-// Reports storage
-let reportsStore: any[] = [];
-
-// ── Token Verification (JWT & Legacy) ──────────────────────
-app.get('/api/auth/verify-token', (req, res) => {
-  const { token, type } = req.query;
-  
-  if (!token) return res.status(400).json({ success: false, error: 'Token is required' });
-
-  // 1. Try JWT Verification (New Standard)
-  if (type === 'admin') {
-    try {
-      const decoded = jwt.verify(token as string, JWT_SECRET) as any;
-      const report = reportsStore.find(r => r.id === decoded.complaintId);
-      if (report) {
-        return res.json({ success: true, reportId: report.id, role: 'admin' });
-      }
-    } catch (e) {
-      console.warn("JWT verification failed, falling back to legacy token check...");
-    }
-  }
-
-  // 2. Legacy / Fallback Token Verification
-  const report = reportsStore.find(r => 
-    (type === 'admin' && r.adminToken === token) || 
-    (type === 'user' && r.userToken === token)
-  );
-
-  if (!report) {
-    return res.status(401).json({ success: false, error: 'Invalid or expired token' });
-  }
-
-  res.json({ success: true, reportId: report.id, role: type });
-});
-
-// ── Main Reports API with Workflow Triggers ─────────────────
-app.get('/api/reports', (req, res) => res.json(reportsStore));
-
-// ── Update Report Endpoint (Admin Review) ─────────────────────
-app.patch('/api/reports/:id', async (req, res) => {
-  const { id } = req.params;
-  const updates = req.body;
-  
-  // Update local store if exists
-  const index = reportsStore.findIndex(r => r.id === id);
-  if (index !== -1) {
-    reportsStore[index] = { ...reportsStore[index], ...updates };
-  }
-
-  // Trigger Email if status is 'resolved' or 'Scam'
-  if (updates.status === 'resolved' || updates.status === 'Scam' || updates.status === 'Verified') {
-    try {
-      // Fetch report details (ideally from DB, but we use the updates/payload here)
-      // For a real app, you'd fetch the full report from Firestore first.
-      // We'll assume the payload contains what we need for the email.
-      if (updates.userEmail) {
-        await EmailService.sendResolutionEmail(
-          updates.userEmail, 
-          updates.userName || 'User', 
-          id, 
-          updates.adminFeedback || 'No feedback provided.', 
-          updates.weightedScore || 0
-        );
-      }
-    } catch (error) {
-      console.error("Failed to send resolution email:", error);
-    }
-  }
-
-  res.json({ success: true, id });
-});
-
-app.post('/api/reports', async (req, res) => {
-  const reportId = Math.random().toString(36).substr(2, 9);
-  const userToken = crypto.randomBytes(16).toString('hex');
-  const adminToken = crypto.randomBytes(16).toString('hex');
-  const ADMIN_EMAIL = "siddharthexam21@gmail.com";
-  const APP_URL = process.env.VITE_APP_URL || "https://trust-link-4151a.web.app";
-
-  const report = {
-    id: reportId,
-    ...req.body,
-    status: "submitted",
-    userToken,
-    adminToken,
-    timestamp: new Date(),
-  };
-
-  reportsStore.push(report);
-
-  // 1. Trigger: Send email to USER (Confirmation via Brevo)
-  if (report.userEmail) {
-    try {
-      await EmailService.sendComplaintConfirmation(report.userEmail, report.userName || 'User', reportId);
-    } catch (e) {
-      console.error("Failed to send confirmation email:", e);
-    }
-  }
-
-  // 2. Trigger: Send email to ADMIN (Notification via Brevo with JWT)
-  try {
-    await EmailService.sendAdminNotification(reportId, report.riskScore || 0, report.content);
-  } catch (e) {
-    console.error("Failed to send admin notification email:", e);
-  }
-
-  if (report.category === 'Scam' || report.status === 'Scam') {
-    await scamDetector.learnFromScam(report.content);
-  }
-  res.status(201).json(report);
-});
-
-app.patch('/api/reports/:id', async (req, res) => {
-  const { id } = req.params;
-  const idx = reportsStore.findIndex(r => r.id === id);
-  if (idx === -1) return res.status(404).json({ error: 'Not found' });
-  
-  const oldStatus = reportsStore[idx].status;
-  const report = reportsStore[idx];
-  
-  // Update the report data
-  reportsStore[idx] = { ...reportsStore[idx], ...req.body };
-  const newStatus = reportsStore[idx].status;
-
-  // 3. Trigger: Send email to USER when resolved (via Brevo)
-  if (newStatus === 'resolved' && oldStatus !== 'resolved' && report.userEmail) {
-    try {
-      await EmailService.sendResolutionEmail(
-        report.userEmail, 
-        report.userName || 'User', 
-        id, 
-        req.body.adminFeedback || 'Review complete.',
-        report.weightedScore || report.riskScore || 0
-      );
-    } catch (e) {
-      console.error("Failed to send resolution email:", e);
-    }
-  }
-
-
-  if (reportsStore[idx].status === 'Scam' && oldStatus !== 'Scam') {
-    await scamDetector.learnFromScam(reportsStore[idx].content);
-  }
-  res.json(reportsStore[idx]);
-});
-
-app.delete('/api/reports/:id', (req, res) => {
-  const { id } = req.params;
-  reportsStore = reportsStore.filter(r => r.id !== id);
-  res.status(204).send();
-});
-
-
-// ═══════════════════════════════════════════════════════════════
+// ── Server Start ─────────────────────────────────────────────
 //  START SERVER
 // ═══════════════════════════════════════════════════════
 
