@@ -12,6 +12,8 @@ import { AdminDashboard } from "./components/AdminDashboard";
 import { CommunityPage } from "./components/CommunityPage";
 import { ResponsesPage } from "./components/ResponsesPage";
 import { UserDashboard } from "./components/UserDashboard";
+import { TrackingPage } from "./components/TrackingPage";
+import { AdminAuthPage } from "./components/AdminAuthPage";
 import { FiMenu as FiMenuRaw } from "react-icons/fi";
 import { BsShieldLock as BsShieldLockRaw } from "react-icons/bs";
 
@@ -112,8 +114,12 @@ export default function App() {
     <>
       <Toaster position="top-right" toastOptions={{ style: { background: "#0f172a", color: "#fff", border: "1px solid #ffffff15" } }} />
       <Routes>
+        {/* Public Utility Routes */}
+        <Route path="/track" element={<TrackingPage />} />
+        <Route path="/admin/auth" element={<AdminAuthPage />} />
+
         {/* Public Routes */}
-        {!user ? (
+        {!user && !localStorage.getItem('admin_token_auth') ? (
           <>
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
@@ -125,7 +131,7 @@ export default function App() {
             <div className="flex min-h-screen bg-black text-zinc-100 selection:bg-white/10">
               <Sidebar 
                 onLogout={handleLogout} 
-                isAdmin={isAdmin} 
+                isAdmin={isAdmin || !!localStorage.getItem('admin_token_auth')} 
                 isOpen={isSidebarOpen} 
                 setIsOpen={setIsSidebarOpen} 
               />
@@ -154,11 +160,11 @@ export default function App() {
                       <Route path="/app/responses" element={<ResponsesPage />} />
                       <Route path="/app/community" element={<CommunityPage />} />
                       <Route path="/app/dashboard" element={<UserDashboard />} />
-                      {isAdmin && (
-                        <Route path="/admin/*" element={<AdminDashboard user={user} onLogout={handleLogout} />} />
+                      {(isAdmin || !!localStorage.getItem('admin_token_auth')) && (
+                        <Route path="/admin/*" element={<AdminDashboard user={user || { email: ADMIN_EMAIL }} onLogout={handleLogout} />} />
                       )}
-                      <Route path="/" element={<Navigate to={isAdmin ? "/admin" : "/app/home"} replace />} />
-                      <Route path="*" element={<Navigate to={isAdmin ? "/admin" : "/app/home"} replace />} />
+                      <Route path="/" element={<Navigate to={(isAdmin || !!localStorage.getItem('admin_token_auth')) ? "/admin" : "/app/home"} replace />} />
+                      <Route path="*" element={<Navigate to={(isAdmin || !!localStorage.getItem('admin_token_auth')) ? "/admin" : "/app/home"} replace />} />
                     </Routes>
                   </div>
                 </main>
@@ -167,10 +173,10 @@ export default function App() {
           } />
         )}
         
-        {/* Fallback route if authenticated user tries to access / */}
-        {user && !isAdmin && <Route path="/" element={<Navigate to="/app/home" replace />} />}
-        {user && !isAdmin && <Route path="*" element={<Navigate to="/app/home" replace />} />}
+        {/* Fallback routes */}
+        {user && !isAdmin && !localStorage.getItem('admin_token_auth') && <Route path="/" element={<Navigate to="/app/home" replace />} />}
       </Routes>
+
     </>
   );
 }

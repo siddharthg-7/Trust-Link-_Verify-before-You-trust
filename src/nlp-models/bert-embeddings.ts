@@ -1,12 +1,18 @@
 import { pipeline, env } from '@xenova/transformers';
 
+
+
 // ── CRITICAL: Force CDN loading, never local filesystem ──────────
-// Without these, the browser fetches /tokenizer.json from your own
-// hosting server, which returns the SPA index.html → JSON parse error.
+// Without these, the browser may try to fetch /tokenizer.json from your 
+// own hosting server, which returns the SPA index.html → JSON parse error.
 env.allowLocalModels = false;
 env.useBrowserCache = true;
-env.remoteHost = 'https://huggingface.co/';
-env.remotePathTemplate = '{model}/resolve/{revision}/';
+
+// Use default Xenova/HuggingFace paths which are more reliable
+// env.remoteHost = 'https://huggingface.co/';
+// env.remotePathTemplate = '{model}/resolve/{revision}/';
+
+
 
 export class BertEmbeddings {
   private extractor: any = null;

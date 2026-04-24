@@ -47,7 +47,6 @@ import { ChatSystem } from "./ChatSystem";
 import { GlassCard } from "./ui/GlassCard";
 import { auth, db, handleFirestoreError, OperationType } from "../lib/firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc, increment, query, orderBy, limit, onSnapshot, getCountFromServer } from "firebase/firestore";
-import { sendAdminEmail } from "../services/emailService";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 import toast from "react-hot-toast";
@@ -191,7 +190,6 @@ export function StudentDashboard() {
     if (!auth.currentUser || !finalContent) return;
     setIsSubmitting(true);
     try {
-      // 1. Initial Submission State
       const initialPayload = {
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
@@ -200,67 +198,42 @@ export function StudentDashboard() {
         title: complaintData.title || "Official Complaint",
         description: complaintData.description || "User reported content for manual review.",
         category: complaintData.category || "Other",
-        status: "Pending Review",
-        timestamp: serverTimestamp(),
+        status: "submitted",
+        timestamp: new Date().toISOString(),
         chatEnabled: true,
         riskScore: result?.riskScore ?? 0,
         nlpConfidence: result?.confidence ?? 0,
         complaintType: result?.complaintType ?? "General"
       };
-      
-      const reportRef = await addDoc(collection(db, "reports"), initialPayload);
+
+      // 1. Submit to Backend API (which handles DB storage and Email triggers)
+      const response = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(initialPayload),
+      });
+
+      if (!response.ok) throw new Error("Failed to submit report via API");
+      const report = await response.json();
+
+      // 2. Update user stats in Firestore
       const userRef = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userRef, { reportsCount: increment(1) });
 
-      // 2. Trigger NLP Evaluation immediately if not already done for this content
-      let finalResult = result;
-      if (!result || content !== finalContent) {
-        finalResult = await detector.analyze(finalContent) as any;
-      }
+      toast.success("Report submitted successfully!");
+      console.log("Report created with tokens and triggers:", report.id);
 
-      // 3. Update with NLP Analysis Results
-      const status = finalResult && finalResult.riskScore > 80 ? "Pending Verification" : "Pending (Analyzed)";
-      
-      await updateDoc(reportRef, {
-        riskScore: finalResult?.riskScore ?? 0,
-        nlpConfidence: finalResult?.confidence ?? 0,
-        complaintType: finalResult?.complaintType ?? "General",
-        status: status,
-        analysisExplanation: finalResult?.explanation
-      });
-
-      // 4. Trigger Admin Email via Resend Service
-      try {
-        const adminEmailResult = await sendAdminEmail({
-          title: initialPayload.title,
-          userName: initialPayload.userName,
-          userEmail: initialPayload.userEmail,
-          riskScore: finalResult?.riskScore ?? initialPayload.riskScore,
-          content: initialPayload.content,
-          reportId: reportRef.id
-        });
-
-        if (adminEmailResult.success) {
-          await updateDoc(reportRef, {
-            adminEmailStatus: "sent",
-            adminEmailSentAt: serverTimestamp(),
-            adminEmailId: adminEmailResult.id
-          });
-        }
-      } catch (e: any) {
-        console.error("Admin Email Failure:", e);
-      }
-
-      toast.success("Report submitted and admin notified!");
       setContent("");
       setComplaintData({ title: "", description: "", category: "" });
       setShowComplaintForm(false);
     } catch (error: any) {
-      handleFirestoreError(error, OperationType.WRITE, "reports");
+      console.error("Submission Error:", error);
+      toast.error("Submission failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="relative min-h-screen">

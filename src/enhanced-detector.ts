@@ -42,6 +42,7 @@ export class EnhancedScamDetector {
     this.init();
   }
 
+
   private async init() {
     try {
       await this.bert.init();
@@ -56,21 +57,51 @@ export class EnhancedScamDetector {
         this.scamEmbeddings.push(emb);
       }
       this.isInitialized = true;
-      console.log('✅ EnhancedScamDetector initialized.');
+      console.log('✅ EnhancedScamDetector initialized with BERT.');
     } catch (error) {
-      console.error('❌ Failed to initialize EnhancedScamDetector:', error);
+      console.error('❌ Failed to initialize BERT in EnhancedScamDetector. Falling back to linguistic-only analysis.', error);
+      // We set isInitialized to true so the app doesn't hang, 
+      // but BERT embeddings will be empty.
+      this.isInitialized = true; 
     }
   }
 
   async analyze(content: string, senderId: string = 'anonymous', timestamp: number = Date.now()) {
-    // Await initialization if calling too early
-    while (!this.isInitialized) {
+    // Await initialization with a reasonable timeout
+    let waitCount = 0;
+    while (!this.isInitialized && waitCount < 50) { // 5 second timeout
       await new Promise(r => setTimeout(r, 100));
+      waitCount++;
     }
 
-    // 1. Semantic Vector Match
-    const semanticSimilarity = await this.bert.calculateMatch(content, this.scamEmbeddings);
-    const vectorRisk = Math.min(semanticSimilarity, 1.0) * 100;
+
+    // 1. Semantic Vector Match (if BERT is available)
+    let vectorRisk = 0;
+    let backendResult = null;
+
+    if (this.scamEmbeddings.length > 0) {
+      try {
+        const semanticSimilarity = await this.bert.calculateMatch(content, this.scamEmbeddings);
+        vectorRisk = Math.min(semanticSimilarity, 1.0) * 100;
+      } catch (e) {
+        console.warn('Vector match failed, falling back to backend analysis.');
+      }
+    } else {
+      // Fallback: Call backend analysis if frontend BERT is not available
+      try {
+        const response = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        });
+        if (response.ok) {
+          backendResult = await response.json();
+          vectorRisk = backendResult.riskScore;
+        }
+      } catch (e) {
+        console.error('Backend analysis fallback failed:', e);
+      }
+    }
 
     // 2. Linguistic Analysis
     const linguisticRisk = this.analyzeLinguistics(content);
@@ -79,11 +110,15 @@ export class EnhancedScamDetector {
     const { densityRisk, timeOfDayRisk } = this.temporal.analyze(senderId, timestamp);
 
     // 4. Composite Scoring
-    const compositeScore = (vectorRisk * 0.40) + (linguisticRisk * 0.35) + (densityRisk * 0.15) + (timeOfDayRisk * 0.1);
+    // If we have backendResult, we might want to prioritize it or blend it
+    const compositeScore = backendResult 
+      ? (backendResult.riskScore * 0.7 + linguisticRisk * 0.3) // Weight backend more if available
+      : (vectorRisk * 0.40) + (linguisticRisk * 0.35) + (densityRisk * 0.15) + (timeOfDayRisk * 0.1);
+    
     const finalRiskScore = Math.round(Math.min(compositeScore, 100));
 
     // 5. Complaint Classification
-    const complaintType = this.classifyComplaintType(content, finalRiskScore);
+    const complaintType = backendResult?.complaintType || this.classifyComplaintType(content, finalRiskScore);
     
     return {
       riskScore: finalRiskScore,
@@ -92,13 +127,15 @@ export class EnhancedScamDetector {
         linguisticMarkers: linguisticRisk > 50 ? 'Highly suspicious language' : 'Normal language',
         messageDensity: Math.round(densityRisk),
         timeContext: timeOfDayRisk > 0 ? 'Suspicious timing' : 'Normal timing',
-        metadataRisk: this.analyzeMetadata(senderId) ? 'Flagged source' : 'Trusted source'
+        metadataRisk: this.analyzeMetadata(senderId) ? 'Flagged source' : 'Trusted source',
+        source: backendResult ? 'Backend AI' : 'Frontend AI'
       },
-      category: finalRiskScore > 65 ? 'Scam' : (finalRiskScore > 35 ? 'Suspicious' : 'Safe'),
+      category: backendResult?.category || (finalRiskScore > 65 ? 'Scam' : (finalRiskScore > 35 ? 'Suspicious' : 'Safe')),
       complaintType,
-      confidence: Math.round(Math.max(vectorRisk, linguisticRisk)), // Simple confidence metric
-      explanation: this.generateExplanation(finalRiskScore, complaintType)
+      confidence: Math.round(Math.max(vectorRisk, linguisticRisk)),
+      explanation: backendResult?.explanation || this.generateExplanation(finalRiskScore, complaintType)
     };
+
   }
 
   private classifyComplaintType(content: string, riskScore: number): 'Fraud' | 'Service Issue' | 'Dispute' | 'General' {

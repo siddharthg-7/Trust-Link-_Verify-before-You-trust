@@ -22,7 +22,6 @@ import { EnhancedScamDetector } from "../enhanced-detector";
 const detector = new EnhancedScamDetector();
 import { logAudit } from "../lib/audit";
 import { ChatSystem } from "./ChatSystem";
-import { sendUserEmail } from "../services/emailService";
 import { motion, AnimatePresence } from "framer-motion";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import {
@@ -66,15 +65,15 @@ const TOOLTIP_STYLE = {
 
 // ─── Sidebar Nav Items ──────────────────────────────────────────
 const NAV = [
-  { id: "overview",       label: "Dashboard",       icon: LayoutDashboard, badge: null },
-  { id: "moderation",     label: "Moderation",      icon: Shield,          badge: "reports" },
-  { id: "scam-analysis",  label: "Scam Analysis",   icon: Cpu,             badge: null },
-  { id: "users",          label: "Users",           icon: Users,           badge: null },
-  { id: "reports",        label: "Reports",         icon: ClipboardList,   badge: "pending" },
-  { id: "analytics",      label: "Analytics",       icon: BarChart3,       badge: null },
-  { id: "settings",       label: "Settings",        icon: Settings,        badge: null },
-  { id: "audit",          label: "Audit Logs",      icon: BookOpen,        badge: null },
-  { id: "notifications",  label: "Notifications",   icon: Bell,            badge: null },
+  { id: "overview", label: "Dashboard", icon: LayoutDashboard, badge: null },
+  { id: "moderation", label: "Moderation", icon: Shield, badge: "reports" },
+  { id: "scam-analysis", label: "Scam Analysis", icon: Cpu, badge: null },
+  { id: "users", label: "Users", icon: Users, badge: null },
+  { id: "reports", label: "Reports", icon: ClipboardList, badge: "pending" },
+  { id: "analytics", label: "Analytics", icon: BarChart3, badge: null },
+  { id: "settings", label: "Settings", icon: Settings, badge: null },
+  { id: "audit", label: "Audit Logs", icon: BookOpen, badge: null },
+  { id: "notifications", label: "Notifications", icon: Bell, badge: null },
 ] as const;
 
 // ─── Main AdminDashboard Component ─────────────────────────────
@@ -83,8 +82,8 @@ interface AdminDashboardProps { user: any; onLogout: () => void; }
 export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [reports, setReports]     = useState<any[]>([]);
-  const [users, setUsers]         = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [community, setCommunity] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
@@ -93,7 +92,7 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const pathParts = location.pathname.split('/');
   const activeTab = pathParts[2] || "overview";
 
-  const pendingCount  = reports.filter(r => r.status === "Pending").length;
+  const pendingCount = reports.filter(r => r.status === "Pending").length;
   const highRiskCount = reports.filter(r => r.riskScore > 65).length;
 
   // Live Firestore subscriptions
@@ -155,9 +154,9 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
           return (
             <button
               key={id}
-              onClick={() => { 
-                navigate(`/admin/${id === 'overview' ? '' : id}`); 
-                setIsAdminSidebarOpen(false); 
+              onClick={() => {
+                navigate(`/admin/${id === 'overview' ? '' : id}`);
+                setIsAdminSidebarOpen(false);
               }}
               className={cn(
                 "w-full flex items-center justify-between px-4 py-2 rounded-xl text-sm transition-all duration-300 group",
@@ -245,7 +244,7 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
         {/* Top bar */}
         <div className="sticky top-0 z-10 bg-black/60 backdrop-blur-xl border-b border-zinc-800/50 px-4 lg:px-8 py-3.5 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => setIsAdminSidebarOpen(true)}
               className="lg:hidden p-2 bg-zinc-900/50 rounded-lg text-zinc-500 hover:text-white"
             >
@@ -301,23 +300,23 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
 //  1. OVERVIEW TAB
 // ═══════════════════════════════════════════════════════════════
 function OverviewTab({ reports, users, community }: { reports: any[]; users: any[]; community: any[] }) {
-  const scamCount    = reports.filter(r => r.category === "Scam").length;
-  const safeCount    = reports.filter(r => r.category === "Safe").length;
+  const scamCount = reports.filter(r => r.category === "Scam").length;
+  const safeCount = reports.filter(r => r.category === "Safe").length;
   const pendingCount = reports.filter(r => r.status === "Pending").length;
-  const highRisk     = reports.filter(r => r.riskScore > 65);
+  const highRisk = reports.filter(r => r.riskScore > 65);
 
   const weekData = {
-    labels: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     datasets: [
       {
         label: 'Scams',
-        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.riskScore > 65 && r.timestamp?.toDate && r.timestamp.toDate().getDay() === (i + 1) % 7).length),
+        data: [0, 0, 0, 0, 0, 0, 0].map((_, i) => reports.filter(r => r.riskScore > 65 && r.timestamp?.toDate && r.timestamp.toDate().getDay() === (i + 1) % 7).length),
         backgroundColor: '#ef4444',
         borderRadius: 4,
       },
       {
         label: 'Safe',
-        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.riskScore <= 35 && r.timestamp?.toDate && r.timestamp.toDate().getDay() === (i + 1) % 7).length),
+        data: [0, 0, 0, 0, 0, 0, 0].map((_, i) => reports.filter(r => r.riskScore <= 35 && r.timestamp?.toDate && r.timestamp.toDate().getDay() === (i + 1) % 7).length),
         backgroundColor: '#22c55e',
         borderRadius: 4,
       }
@@ -343,10 +342,10 @@ function OverviewTab({ reports, users, community }: { reports: any[]; users: any
       {/* Stat cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Total Reports",   value: reports.length,   icon: ClipboardList, color: "from-blue-500/20 to-blue-600/10",    text: "text-blue-400" },
-          { label: "Scam Detected",   value: scamCount,        icon: AlertTriangle,  color: "from-red-500/20 to-red-600/10",     text: "text-red-400" },
-          { label: "Pending Review",  value: pendingCount,     icon: Clock,          color: "from-yellow-500/20 to-yellow-600/10",text: "text-yellow-400" },
-          { label: "Registered Users",value: users.length,     icon: Users,          color: "from-green-500/20 to-green-600/10", text: "text-green-400" },
+          { label: "Total Reports", value: reports.length, icon: ClipboardList, color: "from-blue-500/20 to-blue-600/10", text: "text-blue-400" },
+          { label: "Scam Detected", value: scamCount, icon: AlertTriangle, color: "from-red-500/20 to-red-600/10", text: "text-red-400" },
+          { label: "Pending Review", value: pendingCount, icon: Clock, color: "from-yellow-500/20 to-yellow-600/10", text: "text-yellow-400" },
+          { label: "Registered Users", value: users.length, icon: Users, color: "from-green-500/20 to-green-600/10", text: "text-green-400" },
         ].map(({ label, value, icon: Icon, color, text }) => (
           <GlassCard key={label} className="p-5">
             <div className={cn("w-10 h-10 rounded-xl bg-gradient-to-br flex items-center justify-center mb-3", color)}>
@@ -369,17 +368,17 @@ function OverviewTab({ reports, users, community }: { reports: any[]; users: any
             <span className="text-xs text-white/30">Last 7 days</span>
           </div>
           <div className="h-52">
-            <Bar 
-              data={weekData} 
+            <Bar
+              data={weekData}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0f172a' } },
-                scales: { 
+                scales: {
                   x: { grid: { display: false }, ticks: { color: '#ffffff40' } },
                   y: { grid: { color: '#ffffff05' }, ticks: { color: '#ffffff40' } }
                 }
-              }} 
+              }}
             />
           </div>
         </GlassCard>
@@ -390,13 +389,13 @@ function OverviewTab({ reports, users, community }: { reports: any[]; users: any
             <PieChartIcon className="w-4 h-4 text-purple-400" /> Scam Category Heatmap
           </h3>
           <div className="h-40">
-            <Pie 
-              data={categoryData} 
+            <Pie
+              data={categoryData}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } }
-              }} 
+              }}
             />
           </div>
           <div className="mt-3 space-y-1.5">
@@ -438,7 +437,7 @@ function OverviewTab({ reports, users, community }: { reports: any[]; users: any
         </GlassCard>
       )}
 
-{/* Platform stats */}
+      {/* Platform stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
           { label: "Community Posts", value: community.length, icon: MessageSquare, color: "text-indigo-400" },
@@ -497,8 +496,8 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
       const aiScore = r?.riskScore || 0;
       const weightedScore = Math.round((aiScore * 0.7) + (fixedScore * 0.3));
 
-      await updateDoc(doc(db, "reports", id), { 
-        trustLabel: label, 
+      await updateDoc(doc(db, "reports", id), {
+        trustLabel: label,
         status: label === "Verified" ? "Verified" : label,
         adminScore: fixedScore,
         weightedScore
@@ -512,78 +511,38 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
   async function submitDetailedReview() {
     if (!reviewingReport) return;
     const reportId = reviewingReport.id;
-    const reportRef = doc(db, "reports", reportId);
     setUpdatingId(reportId);
-    
+
     try {
       const aiScore = reviewingReport.riskScore || 0;
       const weightedScore = Math.round((aiScore * 0.7) + (adminScore * 0.3));
-      const status = weightedScore > 50 ? "Scam" : "Verified";
+      const status = weightedScore > 50 ? "Scam" : "resolved"; // Using 'resolved' for workflow trigger
 
-      await updateDoc(reportRef, {
-        adminScore,
-        weightedScore,
-        adminFeedback,
-        status,
-        lastReviewedAt: serverTimestamp(),
-        reviewedBy: user?.email
+      // Update via Backend API to trigger the final user email
+      const response = await fetch(`/api/reports/${reportId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          adminScore,
+          weightedScore,
+          adminFeedback,
+          status,
+          lastReviewedAt: new Date().toISOString(),
+          reviewedBy: user?.email
+        }),
       });
 
-      // ── Email Trigger Mechanism with Tracking ──
-      if (reviewingReport.userEmail) {
-        // Initial state: Pending
-        await updateDoc(reportRef, {
-          emailStatus: "pending",
-          adminFeedback: adminFeedback || 'System: No specific feedback provided.'
-        });
+      if (!response.ok) throw new Error("Failed to update report via API");
 
-        try {
-          const emailResult = await sendUserEmail({
-            to: reviewingReport.userEmail,
-            userName: reviewingReport.userName || 'User',
-            trustScore: weightedScore,
-            status,
-            feedback: adminFeedback || 'No specific feedback provided.',
-            reportId: reviewingReport.id
-          });
-
-          if (emailResult.success) {
-            await updateDoc(reportRef, {
-              emailStatus: "sent",
-              emailSentAt: serverTimestamp(),
-              emailRetries: 0,
-              resendId: emailResult.id
-            });
-            toast.success("Review submitted and confirmation email sent!");
-          } else {
-            await updateDoc(reportRef, {
-              emailStatus: "failed",
-              lastEmailError: emailResult.error,
-              emailRetries: increment(1)
-            });
-            toast.error(`Review saved, but email failed: ${emailResult.error}`);
-          }
-        } catch (e: any) {
-          console.error("User Email Critical Failure:", e);
-          await updateDoc(reportRef, {
-            emailStatus: "failed",
-            lastEmailError: e.message,
-            emailRetries: increment(1)
-          });
-          toast.error("Review saved, but a network error occurred while sending email.");
-        }
-      } else {
-        toast.success("Review submitted! (No user email found to notify)");
-      }
-
-      await logAudit("detailed_review_submitted", `Review submitted for ${reviewingReport.id}. Weighted Score: ${weightedScore}`, reviewingReport.id);
+      await logAudit("detailed_review_submitted", `Review submitted for ${reportId}. Weighted Score: ${weightedScore}`, reportId);
       toast.success("Review submitted and user notified!");
       setReviewingReport(null);
-    } catch (error) { 
+    } catch (error) {
       console.error("Review Error:", error);
-      toast.error("Review failed"); 
+      toast.error("Review failed");
     } finally { setUpdatingId(null); }
   }
+
 
   async function deleteReport(id: string) {
     if (!confirm("Delete this report permanently?")) return;
@@ -631,7 +590,7 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
                 <h4 className="font-bold text-sm mb-1">{reviewingReport.title}</h4>
                 <p className="text-xs text-white/50 leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto">{reviewingReport.content}</p>
               </div>
-              
+
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-4 bg-blue-500/5 rounded-2xl border border-blue-500/10">
                   <p className="text-[10px] font-black uppercase tracking-widest text-blue-400/50 mb-1">NLP AI Contribution (70%)</p>
@@ -652,7 +611,7 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
                   <label className="text-xs font-black uppercase tracking-widest text-white/40">Admin Review Score (30%)</label>
                   <span className={cn("text-xl font-black transition-colors", adminScore > 50 ? "text-red-400" : "text-green-400")}>{adminScore}%</span>
                 </div>
-                <input 
+                <input
                   type="range" min="0" max="100" step="1"
                   value={adminScore} onChange={(e) => setAdminScore(parseInt(e.target.value))}
                   className="w-full h-2 bg-white/5 rounded-lg appearance-none cursor-pointer accent-blue-500"
@@ -666,14 +625,14 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
 
               <div className="space-y-2">
                 <label className="text-xs font-black uppercase tracking-widest text-white/40">Moderator Feedback (Visible to User)</label>
-                <textarea 
+                <textarea
                   value={adminFeedback} onChange={(e) => setAdminFeedback(e.target.value)}
                   placeholder="Explain why this was marked as scam or safe..."
                   className="w-full h-24 bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-white placeholder-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/30 resize-none"
                 />
               </div>
 
-              <button 
+              <button
                 onClick={submitDetailedReview}
                 disabled={updatingId === reviewingReport.id}
                 className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold text-base flex items-center justify-center gap-3 transition-all shadow-xl shadow-blue-900/20 active:scale-[0.98]"
@@ -683,10 +642,10 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
               </button>
 
               <div className="mt-6">
-                <ChatSystem 
-                  reportId={reviewingReport.id} 
-                  currentRole="admin" 
-                  contentContext={reviewingReport.content} 
+                <ChatSystem
+                  reportId={reviewingReport.id}
+                  currentRole="admin"
+                  contentContext={reviewingReport.content}
                 />
               </div>
             </div>
@@ -708,7 +667,7 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
           value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-xl py-2.5 px-4 text-sm focus:outline-none"
         >
-          {["all","pending","verified","scam"].map(s => <option key={s} value={s} className="bg-[#0f172a] capitalize">{s}</option>)}
+          {["all", "pending", "verified", "scam"].map(s => <option key={s} value={s} className="bg-[#0f172a] capitalize">{s}</option>)}
         </select>
         {selected.length > 0 && (
           <div className="flex gap-2 ml-auto">
@@ -779,22 +738,22 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1 items-start">
                       <span className={cn("text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider",
-                        r.status === "Pending"  ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/10" :
-                        r.status === "Verified" ? "bg-green-500/10 text-green-500 border border-green-500/10"   :
-                        r.status === "Scam"     ? "bg-red-500/10 text-red-400 border border-red-500/10"       :
-                        "bg-white/5 text-white/40"
+                        r.status === "Pending" ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/10" :
+                          r.status === "Verified" ? "bg-green-500/10 text-green-500 border border-green-500/10" :
+                            r.status === "Scam" ? "bg-red-500/10 text-red-400 border border-red-500/10" :
+                              "bg-white/5 text-white/40"
                       )}>
                         {r.status || "Unknown"}
                       </span>
                       {r.emailStatus && (
                         <span className={cn("text-[8px] font-black uppercase flex items-center gap-1.5 px-1 opacity-70",
                           r.emailStatus === "sent" ? "text-green-400" :
-                          r.emailStatus === "failed" ? "text-red-500" :
-                          "text-zinc-500"
+                            r.emailStatus === "failed" ? "text-red-500" :
+                              "text-zinc-500"
                         )}>
                           {r.emailStatus === "sent" ? <Check className="w-2 h-2" /> :
-                           r.emailStatus === "failed" ? <X className="w-2 h-2" /> :
-                           <Clock className="w-2 h-2" />}
+                            r.emailStatus === "failed" ? <X className="w-2 h-2" /> :
+                              <Clock className="w-2 h-2" />}
                           Email {r.emailStatus}
                         </span>
                       )}
@@ -812,7 +771,7 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
-                      <button 
+                      <button
                         onClick={() => { setReviewingReport(r); setAdminScore(r.adminScore ?? 50); setAdminFeedback(r.adminFeedback ?? ""); }}
                         className="p-2 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-all" title="Detailed Review"
                       >
@@ -1043,7 +1002,7 @@ function UsersTab({ users }: { users: any[] }) {
                         u.role === "admin" ? "text-red-400" : u.role === "moderator" ? "text-yellow-400" : "text-blue-400"
                       )}
                     >
-                      {["user","moderator","admin"].map(r => (
+                      {["user", "moderator", "admin"].map(r => (
                         <option key={r} value={r} className="bg-[#0f172a] capitalize">{r}</option>
                       ))}
                     </select>
@@ -1101,24 +1060,24 @@ function ReportsTab({ reports }: { reports: any[] }) {
       toast.error("User ID missing from report");
       return;
     }
-    
+
     setUpdatingId(report.id);
     setActionType("warn");
     try {
       const userRef = doc(db, "users", report.userId);
       // Update user doc
-      await updateDoc(userRef, { 
-        warned: true, 
-        warnCount: increment(1) 
+      await updateDoc(userRef, {
+        warned: true,
+        warnCount: increment(1)
       });
       // Also update report status to 'Scam' if it was verified/pending
       await updateDoc(doc(db, "reports", report.id), { status: "Scam" });
-      
+
       await logAudit("user_warned", `Warning sent for report ${report.id}`, report.id);
       toast.success("User warned and report flagged as Scam");
-    } catch (e: any) { 
+    } catch (e: any) {
       console.error("Warn User Error:", e);
-      toast.error("Failed to warn user: " + (e.message || "Unknown error")); 
+      toast.error("Failed to warn user: " + (e.message || "Unknown error"));
     } finally {
       setUpdatingId(null);
       setActionType(null);
@@ -1160,9 +1119,9 @@ function ReportsTab({ reports }: { reports: any[] }) {
               <div className="flex items-center gap-2 flex-wrap mb-1">
                 <span className="font-bold text-sm">{r.title || "Untitled Report"}</span>
                 <span className={cn("text-[10px] font-bold px-1.5 py-0.5 rounded uppercase",
-                  r.status === "Pending"  ? "bg-yellow-500/10 text-yellow-400" :
-                  r.status === "Verified" ? "bg-green-500/10 text-green-400"   :
-                  "bg-red-500/10 text-red-400"
+                  r.status === "Pending" ? "bg-yellow-500/10 text-yellow-400" :
+                    r.status === "Verified" ? "bg-green-500/10 text-green-400" :
+                      "bg-red-500/10 text-red-400"
                 )}>
                   {r.status}
                 </span>
@@ -1177,8 +1136,8 @@ function ReportsTab({ reports }: { reports: any[] }) {
               )}
             </div>
             <div className="flex flex-col gap-1.5 shrink-0">
-              <button 
-                onClick={() => warnUser(r)} 
+              <button
+                onClick={() => warnUser(r)}
                 disabled={updatingId === r.id}
                 className={cn(
                   "text-xs px-2.5 py-1.5 rounded-lg transition-all font-semibold flex items-center justify-center gap-2",
@@ -1188,13 +1147,13 @@ function ReportsTab({ reports }: { reports: any[] }) {
                 {updatingId === r.id && actionType === "warn" ? (
                   <Loader2 className="w-3 h-3 animate-spin" />
                 ) : r.status === "Scam" ? (
-                   <AlertTriangle className="w-3 h-3" />
+                  <AlertTriangle className="w-3 h-3" />
                 ) : (
                   "⚠ Warn User"
                 )}
               </button>
-              <button 
-                onClick={() => markSafe(r.id)} 
+              <button
+                onClick={() => markSafe(r.id)}
                 disabled={updatingId === r.id}
                 className={cn(
                   "text-xs px-2.5 py-1.5 rounded-lg transition-all font-semibold flex items-center justify-center gap-2",
@@ -1250,11 +1209,11 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
   };
 
   const weeklyTrendData = {
-    labels: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"],
+    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     datasets: [
       {
         label: 'Reports',
-        data: [0,0,0,0,0,0,0].map((_, i) => reports.filter(r => r.timestamp?.toDate && r.timestamp.toDate().getDay() === (i + 1) % 7).length),
+        data: [0, 0, 0, 0, 0, 0, 0].map((_, i) => reports.filter(r => r.timestamp?.toDate && r.timestamp.toDate().getDay() === (i + 1) % 7).length),
         borderColor: '#ef4444',
         backgroundColor: 'rgba(239, 68, 68, 0.1)',
         fill: true,
@@ -1262,7 +1221,7 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
       },
       {
         label: 'Users',
-        data: [0,0,0,0,0,0,0].map((_, i) => users.filter(u => u.createdAt?.toDate && u.createdAt.toDate().getDay() === (i + 1) % 7).length),
+        data: [0, 0, 0, 0, 0, 0, 0].map((_, i) => users.filter(u => u.createdAt?.toDate && u.createdAt.toDate().getDay() === (i + 1) % 7).length),
         borderColor: '#3b82f6',
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
         fill: true,
@@ -1280,13 +1239,13 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
             <PieChartIcon className="w-4 h-4 text-purple-400" /> Category Distribution
           </h3>
           <div className="h-56">
-            <Pie 
-              data={categoryDist} 
+            <Pie
+              data={categoryDist}
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { position: 'bottom', labels: { color: '#ffffff40', font: { size: 10 } } } }
-              }} 
+              }}
             />
           </div>
         </GlassCard>
@@ -1297,18 +1256,18 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
             <BarChart3 className="w-4 h-4 text-blue-400" /> Risk Score Distribution
           </h3>
           <div className="h-56">
-            <Bar 
-              data={riskBandsData} 
+            <Bar
+              data={riskBandsData}
               options={{
                 indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
-                scales: { 
+                scales: {
                   x: { grid: { display: false }, ticks: { color: '#ffffff40' } },
                   y: { grid: { display: false }, ticks: { color: '#ffffff40', font: { size: 9 } } }
                 }
-              }} 
+              }}
             />
           </div>
         </GlassCard>
@@ -1320,17 +1279,17 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
           <TrendingUp className="w-4 h-4 text-green-400" /> Weekly Trend — Reports vs New Users
         </h3>
         <div className="h-64">
-          <Line 
-            data={weeklyTrendData} 
+          <Line
+            data={weeklyTrendData}
             options={{
               responsive: true,
               maintainAspectRatio: false,
               plugins: { legend: { position: 'top', labels: { color: '#ffffff40' } } },
-              scales: { 
+              scales: {
                 x: { grid: { display: false }, ticks: { color: '#ffffff40' } },
                 y: { grid: { color: '#ffffff05' }, ticks: { color: '#ffffff40' } }
               }
-            }} 
+            }}
           />
         </div>
       </GlassCard>
@@ -1338,10 +1297,10 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
       {/* Summary metrics */}
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: "Avg Risk Score", value: reports.length ? Math.round(reports.reduce((s,r) => s + (r.riskScore||0), 0) / reports.length) + "%" : "N/A" },
-          { label: "Scam Rate",      value: reports.length ? Math.round(reports.filter(r=>r.category==="Scam").length / reports.length * 100) + "%" : "N/A" },
-          { label: "Community Posts",value: community.length },
-          { label: "Total Users",    value: users.length },
+          { label: "Avg Risk Score", value: reports.length ? Math.round(reports.reduce((s, r) => s + (r.riskScore || 0), 0) / reports.length) + "%" : "N/A" },
+          { label: "Scam Rate", value: reports.length ? Math.round(reports.filter(r => r.category === "Scam").length / reports.length * 100) + "%" : "N/A" },
+          { label: "Community Posts", value: community.length },
+          { label: "Total Users", value: users.length },
         ].map(({ label, value }) => (
           <GlassCard key={label} className="p-4 text-center">
             <p className="text-2xl font-black">{value}</p>
@@ -1357,7 +1316,7 @@ function AnalyticsTab({ reports, users, community }: { reports: any[]; users: an
 //  7. SETTINGS TAB
 // ═══════════════════════════════════════════════════════════════
 function SettingsTab() {
-  const [sensitivity, setSensitivity] = useState<"strict"|"moderate"|"lenient">("moderate");
+  const [sensitivity, setSensitivity] = useState<"strict" | "moderate" | "lenient">("moderate");
   const [autoApprove, setAutoApprove] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1393,13 +1352,13 @@ function SettingsTab() {
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-white/40 block mb-3">Detection Sensitivity</label>
             <div className="grid grid-cols-3 gap-2">
-              {(["strict","moderate","lenient"] as const).map(s => (
+              {(["strict", "moderate", "lenient"] as const).map(s => (
                 <button key={s} onClick={() => setSensitivity(s)}
                   className={cn("py-3 rounded-xl font-bold text-sm capitalize transition-all border",
                     sensitivity === s
-                      ? s === "strict"   ? "border-red-500 bg-red-500/10 text-red-400"
-                      : s === "moderate" ? "border-yellow-500 bg-yellow-500/10 text-yellow-400"
-                      : "border-green-500 bg-green-500/10 text-green-400"
+                      ? s === "strict" ? "border-red-500 bg-red-500/10 text-red-400"
+                        : s === "moderate" ? "border-yellow-500 bg-yellow-500/10 text-yellow-400"
+                          : "border-green-500 bg-green-500/10 text-green-400"
                       : "border-white/10 text-white/30 hover:border-white/30"
                   )}>
                   {s === "strict" ? "🔴" : s === "moderate" ? "🟡" : "🟢"} {s}
@@ -1407,9 +1366,9 @@ function SettingsTab() {
               ))}
             </div>
             <p className="text-xs text-white/30 mt-2">
-              {sensitivity === "strict"   ? "Flags any content with >30% risk. More false positives." :
-               sensitivity === "moderate" ? "Balanced mode. Flags >50% risk. Recommended." :
-               "Only flags very obvious scams (>70% risk). More lenient."}
+              {sensitivity === "strict" ? "Flags any content with >30% risk. More false positives." :
+                sensitivity === "moderate" ? "Balanced mode. Flags >50% risk. Recommended." :
+                  "Only flags very obvious scams (>70% risk). More lenient."}
             </p>
           </div>
 
@@ -1465,16 +1424,16 @@ function SettingsTab() {
 // ═══════════════════════════════════════════════════════════════
 function AuditTab({ logs }: { logs: any[] }) {
   const actionColor: Record<string, string> = {
-    report_approved:   "text-green-400 bg-green-500/10",
-    report_rejected:   "text-red-400 bg-red-500/10",
-    report_deleted:    "text-red-400 bg-red-500/10",
-    report_flagged:    "text-yellow-400 bg-yellow-500/10",
-    user_banned:       "text-red-400 bg-red-500/10",
+    report_approved: "text-green-400 bg-green-500/10",
+    report_rejected: "text-red-400 bg-red-500/10",
+    report_deleted: "text-red-400 bg-red-500/10",
+    report_flagged: "text-yellow-400 bg-yellow-500/10",
+    user_banned: "text-red-400 bg-red-500/10",
     user_role_changed: "text-blue-400 bg-blue-500/10",
-    user_warned:       "text-yellow-400 bg-yellow-500/10",
-    bulk_action:       "text-purple-400 bg-purple-500/10",
-    settings_updated:  "text-blue-400 bg-blue-500/10",
-    threat_intel_synced:"text-green-400 bg-green-500/10",
+    user_warned: "text-yellow-400 bg-yellow-500/10",
+    bulk_action: "text-purple-400 bg-purple-500/10",
+    settings_updated: "text-blue-400 bg-blue-500/10",
+    threat_intel_synced: "text-green-400 bg-green-500/10",
   };
 
   return (

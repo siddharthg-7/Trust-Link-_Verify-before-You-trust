@@ -6,15 +6,21 @@ import helmet from "helmet";
 import natural from "natural";
 import axios from "axios";
 import 'dotenv/config';
-import { Resend } from 'resend';
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
+import { EmailService } from "./backend/emailService";
+
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
-const resend = new Resend(process.env.RESEND_API_KEY);
+const JWT_SECRET = process.env.JWT_SECRET || 'trust-link-secret-2024';
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(express.json());
+
+// Serve favicon
+app.get('/favicon.ico', (req, res) => res.sendFile(path.join(process.cwd(), 'public/favicon.svg')));
 
 // ═══════════════════════════════════════════════════════════════
 //  UNIFIED NLP SERVICE LAYER
@@ -709,139 +715,70 @@ console.log('   - ScamDetector: Unified analysis API');
 
 // ── Email Endpoints (Resend) ─────────────────────────────────
 
-app.post('/api/email/admin-complaint', async (req, res) => {
-  const { title, userName, userEmail, riskScore, content, reportId } = req.body;
-  const ADMIN_EMAIL = "siddharthexam21@gmail.com";
-
-  try {
-    const { data, error } = await resend.emails.send({
-      from: 'TrustLink AI <onboarding@resend.dev>', // Default Resend test address
-      to: ADMIN_EMAIL,
-      subject: `🚨 New Complaint: ${title}`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px;">
-          <h2 style="color: #dc2626;">🚨 New Complaint Reported</h2>
-          <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee;">
-            <p><strong>Report ID:</strong> ${reportId}</p>
-            <p><strong>User:</strong> ${userName} (${userEmail})</p>
-            <p><strong>Risk Score:</strong> <span style="color: ${riskScore > 65 ? '#dc2626' : '#10b981'}; font-weight: bold;">${riskScore}%</span></p>
-            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-            <p><strong>Content Overview:</strong></p>
-            <p style="color: #555; background: #f0f0f0; padding: 15px; border-left: 4px solid #dc2626;">${content}</p>
-          </div>
-          <div style="text-align: center; margin-top: 20px;">
-            <a href="https://trust-link-4151a.web.app/admin" style="display:inline-block; padding: 10px 20px; background: #3b82f6; color: white; text-decoration: none; border-radius: 5px;">View in Dashboard</a>
-          </div>
-        </div>
-      `
-    });
-    
-    if (error) return res.status(400).json({ success: false, error });
-    res.json({ success: true, id: data?.id });
-  } catch (error) {
-    res.status(500).json({ success: false, error });
-  }
-});
-
-app.post('/api/email/user-feedback', async (req, res) => {
-  const { to, userName, trustScore, status, feedback, reportId } = req.body;
-
-  try {
-    const { data, error } = await resend.emails.send({
-      from: 'TrustLink Verification <onboarding@resend.dev>',
-      to: to,
-      subject: `✅ Your Report Has Been Reviewed - Score: ${trustScore}%`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 20px; border-radius: 8px;">
-          <h2 style="color: #3b82f6;">✅ Report Verified</h2>
-          <p>Hi ${userName},</p>
-          <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #eee; text-align: center;">
-            <p>Official Trust Score Assigned:</p>
-            <div style="background: linear-gradient(to right, #ef4444, #f59e0b, #22c55e); padding: 20px; border-radius: 8px; color: white; font-size: 32px; font-weight: bold; margin: 10px 0;">
-              ${trustScore}%
-            </div>
-            <p>Final Status: <strong>${status}</strong></p>
-          </div>
-          <div style="background: #f0f7ff; padding: 15px; border-left: 4px solid #3b82f6; margin: 20px 0;">
-            <p><strong>Moderator Comments:</strong></p>
-            <p style="font-style: italic;">"${feedback}"</p>
-          </div>
-          <p style="font-size: 11px; color: #999; text-align: center;">This is an automated intelligence update from TrustLink.</p>
-        </div>
-      `
-    });
-    
-    if (error) return res.status(400).json({ success: false, error });
-    res.json({ success: true, id: data?.id });
-  } catch (error) {
-    res.status(500).json({ success: false, error });
-  }
-});
-
-// Main analysis endpoint
-app.post('/api/analyze', async (req, res) => {
-  const { content } = req.body;
-  if (!content || typeof content !== 'string' || !content.trim()) {
-    return res.status(400).json({ error: 'Content is required' });
-  }
-  
-  try {
-    const result = await scamDetector.analyze(content);
-    res.json(result);
-  } catch (error) {
-    console.error('Analysis error:', error);
-    res.status(500).json({ error: 'Analysis failed' });
-  }
-});
-
-// NLP metrics endpoint (for monitoring)
-app.get('/api/nlp/metrics', (req, res) => {
-  const metrics = scamDetector.getMetrics();
-  res.json({
-    ...metrics,
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    memory: process.memoryUsage()
-  });
-});
-
-// NLP health check
-app.get('/api/nlp/health', async (req, res) => {
-  const result = await scamDetector.analyze('This is a test message about a free prize lottery winning money immediately');
-  
-  res.json({
-    status: 'healthy',
-    modelLoaded: true,
-    testPrediction: {
-      category: result.category,
-      riskScore: result.riskScore
-    },
-    latency: 'OK'
-  });
-});
-
-// Threat intel sync
-app.post('/api/admin/sync-threat-intel', (req, res) => {
-  const mockIntel = ['metamask', 'phantom', 'ledger', 'seedphrase', 'recovery', 'airdrop', 'mnemonic', 'rugpull', 'honeypot', 'drainer'];
-  mockIntel.forEach(word => {
-    scamDetector['keywords'].addKeyword(word, 20);
-  });
-  res.json({ message: 'Threat intel synced', keywords: mockIntel });
-});
-
 // Reports storage
 let reportsStore: any[] = [];
 
+// ── Token Verification (JWT & Legacy) ──────────────────────
+app.get('/api/auth/verify-token', (req, res) => {
+  const { token, type } = req.query;
+  
+  if (!token) return res.status(400).json({ success: false, error: 'Token is required' });
+
+  // 1. Try JWT Verification (New Standard)
+  if (type === 'admin') {
+    try {
+      const decoded = jwt.verify(token as string, JWT_SECRET) as any;
+      const report = reportsStore.find(r => r.id === decoded.complaintId);
+      if (report) {
+        return res.json({ success: true, reportId: report.id, role: 'admin' });
+      }
+    } catch (e) {
+      console.warn("JWT verification failed, falling back to legacy token check...");
+    }
+  }
+
+  // 2. Legacy / Fallback Token Verification
+  const report = reportsStore.find(r => 
+    (type === 'admin' && r.adminToken === token) || 
+    (type === 'user' && r.userToken === token)
+  );
+
+  if (!report) {
+    return res.status(401).json({ success: false, error: 'Invalid or expired token' });
+  }
+
+  res.json({ success: true, reportId: report.id, role: type });
+});
+
+// ── Main Reports API with Workflow Triggers ─────────────────
 app.get('/api/reports', (req, res) => res.json(reportsStore));
 
 app.post('/api/reports', async (req, res) => {
+  const reportId = Math.random().toString(36).substr(2, 9);
+  const userToken = crypto.randomBytes(16).toString('hex');
+  const adminToken = crypto.randomBytes(16).toString('hex');
+  const ADMIN_EMAIL = "siddharthexam21@gmail.com";
+  const APP_URL = process.env.VITE_APP_URL || "https://trust-link-4151a.web.app";
+
   const report = {
-    id: Math.random().toString(36).substr(2, 9),
+    id: reportId,
     ...req.body,
+    status: "submitted",
+    userToken,
+    adminToken,
     timestamp: new Date(),
   };
+
   reportsStore.push(report);
-  
+
+  // 1. Trigger: Send email to USER (Confirmation via Brevo)
+  if (report.userEmail) {
+    EmailService.sendComplaintConfirmation(report.userEmail, report.userName || 'User', reportId);
+  }
+
+  // 2. Trigger: Send email to ADMIN (Notification via Brevo with JWT)
+  EmailService.sendAdminNotification(reportId, report.riskScore || 0, report.content);
+
   if (report.category === 'Scam' || report.status === 'Scam') {
     await scamDetector.learnFromScam(report.content);
   }
@@ -854,8 +791,24 @@ app.patch('/api/reports/:id', async (req, res) => {
   if (idx === -1) return res.status(404).json({ error: 'Not found' });
   
   const oldStatus = reportsStore[idx].status;
-  reportsStore[idx] = { ...reportsStore[idx], ...req.body };
+  const report = reportsStore[idx];
   
+  // Update the report data
+  reportsStore[idx] = { ...reportsStore[idx], ...req.body };
+  const newStatus = reportsStore[idx].status;
+
+  // 3. Trigger: Send email to USER when resolved (via Brevo)
+  if (newStatus === 'resolved' && oldStatus !== 'resolved' && report.userEmail) {
+    EmailService.sendResolutionEmail(
+      report.userEmail, 
+      report.userName || 'User', 
+      id, 
+      req.body.adminFeedback || 'Review complete.',
+      report.weightedScore || report.riskScore || 0
+    );
+  }
+
+
   if (reportsStore[idx].status === 'Scam' && oldStatus !== 'Scam') {
     await scamDetector.learnFromScam(reportsStore[idx].content);
   }
@@ -867,6 +820,7 @@ app.delete('/api/reports/:id', (req, res) => {
   reportsStore = reportsStore.filter(r => r.id !== id);
   res.status(204).send();
 });
+
 
 // ═══════════════════════════════════════════════════════════════
 //  START SERVER
