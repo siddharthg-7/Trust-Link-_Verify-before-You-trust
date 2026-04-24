@@ -6,11 +6,22 @@ import helmet from "helmet";
 import natural from "natural";
 import axios from "axios";
 import 'dotenv/config';
+import admin from 'firebase-admin';
+import { EmailService } from './backend/emailService.js';
+import rateLimit from 'express-rate-limit';
 
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'trust-link-secret-2024';
+
+// ── FIREBASE ADMIN INITIALIZATION ──────────────────────────
+if (!admin.apps.length) {
+  admin.initializeApp({
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'trust-link-4151a',
+  });
+}
+const db = admin.firestore();
 
 app.use(helmet({ 
   contentSecurityPolicy: false,
@@ -19,8 +30,40 @@ app.use(helmet({
 app.use(cors());
 app.use(express.json());
 
+// ── SECURITY & RATE LIMITING ────────────────────────────────
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiter to all /api routes
+app.use('/api', apiLimiter);
+
+// ── AUTH MIDDLEWARE (Basic example) ─────────────────────────
+const verifyAdmin = async (req: any, res: any, next: any) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: No token provided' });
+  }
+
+  const idToken = authHeader.split('Bearer ')[1];
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    // You can add logic here to check if the user has an 'admin' claim
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    console.error('Error verifying ID token:', error);
+    res.status(403).json({ error: 'Unauthorized: Invalid token' });
+  }
+};
+
 // Serve favicon
 app.get('/favicon.ico', (req, res) => res.sendFile(path.join(process.cwd(), 'public/favicon.svg')));
+
 
 // ═══════════════════════════════════════════════════════════════
 //  UNIFIED NLP SERVICE LAYER
@@ -709,6 +752,116 @@ app.post('/api/analyze', (req, res) => {
   
   const result = scamDetector.analyze(content);
   res.json(result);
+});
+
+
+// ── 7. Complaint Lifecycle Management ──────────────────────
+
+// 1. Create Complaint (Submission)
+app.post('/api/complaint', async (req, res) => {
+  try {
+    const { name, email, message, title, category } = req.body;
+
+    if (!email || !message) {
+      return res.status(400).json({ error: 'Email and message are required' });
+    }
+
+    // AI Analysis
+    const analysis = scamDetector.analyze(message);
+
+    const complaintData = {
+      name: name || email.split('@')[0],
+      email,
+      message,
+      title: title || 'New Complaint',
+      category: category || analysis.complaintType || 'General',
+      status: 'pending',
+      riskScore: analysis.riskScore,
+      riskLevel: analysis.riskLevel,
+      nlpFindings: analysis.findings,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    const docRef = await db.collection('complaints').add(complaintData);
+    const id = docRef.id;
+
+    // Send Emails asynchronously
+    EmailService.sendComplaintConfirmation(email, complaintData.name, id);
+    EmailService.sendAdminNotification(id, analysis.riskScore, message);
+
+    res.status(201).json({
+      success: true,
+      complaintId: id,
+      analysis: {
+        riskScore: analysis.riskScore,
+        riskLevel: analysis.riskLevel,
+        category: analysis.complaintType
+      }
+    });
+  } catch (error: any) {
+    console.error('Error creating complaint:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// 2. Get All Complaints (Admin)
+app.get('/api/complaints', verifyAdmin, async (req, res) => {
+  try {
+    // In a real app, verify admin JWT here
+    const snapshot = await db.collection('complaints').orderBy('createdAt', 'desc').get();
+    const complaints = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    res.json(complaints);
+  } catch (error) {
+    console.error('Error fetching complaints:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// 3. Resolve Complaint
+app.post('/api/complaint/:id/resolve', verifyAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { resolution, score } = req.body;
+
+    if (!resolution) {
+      return res.status(400).json({ error: 'Resolution text is required' });
+    }
+
+    const complaintRef = db.collection('complaints').doc(id);
+    const complaintDoc = await complaintRef.get();
+
+    if (!complaintDoc.exists) {
+      return res.status(404).json({ error: 'Complaint not found' });
+    }
+
+    const complaintData = complaintDoc.data();
+
+    await complaintRef.update({
+      status: 'resolved',
+      resolution,
+      adminScore: score || 0,
+      resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    // Send resolution email to user
+    EmailService.sendResolutionEmail(
+      complaintData?.email,
+      complaintData?.name,
+      id,
+      resolution,
+      score || 0
+    );
+
+    res.json({ success: true, message: 'Complaint resolved' });
+  } catch (error) {
+    console.error('Error resolving complaint:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 

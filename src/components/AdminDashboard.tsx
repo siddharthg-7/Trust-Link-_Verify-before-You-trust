@@ -83,17 +83,23 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [reports, setReports] = useState<any[]>([]);
+  const [complaints, setComplaints] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [community, setCommunity] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [isAdminSidebarOpen, setIsAdminSidebarOpen] = useState(false);
+  const allReports = [...reports, ...complaints].sort((a, b) => {
+    const timeA = a.timestamp?.toDate ? a.timestamp.toDate() : (a.createdAt?.toDate ? a.createdAt.toDate() : new Date(0));
+    const timeB = b.timestamp?.toDate ? b.timestamp.toDate() : (b.createdAt?.toDate ? b.createdAt.toDate() : new Date(0));
+    return timeB - timeA;
+  });
 
   // Derive active tab from URL path
   const pathParts = location.pathname.split('/');
   const activeTab = pathParts[2] || "overview";
 
-  const pendingCount = reports.filter(r => r.status === "Pending").length;
-  const highRiskCount = reports.filter(r => r.riskScore > 65).length;
+  const pendingCount = allReports.filter(r => r.status === "Pending" || r.status === "pending").length;
+  const highRiskCount = allReports.filter(r => r.riskScore > 65).length;
 
   // Live Firestore subscriptions
   useEffect(() => {
@@ -110,6 +116,11 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
       snap => setReports(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
       handleError("reports")
     );
+    const unsubComplaints = onSnapshot(
+      query(collection(db, "complaints"), orderBy("createdAt", "desc")),
+      snap => setComplaints(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      handleError("complaints")
+    );
     const unsubUsers = onSnapshot(
       query(collection(db, "users"), orderBy("createdAt", "desc")),
       snap => setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
@@ -125,7 +136,7 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
       snap => setAuditLogs(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
       handleError("audit")
     );
-    return () => { unsubReports(); unsubUsers(); unsubComm(); unsubAudit(); };
+    return () => { unsubReports(); unsubComplaints(); unsubUsers(); unsubComm(); unsubAudit(); };
   }, []);
 
   const AdminSidebarContent = (
@@ -150,7 +161,7 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
         </div>
         {NAV.map(({ id, label, icon: Icon, badge }) => {
           const isActive = activeTab === id;
-          const badgeCount = badge === "reports" ? reports.length : badge === "pending" ? pendingCount : 0;
+          const badgeCount = badge === "reports" ? allReports.length : badge === "pending" ? pendingCount : 0;
           return (
             <button
               key={id}
@@ -278,15 +289,15 @@ export function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
         <div className="flex-1 overflow-y-auto relative z-10">
           <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-8">
             <Routes>
-              <Route path="/" element={<OverviewTab reports={reports} users={users} community={community} />} />
-              <Route path="/moderation" element={<ModerationTab reports={reports} user={user} />} />
+              <Route path="/" element={<OverviewTab reports={allReports} users={users} community={community} />} />
+              <Route path="/moderation" element={<ModerationTab reports={allReports} user={user} />} />
               <Route path="/scam-analysis" element={<ScamAnalysisTab />} />
               <Route path="/users" element={<UsersTab users={users} />} />
-              <Route path="/reports" element={<ReportsTab reports={reports} />} />
-              <Route path="/analytics" element={<AnalyticsTab reports={reports} users={users} community={community} />} />
+              <Route path="/reports" element={<ReportsTab reports={allReports} />} />
+              <Route path="/analytics" element={<AnalyticsTab reports={allReports} users={users} community={community} />} />
               <Route path="/settings" element={<SettingsTab />} />
               <Route path="/audit" element={<AuditTab logs={auditLogs} />} />
-              <Route path="/notifications" element={<NotificationsTab reports={reports} />} />
+              <Route path="/notifications" element={<NotificationsTab reports={allReports} />} />
               <Route path="*" element={<Navigate to="/admin" replace />} />
             </Routes>
           </div>
@@ -514,22 +525,24 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
     setUpdatingId(reportId);
 
     try {
-      const aiScore = reviewingReport.riskScore || 0;
-      const weightedScore = Math.round((aiScore * 0.7) + (adminScore * 0.3));
-      const status = weightedScore > 50 ? "Scam" : "Resolved"; 
-
-      // Update directly in Firestore (Reverting to original direct-to-db logic)
-      await updateDoc(doc(db, "reports", reportId), {
-        adminScore,
-        weightedScore,
-        adminFeedback,
-        status,
-        lastReviewedAt: serverTimestamp(),
-        reviewedBy: user?.email
+      const idToken = await auth.currentUser?.getIdToken();
+      
+      const response = await fetch(`/api/complaint/${reportId}/resolve`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          resolution: adminFeedback,
+          score: adminScore
+        })
       });
 
-      await logAudit("detailed_review_submitted", `Review submitted for ${reportId}. Weighted Score: ${weightedScore}`, reportId);
-      toast.success("Review submitted successfully!");
+      if (!response.ok) throw new Error('Resolution failed');
+
+      await logAudit("detailed_review_submitted", `Review submitted for ${reportId} via API.`, reportId);
+      toast.success("Review submitted and email sent!");
       setReviewingReport(null);
     } catch (error) {
       console.error("Review Error:", error);
@@ -732,9 +745,9 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1 items-start">
                       <span className={cn("text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-wider",
-                        r.status === "Pending" ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/10" :
-                          r.status === "Verified" ? "bg-green-500/10 text-green-500 border border-green-500/10" :
-                            r.status === "Scam" ? "bg-red-500/10 text-red-400 border border-red-500/10" :
+                        (r.status?.toLowerCase() === "pending" || r.status === "submitted") ? "bg-yellow-500/10 text-yellow-500 border border-yellow-500/10" :
+                          (r.status?.toLowerCase() === "verified" || r.status?.toLowerCase() === "resolved") ? "bg-green-500/10 text-green-500 border border-green-500/10" :
+                            r.status?.toLowerCase() === "scam" ? "bg-red-500/10 text-red-400 border border-red-500/10" :
                               "bg-white/5 text-white/40"
                       )}>
                         {r.status || "Unknown"}
