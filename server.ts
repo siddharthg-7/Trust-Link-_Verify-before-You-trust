@@ -773,11 +773,19 @@ app.post('/api/reports', async (req, res) => {
 
   // 1. Trigger: Send email to USER (Confirmation via Brevo)
   if (report.userEmail) {
-    EmailService.sendComplaintConfirmation(report.userEmail, report.userName || 'User', reportId);
+    try {
+      await EmailService.sendComplaintConfirmation(report.userEmail, report.userName || 'User', reportId);
+    } catch (e) {
+      console.error("Failed to send confirmation email:", e);
+    }
   }
 
   // 2. Trigger: Send email to ADMIN (Notification via Brevo with JWT)
-  EmailService.sendAdminNotification(reportId, report.riskScore || 0, report.content);
+  try {
+    await EmailService.sendAdminNotification(reportId, report.riskScore || 0, report.content);
+  } catch (e) {
+    console.error("Failed to send admin notification email:", e);
+  }
 
   if (report.category === 'Scam' || report.status === 'Scam') {
     await scamDetector.learnFromScam(report.content);
@@ -799,13 +807,17 @@ app.patch('/api/reports/:id', async (req, res) => {
 
   // 3. Trigger: Send email to USER when resolved (via Brevo)
   if (newStatus === 'resolved' && oldStatus !== 'resolved' && report.userEmail) {
-    EmailService.sendResolutionEmail(
-      report.userEmail, 
-      report.userName || 'User', 
-      id, 
-      req.body.adminFeedback || 'Review complete.',
-      report.weightedScore || report.riskScore || 0
-    );
+    try {
+      await EmailService.sendResolutionEmail(
+        report.userEmail, 
+        report.userName || 'User', 
+        id, 
+        req.body.adminFeedback || 'Review complete.',
+        report.weightedScore || report.riskScore || 0
+      );
+    } catch (e) {
+      console.error("Failed to send resolution email:", e);
+    }
   }
 
 

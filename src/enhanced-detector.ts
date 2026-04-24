@@ -7,10 +7,10 @@ export class TemporalAnalyzer {
   analyze(senderId: string, timestamp: number): { densityRisk: number; timeOfDayRisk: number } {
     const now = timestamp || Date.now();
     const times = this.messageHistory.get(senderId) || [];
-    
+
     // Add new timestamp
     times.push(now);
-    
+
     // Filter to last 5 minutes (300,000 ms)
     const fiveMinutesAgo = now - 300000;
     const recentTimes = times.filter(t => t > fiveMinutesAgo);
@@ -22,7 +22,7 @@ export class TemporalAnalyzer {
     // Time-of-day Risk: 1 AM - 5 AM = high risk, late night = medium risk, 2 PM - 4 PM = low risk
     const hour = new Date(now).getHours();
     let timeOfDayRisk = 0;
-    
+
     if (hour >= 1 && hour <= 5) timeOfDayRisk = 40;      // 1 AM - 5 AM (High risk)
     else if (hour >= 22 || hour === 0) timeOfDayRisk = 25; // 10 PM - midnight (Suspicious)
     else if (hour >= 14 && hour <= 16) timeOfDayRisk = 15; // 2 PM - 4 PM (Work hours / distracted)
@@ -49,9 +49,11 @@ export class EnhancedScamDetector {
       const baseScams = [
         "Congratulations! You won a gift card. Click here.",
         "Urgent: Account suspended. Verify now.",
-        "Send money to claim your prize."
+        "Send money to claim your prize.",
+        "Claim Your Prize Now!",
+        "Verify your account immediately to avoid suspension."
       ];
-      
+
       for (const scam of baseScams) {
         const emb = await this.bert.getEmbedding(scam);
         this.scamEmbeddings.push(emb);
@@ -62,7 +64,7 @@ export class EnhancedScamDetector {
       console.error('❌ Failed to initialize BERT in EnhancedScamDetector. Falling back to linguistic-only analysis.', error);
       // We set isInitialized to true so the app doesn't hang, 
       // but BERT embeddings will be empty.
-      this.isInitialized = true; 
+      this.isInitialized = true;
     }
   }
 
@@ -111,15 +113,15 @@ export class EnhancedScamDetector {
 
     // 4. Composite Scoring
     // If we have backendResult, we might want to prioritize it or blend it
-    const compositeScore = backendResult 
+    const compositeScore = backendResult
       ? (backendResult.riskScore * 0.7 + linguisticRisk * 0.3) // Weight backend more if available
       : (vectorRisk * 0.40) + (linguisticRisk * 0.35) + (densityRisk * 0.15) + (timeOfDayRisk * 0.1);
-    
+
     const finalRiskScore = Math.round(Math.min(compositeScore, 100));
 
     // 5. Complaint Classification
     const complaintType = backendResult?.complaintType || this.classifyComplaintType(content, finalRiskScore);
-    
+
     return {
       riskScore: finalRiskScore,
       details: {

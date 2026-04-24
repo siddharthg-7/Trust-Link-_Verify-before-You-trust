@@ -7,6 +7,7 @@ const BREVO_API_KEY = process.env.BREVO_API_KEY || '';
 const JWT_SECRET = process.env.JWT_SECRET || 'trust-link-secret-2024';
 const APP_URL = process.env.VITE_APP_URL || "https://trust-link-4151a.web.app";
 const ADMIN_EMAIL = "siddharthexam21@gmail.com";
+const SENDER_EMAIL = process.env.BREVO_SENDER_EMAIL || "siddharthexam21@gmail.com";
 
 // Initialize Brevo v5 Client
 const brevo = new BrevoClient({
@@ -56,7 +57,7 @@ export class EmailService {
   static async sendComplaintConfirmation(userEmail: string, userName: string, complaintId: string) {
     const payload = {
       subject: `🛡️ Complaint Received: ${complaintId}`,
-      sender: { name: 'TrustLink Security', email: 'notifications@trustlink.ai' },
+      sender: { name: 'TrustLink Security', email: SENDER_EMAIL },
       to: [{ email: userEmail, name: userName }],
       htmlContent: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #f9f9f9; padding: 30px; border-radius: 16px;">
@@ -76,6 +77,7 @@ export class EmailService {
       return { success: true };
     } catch (error: any) {
       await logEmail({ complaintId, type: 'confirmation', recipient: userEmail, status: 'failed', error: error.message });
+      console.error("Email error:", error);
       return { success: false, error: error.message };
     }
   }
@@ -87,7 +89,7 @@ export class EmailService {
 
     const payload = {
       subject: `🚨 New Complaint: ${complaintId} [Risk: ${riskScore}%]`,
-      sender: { name: 'TrustLink Intelligence', email: 'system@trustlink.ai' },
+      sender: { name: 'TrustLink Intelligence', email: SENDER_EMAIL },
       to: [{ email: ADMIN_EMAIL, name: 'Admin' }],
       htmlContent: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; padding: 30px; border-radius: 16px; color: white;">
@@ -109,6 +111,7 @@ export class EmailService {
       return { success: true };
     } catch (error: any) {
       await logEmail({ complaintId, type: 'notification', recipient: ADMIN_EMAIL, status: 'failed', error: error.message });
+      console.error("Email error:", error);
       return { success: false, error: error.message };
     }
   }
@@ -117,7 +120,7 @@ export class EmailService {
   static async sendResolutionEmail(userEmail: string, userName: string, complaintId: string, feedback: string, score: number) {
     const payload = {
       subject: `✅ Resolution Reached: ${complaintId}`,
-      sender: { name: 'TrustLink Verification', email: 'security@trustlink.ai' },
+      sender: { name: 'TrustLink Verification', email: SENDER_EMAIL },
       to: [{ email: userEmail, name: userName }],
       htmlContent: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 16px; border: 1px solid #22c55e;">
@@ -141,7 +144,9 @@ export class EmailService {
       return { success: true };
     } catch (error: any) {
       await logEmail({ complaintId, type: 'resolution', recipient: userEmail, status: 'failed', error: error.message });
+      console.error("Email error:", error);
       return { success: false, error: error.message };
     }
   }
 }
+
