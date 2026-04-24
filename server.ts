@@ -713,6 +713,15 @@ console.log('   - ScamDetector: Unified analysis API');
 //  API ROUTES
 // ═══════════════════════════════════════════════════════════════
 
+// ── Analysis Fallback Endpoint ──────────────────────────────
+app.post('/api/analyze', (req, res) => {
+  const { content } = req.body;
+  if (!content) return res.status(400).json({ error: 'Content is required' });
+  
+  const result = scamDetector.analyze(content);
+  res.json(result);
+});
+
 // ── Email Endpoints (Resend) ─────────────────────────────────
 
 // Reports storage

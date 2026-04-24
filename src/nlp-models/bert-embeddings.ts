@@ -21,12 +21,14 @@ export class BertEmbeddings {
       // 2. Configure environment (CDN only)
       env.allowLocalModels = false;
       env.useBrowserCache = true;
+      env.remoteHost = 'https://huggingface.co';
+      env.remotePathTemplate = '{model}/resolve/main/';
 
-      // 3. Load Multilingual MiniLM model
+      // 3. Load lightweight MiniLM model (L6 is faster and more stable than L12 Multilingual)
       this.extractor = await pipeline(
         'feature-extraction',
-        'Xenova/paraphrase-multilingual-MiniLM-L12-v2',
-        { quantized: true } // Quantized for speed and smaller download size
+        'Xenova/all-MiniLM-L6-v2',
+        { quantized: true } 
       );
       
       this.isReady = true;
