@@ -199,7 +199,7 @@ export function StudentDashboard() {
         description: complaintData.description || "User reported content for manual review.",
         category: complaintData.category || "Other",
         status: "submitted",
-        timestamp: new Date().toISOString(),
+        timestamp: serverTimestamp(),
         chatEnabled: true,
         riskScore: result?.riskScore ?? 0,
         nlpConfidence: result?.confidence ?? 0,
@@ -440,7 +440,13 @@ export function StudentDashboard() {
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-semibold text-white truncate leading-tight uppercase tracking-tight">{report.title}</div>
                   <div className="text-[10px] text-zinc-500 font-medium uppercase tracking-wider mt-1 mb-3">
-                    {report.timestamp?.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {report.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {report.timestamp?.toDate ? (
+                      <>
+                        {report.timestamp.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} • {report.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </>
+                    ) : (
+                      "Just now"
+                    )}
                   </div>
                   
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2">
