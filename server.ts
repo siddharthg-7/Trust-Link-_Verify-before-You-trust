@@ -7,7 +7,6 @@ import natural from "natural";
 import axios from "axios";
 import 'dotenv/config';
 import admin from 'firebase-admin';
-import { EmailService } from './backend/emailService.js';
 import rateLimit from 'express-rate-limit';
 
 
@@ -16,7 +15,7 @@ const PORT = Number(process.env.PORT) || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'trust-link-secret-2024';
 
 // ── FIREBASE ADMIN INITIALIZATION ──────────────────────────
-if (!admin.apps.length) {
+if (!admin?.apps || admin.apps.length === 0) {
   try {
     // If running locally, you can explicitly point to the service account
     const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "./serviceAccountKey.json";
@@ -777,6 +776,18 @@ app.get('/api/health', async (req, res) => {
 
 // ── 7. Complaint Lifecycle Management ──────────────────────
 
+// Python Email Service Helper
+const triggerEmailService = async (data: any) => {
+  try {
+    const pythonServiceUrl = process.env.PYTHON_SERVICE_URL || 'http://127.0.0.1:5000/send-email';
+    await axios.post(pythonServiceUrl, data);
+    console.log(`✅ Python Email Service triggered for: ${data.type}`);
+  } catch (error: any) {
+    console.error(`❌ Python Email Service failed: ${error.message}`);
+    // We don't throw here to avoid failing the whole request if only email fails
+  }
+};
+
 // 1. Create Complaint (Submission)
 app.post('/api/complaint', async (req, res) => {
   try {
@@ -791,24 +802,43 @@ app.post('/api/complaint', async (req, res) => {
 
     const complaintData = {
       name: name || email.split('@')[0],
+      userName: name || email.split('@')[0], // For frontend consistency
+      userEmail: email,
       email,
+      content: message, // Frontend expects 'content'
       message,
       title: title || 'New Complaint',
       category: category || analysis.complaintType || 'General',
-      status: 'pending',
+      status: 'Pending Review', // Match standard frontend status
       riskScore: analysis.riskScore,
       riskLevel: analysis.riskLevel,
+      nlpConfidence: analysis.confidence || 0,
       nlpFindings: analysis.findings,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     };
 
-    const docRef = await db.collection('complaints').add(complaintData);
+    const docRef = await db.collection('reports').add(complaintData);
     const id = docRef.id;
 
-    // Send Emails asynchronously
-    EmailService.sendComplaintConfirmation(email, complaintData.name, id);
-    EmailService.sendAdminNotification(id, analysis.riskScore, message);
+    // Trigger Python Email Service
+    triggerEmailService({
+      type: "user_confirmation",
+      email: email,
+      details: {
+        complaintId: id,
+        message: message
+      }
+    });
+
+    triggerEmailService({
+      type: "admin_alert",
+      details: {
+        complaintId: id,
+        userEmail: email,
+        message: message
+      }
+    });
 
     res.status(201).json({
       success: true,
@@ -824,8 +854,7 @@ app.post('/api/complaint', async (req, res) => {
     res.status(500).json({ 
       error: 'Internal server error', 
       details: error.message,
-      code: error.code,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      code: error.code
     });
   }
 });
@@ -833,8 +862,7 @@ app.post('/api/complaint', async (req, res) => {
 // 2. Get All Complaints (Admin)
 app.get('/api/complaints', verifyAdmin, async (req, res) => {
   try {
-    // In a real app, verify admin JWT here
-    const snapshot = await db.collection('complaints').orderBy('createdAt', 'desc').get();
+    const snapshot = await db.collection('reports').orderBy('timestamp', 'desc').get();
     const complaints = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
@@ -856,7 +884,7 @@ app.post('/api/complaint/:id/resolve', verifyAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Resolution text is required' });
     }
 
-    const complaintRef = db.collection('complaints').doc(id);
+    const complaintRef = db.collection('reports').doc(id);
     const complaintDoc = await complaintRef.get();
 
     if (!complaintDoc.exists) {
@@ -873,14 +901,16 @@ app.post('/api/complaint/:id/resolve', verifyAdmin, async (req, res) => {
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
-    // Send resolution email to user
-    EmailService.sendResolutionEmail(
-      complaintData?.email,
-      complaintData?.name,
-      id,
-      resolution,
-      score || 0
-    );
+    // Trigger Python Email Service for Resolution
+    triggerEmailService({
+      type: "resolution",
+      email: complaintData?.email,
+      details: {
+        complaintId: id,
+        resolution: resolution,
+        score: score || 0
+      }
+    });
 
     res.json({ success: true, message: 'Complaint resolved' });
   } catch (error) {

@@ -138,6 +138,7 @@ export function StudentDashboard() {
   const [complaintData, setComplaintData] = useState({ title: "", description: "", category: "" });
   const [selectedChatReport, setSelectedChatReport] = useState<any | null>(null);
   const [totalReports, setTotalReports] = useState(0);
+  const [submittedId, setSubmittedId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -190,32 +191,41 @@ export function StudentDashboard() {
     if (!auth.currentUser || !finalContent) return;
     setIsSubmitting(true);
     try {
-      const initialPayload = {
-        userId: auth.currentUser.uid,
-        userEmail: auth.currentUser.email,
-        userName: auth.currentUser.displayName || auth.currentUser.email?.split("@")[0] || "Anonymous",
-        content: finalContent,
+      const payload = {
         title: complaintData.title || "Official Complaint",
-        description: complaintData.description || "User reported content for manual review.",
+        content: finalContent,
         category: complaintData.category || "Other",
         status: "Pending Review",
         timestamp: serverTimestamp(),
-        chatEnabled: true,
+        userName: auth.currentUser.displayName || auth.currentUser.email?.split("@")[0] || "Anonymous",
+        userEmail: auth.currentUser.email,
+        userId: auth.currentUser.uid, // Required by security rules
         riskScore: result?.riskScore ?? 0,
-        nlpConfidence: result?.confidence ?? 0,
-        complaintType: result?.complaintType ?? "General"
+        nlpConfidence: result?.confidence ?? 0
       };
 
-      // 1. Submit directly to Firestore for instant appearing in Responses Page
-      const reportRef = await addDoc(collection(db, "reports"), initialPayload);
+      // 1. DIRECT FIRESTORE WRITE (for instant appearance in Trends/Responses)
+      const reportRef = await addDoc(collection(db, "reports"), payload);
+      setSubmittedId(reportRef.id);
 
-      // 2. Update user stats in Firestore
+      // 2. TRIGGER EMAIL VIA BACKEND
+      fetch('/api/complaint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...payload,
+          message: finalContent,
+          name: payload.userName,
+          email: payload.userEmail
+        })
+      }).catch(err => console.error("Email trigger failed:", err));
+      
+      // Update local user stats
       const userRef = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userRef, { reportsCount: increment(1) });
 
-      toast.success("Report submitted successfully! View it in the Responses page.");
-      console.log("Report created in Firestore:", reportRef.id);
-
+      toast.success("Report logged and queued for review!");
+      
       setContent("");
       setComplaintData({ title: "", description: "", category: "" });
       setShowComplaintForm(false);
@@ -235,7 +245,47 @@ export function StudentDashboard() {
         <div className="w-[600px] h-[600px] bg-white/5 blur-[120px] rounded-full mt-[-100px]" />
       </div>
 
-      <div className="relative z-10 max-w-6xl mx-auto space-y-12">
+        {/* ── Submission Success State ────────────────────────── */}
+        <AnimatePresence>
+          {submittedId && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-zinc-900/90 border border-zinc-800 rounded-2xl p-10 text-center space-y-8 backdrop-blur-2xl"
+            >
+              <div className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <MdOutlineVerified className="w-10 h-10" />
+              </div>
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold text-white tracking-tight">Submission Received</h2>
+                <p className="text-zinc-400 text-lg">
+                  Thank you for your response. We will evaluate and send you an email.
+                </p>
+                <div className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest pt-2">
+                  Reference ID: {submittedId}
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+                <button 
+                  onClick={() => navigate("/app/responses")}
+                  className="px-8 py-3 bg-white text-black rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-zinc-200 transition-all"
+                >
+                  Explore More Complaints
+                </button>
+                <button 
+                  onClick={() => setSubmittedId(null)}
+                  className="px-8 py-3 bg-zinc-800 text-white rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-zinc-700 transition-all"
+                >
+                  Submit Another
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {!submittedId && (
+          <div className="relative z-10 max-w-6xl mx-auto space-y-12">
         {/* ── Header Section (Hero) ────────────────────────────── */}
         <div className="space-y-4">
           <div className="inline-flex items-center px-3 py-1 bg-white/5 border border-white/10 rounded-full text-zinc-400 text-[10px] font-bold uppercase tracking-[0.2em] align-center">
@@ -515,7 +565,8 @@ export function StudentDashboard() {
             </div>
           )}
         </AnimatePresence>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

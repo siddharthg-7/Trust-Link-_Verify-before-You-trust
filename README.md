@@ -285,3 +285,23 @@ This project is licensed under the **MIT License**.
 **Gilakathi Siddhartha Goud** 
 <br>
 *Building systems that solve real-world problems.*
+
+## 📧 Python Email Service Setup
+
+The platform uses a Python-based microservice for high-reliability Gmail SMTP notifications.
+
+### 1. Prerequisites
+- Python 3.8+
+- Gmail App Password (already configured in `emailing.py`)
+
+### 2. Installation
+```bash
+cd backend/app
+pip install -r requirements.txt
+```
+
+### 3. Running the Service
+```bash
+python main.py
+```
+The service will start on `http://localhost:5000`. The Express server automatically communicates with this service.
