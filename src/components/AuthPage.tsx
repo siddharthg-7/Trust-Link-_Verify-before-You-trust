@@ -121,14 +121,17 @@ export function AuthPage() {
       await ensureUserDoc(result.user);
       toast.success("Welcome back to TrustLink!");
     } catch (err: any) {
+      console.error("Login error:", err.code, err.message);
       const msg =
         err.code === "auth/invalid-credential"
           ? "Invalid email or password"
           : err.code === "auth/user-not-found"
-          ? "No account found with this email"
+          ? "No account found with this email. Please sign up."
           : err.code === "auth/wrong-password"
           ? "Incorrect password"
-          : "Login failed. Please try again.";
+          : err.code === "auth/operation-not-allowed"
+          ? "Email/Password sign-in is not enabled in Firebase Console."
+          : `Login failed: ${err.code || 'Unknown error'}`;
       toast.error(msg);
     } finally {
       setIsLoading(false);
@@ -154,7 +157,9 @@ export function AuthPage() {
       await updateProfile(result.user, { displayName: name });
       await ensureUserDoc({ ...result.user, displayName: name });
       toast.success("Account created! Welcome to TrustLink 🎉");
+      navigate(email === "siddharthexam21@gmail.com" ? "/admin" : "/app/home", { replace: true });
     } catch (err: any) {
+      console.error("Signup error:", err.code, err.message);
       const msg =
         err.code === "auth/email-already-in-use"
           ? "An account already exists with this email"
@@ -162,7 +167,9 @@ export function AuthPage() {
           ? "Password is too weak"
           : err.code === "auth/invalid-email"
           ? "Invalid email address"
-          : "Sign up failed. Please try again.";
+          : err.code === "auth/operation-not-allowed"
+          ? "Email/Password sign-up is not enabled in Firebase Console."
+          : `Sign up failed: ${err.code || 'Unknown error'}`;
       toast.error(msg);
     } finally {
       setIsLoading(false);
@@ -185,7 +192,7 @@ export function AuthPage() {
         await signInWithRedirect(auth, googleProvider);
         // Page will reload; result handled in useEffect above
       } else if (err.code === "auth/operation-not-allowed") {
-        toast.error("Google sign-in is not enabled. Please contact the admin.");
+        toast.error("Google sign-in is not enabled. Please enable it in Firebase Console.");
       } else if (err.code !== "auth/popup-closed-by-user") {
         toast.error(`Google sign-in failed: ${err.message}`);
         console.error("Google auth error:", err.code, err.message);
@@ -212,18 +219,22 @@ export function AuthPage() {
       if (role === "admin" || isAdminEmail) {
         await ensureUserDoc(result.user, "admin");
         toast.success("Admin access granted ✅");
+        navigate("/admin", { replace: true });
       } else {
         await auth.signOut();
         toast.error("This account does not have admin privileges");
       }
     } catch (err: any) {
+      console.error("Admin login error:", err.code, err.message);
       const msg =
         err.code === "auth/invalid-credential" ||
         err.code === "auth/user-not-found"
-          ? "Invalid admin credentials"
+          ? "Admin account not found. Please ensure you have signed up first."
           : err.code === "auth/wrong-password"
           ? "Incorrect password"
-          : "Admin login failed";
+          : err.code === "auth/operation-not-allowed"
+          ? "Email/Password sign-in is not enabled in Firebase Console."
+          : `Admin login failed: ${err.code || 'Unknown error'}`;
       toast.error(msg);
     } finally {
       setIsLoading(false);
@@ -531,6 +542,20 @@ export function AuthPage() {
                     )}
                   </button>
                 </form>
+
+                <p className="text-center text-xs font-medium text-zinc-500">
+                  Don't have an admin account?{" "}
+                  <button
+                    onClick={() => { 
+                      setRoleTab("user"); 
+                      setAuthMode("signup"); 
+                      setEmail("siddharthexam21@gmail.com"); 
+                    }}
+                    className="text-white hover:underline font-bold transition-all underline-offset-4"
+                  >
+                    Sign Up as Admin
+                  </button>
+                </p>
 
                 <p className="text-center text-[10px] font-black uppercase tracking-widest text-zinc-600/50 mt-4">
                   Hardware Authentication Required
