@@ -791,7 +791,7 @@ const triggerEmailService = async (data: any) => {
 // 1. Create Complaint (Submission)
 app.post('/api/complaint', async (req, res) => {
   try {
-    const { name, email, message, title, category } = req.body;
+    const { name, email, message, title, category, userId } = req.body;
 
     if (!email || !message) {
       return res.status(400).json({ error: 'Email and message are required' });
@@ -812,6 +812,7 @@ app.post('/api/complaint', async (req, res) => {
       status: 'Pending Review', // Match standard frontend status
       riskScore: analysis.riskScore,
       riskLevel: analysis.riskLevel,
+      userId: userId || null,
       nlpConfidence: analysis.confidence || 0,
       nlpFindings: analysis.findings,
       timestamp: admin.firestore.FieldValue.serverTimestamp(),

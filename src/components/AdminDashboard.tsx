@@ -1063,15 +1063,30 @@ function ReportsTab({ reports }: { reports: any[] }) {
   const sorted = [...reports].sort((a, b) => (b.riskScore || 0) - (a.riskScore || 0));
 
   async function warnUser(report: any) {
-    if (!report.userId) {
-      toast.error("User ID missing from report");
+    let targetUid = report.userId;
+
+    if (!targetUid && (report.userEmail || report.email)) {
+      try {
+        const userEmail = report.userEmail || report.email;
+        const uQuery = query(collection(db, "users"), where("email", "==", userEmail));
+        const uSnap = await getDocs(uQuery);
+        if (!uSnap.empty) {
+          targetUid = uSnap.docs[0].id;
+        }
+      } catch (err) {
+        console.error("User lookup failed:", err);
+      }
+    }
+
+    if (!targetUid) {
+      toast.error("User ID missing from report and could not be resolved by email");
       return;
     }
 
     setUpdatingId(report.id);
     setActionType("warn");
     try {
-      const userRef = doc(db, "users", report.userId);
+      const userRef = doc(db, "users", targetUid);
       // Update user doc
       await updateDoc(userRef, {
         warned: true,

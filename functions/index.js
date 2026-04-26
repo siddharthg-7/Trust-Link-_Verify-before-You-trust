@@ -144,9 +144,9 @@ const verifyAdmin = async (req, res, next) => {
 // ── API ROUTES ─────────────────────────────────────────────────
 
 // 1. Create Complaint
-app.post('/complaint', async (req, res) => {
+app.post('/api/complaint', async (req, res) => {
     try {
-        const { name, email, message, title, category } = req.body;
+        const { name, email, message, title, category, userId } = req.body;
         if (!email || !message) return res.status(400).json({ error: 'Missing fields' });
 
         const analysis = scamDetector.analyze(message);
@@ -164,6 +164,7 @@ app.post('/complaint', async (req, res) => {
             riskScore: analysis.riskScore,
             riskLevel: analysis.riskLevel,
             nlpFindings: analysis.findings,
+            userId: userId || null,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
             updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         };
@@ -191,7 +192,7 @@ app.post('/complaint', async (req, res) => {
 });
 
 // 2. Get Complaints
-app.get('/complaints', verifyAdmin, async (req, res) => {
+app.get('/api/complaints', verifyAdmin, async (req, res) => {
     try {
         const snapshot = await db.collection('reports').orderBy('timestamp', 'desc').get();
         const complaints = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -202,7 +203,7 @@ app.get('/complaints', verifyAdmin, async (req, res) => {
 });
 
 // 3. Resolve Complaint
-app.post('/complaint/:id/resolve', verifyAdmin, async (req, res) => {
+app.post('/api/complaint/:id/resolve', verifyAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { resolution, score } = req.body;
