@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
 import cors from "cors";
 import helmet from "helmet";
@@ -17,18 +16,31 @@ const JWT_SECRET = process.env.JWT_SECRET || 'trust-link-secret-2024';
 // ── FIREBASE ADMIN INITIALIZATION ──────────────────────────
 if (!admin?.apps || admin.apps.length === 0) {
   try {
-    // If running locally, you can explicitly point to the service account
-    const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "./serviceAccountKey.json";
-
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccountPath),
-      projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'trust-link-4151a'
-    });
-    console.log("✅ Firebase Admin initialized with Service Account");
+    const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+    if (serviceAccountVar) {
+      const serviceAccount = JSON.parse(serviceAccountVar);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'trust-link-4151a'
+      });
+      console.log("✅ Firebase Admin initialized with Environment Variable");
+    } else {
+      // Fallback to file-based (for local dev)
+      const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "./serviceAccountKey.json";
+      try {
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccountPath),
+          projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'trust-link-4151a'
+        });
+        console.log("✅ Firebase Admin initialized with Service Account File");
+      } catch (fileError) {
+        // Final fallback for Cloud environments with default credentials
+        admin.initializeApp();
+        console.log("✅ Firebase Admin initialized with Default Credentials");
+      }
+    }
   } catch (error) {
-    // Fallback for Cloud environments (Vercel/Firebase Functions)
-    admin.initializeApp();
-    console.log("✅ Firebase Admin initialized with Default Credentials");
+    console.error("❌ Firebase Admin initialization error:", error);
   }
 }
 const db = admin.firestore();
@@ -934,23 +946,31 @@ app.post('/api/complaint/:id/resolve', verifyAdmin, async (req, res) => {
 // ═══════════════════════════════════════════════════════
 
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
+  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    try {
+      const { createServer: createViteServer } = await import('vite');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+      console.log("🚀 Vite dev server integrated");
+    } catch (e) {
+      console.warn("⚠️ Vite not found, skipping dev server integration");
+    }
+  } else if (process.env.NODE_ENV === 'production') {
     const distPath = path.join(process.cwd(), 'dist');
     app.use(express.static(distPath));
-    app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
+    // Important: Only catch-all if not a Vercel function (which handles routing via vercel.json)
+    if (!process.env.VERCEL) {
+      app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
+    }
   }
 
   if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🛡️  TrustLink server running on http://localhost:${PORT}`);
-      console.log(`📊 NLP metrics available at /api/nlp/metrics`);
-      console.log(`❤️  NLP health check at /api/nlp/health`);
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => {
+      console.log(`🛡️  TrustLink server running on http://localhost:${port}`);
     });
   }
 }
