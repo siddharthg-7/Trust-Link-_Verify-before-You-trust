@@ -19,7 +19,7 @@ if (!admin?.apps || admin.apps.length === 0) {
   try {
     // If running locally, you can explicitly point to the service account
     const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "./serviceAccountKey.json";
-    
+
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccountPath),
       projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'trust-link-4151a'
@@ -33,7 +33,7 @@ if (!admin?.apps || admin.apps.length === 0) {
 }
 const db = admin.firestore();
 
-app.use(helmet({ 
+app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
 }));
@@ -85,7 +85,7 @@ class NLPPipeline {
   private tokenizer = new natural.WordTokenizer();
   private stemmer = natural.PorterStemmer;
   private stopwords = new Set(natural.stopwords);
-  
+
   // Extended stopwords for scam detection
   private scamStopwords = new Set([
     'http', 'https', 'www', 'com', 'net', 'org', 'co',
@@ -111,44 +111,44 @@ class NLPPipeline {
     } = options;
 
     let processed = text;
-    
+
     // Remove URLs
     if (removeUrls) {
       processed = processed.replace(/https?:\/\/[^\s]+/gi, '');
       processed = processed.replace(/www\.[^\s]+/gi, '');
       processed = processed.replace(/\b\w+\.(com|net|org|io|tk|ga|cf|gq|ml)\b/gi, '');
     }
-    
+
     // Remove email addresses
     if (removeEmails) {
       processed = processed.replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '');
     }
-    
+
     // Remove phone numbers
     if (removePhoneNumbers) {
       processed = processed.replace(/\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4,}\b/g, '');
       processed = processed.replace(/\b\+?\d{1,3}[-.\s]?\d{3,4}[-.\s]?\d{3,4}[-.\s]?\d{3,4}\b/g, '');
     }
-    
+
     // Tokenize
     let tokens = this.tokenizer.tokenize(lowercase ? processed.toLowerCase() : processed);
-    
+
     if (!tokens) return [];
-    
+
     // Remove short tokens
     tokens = tokens.filter(t => t.length > 2);
-    
+
     // Remove standard stopwords
     if (removeStopwords) {
       const allStopwords = new Set([...this.stopwords, ...this.scamStopwords]);
       tokens = tokens.filter(t => !allStopwords.has(t));
     }
-    
+
     // Apply stemming
     if (stem) {
       tokens = tokens.map(t => this.stemmer.stem(t));
     }
-    
+
     return tokens;
   }
 
@@ -185,7 +185,7 @@ class FeatureExtractor {
   extract(text: string, keywords: Map<string, number>): TextFeatures {
     const tokens = text.split(/\s+/);
     const uniqueTokens = new Set(tokens.map(t => t.toLowerCase()));
-    
+
     // Basic counts
     const urlCount = (text.match(/https?:\/\/[^\s]+/gi) || []).length;
     const emailCount = (text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g) || []).length;
@@ -195,11 +195,11 @@ class FeatureExtractor {
     const questionCount = (text.match(/\?/g) || []).length;
     const digits = (text.match(/\d/g) || []).length;
     const specialChars = (text.match(/[^a-zA-Z0-9\s]/g) || []).length;
-    
+
     // Calculate ratios
     const capsWords = tokens.filter(w => w.length > 3 && w === w.toUpperCase());
     const avgTokenLength = tokens.reduce((sum, t) => sum + t.length, 0) / Math.max(tokens.length, 1);
-    
+
     return {
       tokenCount: tokens.length,
       uniqueTokenCount: uniqueTokens.size,
@@ -225,26 +225,26 @@ class FeatureExtractor {
       /!+/,
       /\b(FINAL|NOW|IMMEDIATE|URGENT)\b/g
     ];
-    
+
     let score = 0;
     urgencyPatterns.forEach(pattern => {
       const matches = text.match(pattern);
       if (matches) score += matches.length * 2;
     });
-    
+
     return Math.min(score, 20);
   }
 
   private calculateFinancialRisk(text: string, keywords: Map<string, number>): number {
     const lowerText = text.toLowerCase();
     let score = 0;
-    
+
     keywords.forEach((weight, keyword) => {
       if (lowerText.includes(keyword.toLowerCase())) {
         score += weight;
       }
     });
-    
+
     return Math.min(score / 10, 20);
   }
 
@@ -254,16 +254,16 @@ class FeatureExtractor {
       'google', 'facebook', 'twitter', 'instagram', 'bank of america', 'chase',
       'wells fargo', 'citi', 'support', 'ceo', 'director', 'agent'
     ];
-    
+
     let score = 0;
     const lowerText = text.toLowerCase();
-    
+
     impersonationBrands.forEach(brand => {
       if (lowerText.includes(brand)) {
         score += 3;
       }
     });
-    
+
     return Math.min(score, 15);
   }
 }
@@ -278,7 +278,7 @@ type ClassificationResult = {
 class EnsembleClassifier {
   private bayesClassifier = new natural.BayesClassifier();
   private isTrained = false;
-  
+
   // Scam training data
   private scamExamples = [
     "Congratulations! You have won a $1000 Walmart gift card. Click here to claim your prize now before it expires.",
@@ -403,19 +403,19 @@ class EnsembleClassifier {
     if (!this.isTrained) {
       this.train();
     }
-    
+
     const classifications = this.bayesClassifier.getClassifications(text);
     const scamClass = classifications.find((c: any) => c.label === 'scam');
     const safeClass = classifications.find((c: any) => c.label === 'safe');
-    
+
     const scamProb = Math.max(0, Math.min(1, scamClass?.value || 0));
     const safeProb = Math.max(0, Math.min(1, safeClass?.value || 0));
-    
+
     // Normalize probabilities
     const total = scamProb + safeProb || 1;
     const normalizedScam = scamProb / total;
     const normalizedSafe = safeProb / total;
-    
+
     return {
       label: normalizedScam > normalizedSafe ? 'scam' : 'safe',
       confidence: Math.abs(normalizedScam - normalizedSafe),
@@ -430,15 +430,15 @@ class EnsembleClassifier {
     // Simple sentiment based on positive/negative word ratios
     const positiveWords = ['good', 'great', 'excellent', 'amazing', 'wonderful', 'happy', 'love', 'best', 'thank', 'congratulations', 'prize', 'won', 'winner', 'free', 'gift', 'bonus'];
     const negativeWords = ['bad', 'terrible', 'awful', 'hate', 'worst', 'scam', 'fraud', 'warning', 'alert', 'suspended', 'limited', 'expired', 'urgent', 'immediately', 'arrest', 'fine'];
-    
+
     const tokens = text.toLowerCase().split(/\s+/);
     let score = 0;
-    
+
     tokens.forEach(token => {
       if (positiveWords.some(w => token.includes(w))) score += 0.1;
       if (negativeWords.some(w => token.includes(w))) score -= 0.1;
     });
-    
+
     return Math.max(-1, Math.min(1, score));
   }
 }
@@ -446,11 +446,11 @@ class EnsembleClassifier {
 // ── 4. Weighted Keyword Database ─────────────────────────────
 class KeywordDatabase {
   private keywords = new Map<string, number>();
-  
+
   constructor() {
     this.loadDefaultKeywords();
   }
-  
+
   private loadDefaultKeywords() {
     const defaults: [string, number][] = [
       // High-risk financial fraud
@@ -482,26 +482,26 @@ class KeywordDatabase {
       // Pharma / illegal
       ['pharmacy', 20], ['prescription', 16], ['meds', 16], ['pills', 16], ['drugs', 16],
     ];
-    
+
     defaults.forEach(([kw, weight]) => this.keywords.set(kw, weight));
   }
-  
+
   getWeight(token: string): number {
     return this.keywords.get(token.toLowerCase()) || 0;
   }
-  
+
   addKeyword(keyword: string, weight: number) {
     this.keywords.set(keyword.toLowerCase(), weight);
   }
-  
+
   removeKeyword(keyword: string) {
     this.keywords.delete(keyword.toLowerCase());
   }
-  
+
   getAll(): Map<string, number> {
     return new Map(this.keywords);
   }
-  
+
   getTopKeywords(limit: number = 20): Array<{ keyword: string; weight: number }> {
     return Array.from(this.keywords.entries())
       .sort((a, b) => b[1] - a[1])
@@ -538,10 +538,10 @@ class PatternEngine {
     { regex: /\b1-?800-?555-?\d{4}\b/i, label: 'Toll-free Number', score: 0.5, category: 'neutral' },
     { regex: /\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/, label: 'IP Address', score: 1.0, category: 'technical' },
   ];
-  
+
   detect(text: string): Array<{ label: string; score: number; category: string }> {
     const findings: Array<{ label: string; score: number; category: string }> = [];
-    
+
     this.patterns.forEach(pattern => {
       if (pattern.regex.test(text)) {
         findings.push({
@@ -551,10 +551,10 @@ class PatternEngine {
         });
       }
     });
-    
+
     return findings;
   }
-  
+
   addPattern(pattern: { regex: RegExp; label: string; score: number; category: string }) {
     this.patterns.push(pattern);
   }
@@ -587,25 +587,25 @@ class ScamDetector {
   private classifier = new EnsembleClassifier();
   private keywords = new KeywordDatabase();
   private patterns = new PatternEngine();
-  
+
   constructor() {
     this.classifier.train();
   }
-  
+
   analyze(content: string): AnalysisResult {
     const tokens = this.pipeline.preprocess(content);
-    
+
     // 1. ML Classification
     const classification = this.classifier.classify(content);
     const bayesScore = classification.probabilities.scam;
-    
+
     // 2. Feature Extraction
     const features = this.featureExtractor.extract(content, this.keywords.getAll());
-    
+
     // 3. Pattern Detection
     const detectedPatterns = this.patterns.detect(content);
     const patternScore = detectedPatterns.reduce((sum, p) => sum + p.score, 0);
-    
+
     // 4. Keyword Scoring
     let keywordScore = 0;
     const lowerContent = content.toLowerCase();
@@ -614,60 +614,60 @@ class ScamDetector {
         keywordScore += weight * 0.06;
       }
     });
-    
+
     // 5. Calculate Composite Score
     let rawScore = -1.5;
-    
+
     // Bayes contribution (40%)
     if (classification.confidence > 0) {
       rawScore += (bayesScore - 0.5) * 8 * 0.4;
     }
-    
+
     // Feature contributions
     rawScore += features.urgencyScore * 0.15;
     rawScore += features.financialRiskScore * 0.1;
     rawScore += features.impersonationScore * 0.1;
     rawScore += patternScore * 0.15;
     rawScore += keywordScore * 0.1;
-    
+
     // Apply sigmoid
     const probability = 1 / (1 + Math.exp(-rawScore));
     const riskScore = Math.round(probability * 100);
-    
+
     // Determine risk level
     let riskLevel: 'low' | 'medium' | 'high';
     if (riskScore > 65) riskLevel = 'high';
     else if (riskScore > 35) riskLevel = 'medium';
     else riskLevel = 'low';
-    
+
     // Compile findings
     const findings: string[] = [];
-    
+
     if (classification.confidence > 0.3) {
       findings.push(`AI Classifier: ${(classification.confidence * 100).toFixed(0)}% ${classification.label}`);
     }
-    
+
     detectedPatterns.forEach(p => {
       findings.push(`${p.label} (+${p.score})`);
     });
-    
+
     if (features.urgencyScore > 5) {
       findings.push(`Urgency signals detected (+${features.urgencyScore})`);
     }
-    
+
     if (features.impersonationScore > 3) {
       findings.push(`Brand impersonation detected (+${features.impersonationScore})`);
     }
-    
+
     // Determine complaint type
     const complaintType = this.classifyComplaintType(content, riskScore);
 
     // Generate explanation
     const explanation = this.generateExplanation(riskScore, classification, complaintType);
-    
+
     // Sentiment (basic)
     const sentiment = this.classifier.getSentiment(content);
-    
+
     return {
       riskScore,
       riskLevel,
@@ -690,25 +690,25 @@ class ScamDetector {
 
   private classifyComplaintType(content: string, riskScore: number): 'Fraud' | 'Service Issue' | 'Dispute' | 'General' {
     const lower = content.toLowerCase();
-    
+
     // Fraud markers
     if (riskScore > 60 || /\b(scam|fraud|fake|impersonat|stole|lost|money|bank|login|password|verify)\b/i.test(lower)) {
       return 'Fraud';
     }
-    
+
     // Service Issue markers
     if (/\b(slow|broken|not working|failed|error|connection|service|support|help|issue|bug)\b/i.test(lower)) {
       return 'Service Issue';
     }
-    
+
     // Dispute markers
     if (/\b(refund|dispute|chargeback|money back|wrong|incorrect|disagree|claim|order)\b/i.test(lower)) {
       return 'Dispute';
     }
-    
+
     return 'General';
   }
-  
+
   private generateExplanation(riskScore: number, classification: ClassificationResult, complaintType: string): string {
     if (riskScore > 65) {
       return `⚠️ Detected ${complaintType}-related language with high-risk markers. Our multi-layer AI analysis flagged significant scam patterns.`;
@@ -718,19 +718,19 @@ class ScamDetector {
       return `✅ Content appears to be a legitimate ${complaintType} report or inquiry. No significant scam patterns detected.`;
     }
   }
-  
+
   // Dynamic learning
   learnFromScam(content: string) {
     const tokens = this.pipeline.preprocess(content);
     tokens.forEach(token => {
       if (token.length < 3) return;
       if (this.keywords.getWeight(token) > 0) return;
-      
+
       const currentWeight = this.keywords.getWeight(token);
       this.keywords.addKeyword(token, Math.min(currentWeight + 5, 25));
     });
   }
-  
+
   // Get metrics for monitoring
   getMetrics() {
     return {
@@ -759,7 +759,7 @@ const scamDetector = new ScamDetector();
 app.post('/api/analyze', (req, res) => {
   const { content } = req.body;
   if (!content) return res.status(400).json({ error: 'Content is required' });
-  
+
   const result = scamDetector.analyze(content);
   res.json(result);
 });
@@ -823,23 +823,24 @@ app.post('/api/complaint', async (req, res) => {
     const id = docRef.id;
 
     // Trigger Python Email Service
-    triggerEmailService({
-      type: "user_confirmation",
-      email: email,
-      details: {
-        complaintId: id,
-        message: message
-      }
-    });
-
-    triggerEmailService({
-      type: "admin_alert",
-      details: {
-        complaintId: id,
-        userEmail: email,
-        message: message
-      }
-    });
+    await Promise.all([
+      triggerEmailService({
+        type: "user_confirmation",
+        email: email,
+        details: {
+          complaintId: id,
+          message: message
+        }
+      }),
+      triggerEmailService({
+        type: "admin_alert",
+        details: {
+          complaintId: id,
+          userEmail: email,
+          message: message
+        }
+      })
+    ]);
 
     res.status(201).json({
       success: true,
@@ -852,8 +853,8 @@ app.post('/api/complaint', async (req, res) => {
     });
   } catch (error: any) {
     console.error('❌ Error creating complaint:', error);
-    res.status(500).json({ 
-      error: 'Internal server error', 
+    res.status(500).json({
+      error: 'Internal server error',
       details: error.message,
       code: error.code
     });
@@ -885,11 +886,18 @@ app.post('/api/complaint/:id/resolve', verifyAdmin, async (req, res) => {
       return res.status(400).json({ error: 'Resolution text is required' });
     }
 
-    const complaintRef = db.collection('reports').doc(id);
-    const complaintDoc = await complaintRef.get();
+    let complaintRef = db.collection('reports').doc(id);
+    let complaintDoc = await complaintRef.get();
+
+    // Fallback to 'complaints' collection if not found in 'reports'
+    if (!complaintDoc.exists) {
+      complaintRef = db.collection('complaints').doc(id);
+      complaintDoc = await complaintRef.get();
+    }
 
     if (!complaintDoc.exists) {
-      return res.status(404).json({ error: 'Complaint not found' });
+      console.warn(`⚠️ Complaint ${id} not found in 'reports' or 'complaints' collections.`);
+      return res.status(404).json({ error: 'Complaint not found in any database collection.' });
     }
 
     const complaintData = complaintDoc.data();
@@ -903,7 +911,7 @@ app.post('/api/complaint/:id/resolve', verifyAdmin, async (req, res) => {
     });
 
     // Trigger Python Email Service for Resolution
-    triggerEmailService({
+    await triggerEmailService({
       type: "resolution",
       email: complaintData?.email,
       details: {
