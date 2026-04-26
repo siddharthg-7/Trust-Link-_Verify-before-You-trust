@@ -96,5 +96,11 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
+
+    // ─── COMPLAINTS COLLECTION (Legacy/Alternative) ───────────────────
+    match /complaints/{complaintId} {
+      allow read, write: if isAdmin();
+      allow create: if isAuthenticated();
+    }
   }
 }
