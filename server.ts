@@ -17,14 +17,23 @@ const JWT_SECRET = process.env.JWT_SECRET || 'trust-link-secret-2024';
 if (!admin?.apps || admin.apps.length === 0) {
   try {
     const serviceAccountVar = process.env.FIREBASE_SERVICE_ACCOUNT;
+    let initialized = false;
+
     if (serviceAccountVar) {
-      const serviceAccount = JSON.parse(serviceAccountVar);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'trust-link-4151a'
-      });
-      console.log("✅ Firebase Admin initialized with Environment Variable");
-    } else {
+      try {
+        const serviceAccount = JSON.parse(serviceAccountVar);
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+          projectId: process.env.VITE_FIREBASE_PROJECT_ID || 'trust-link-4151a'
+        });
+        console.log("✅ Firebase Admin initialized with Environment Variable");
+        initialized = true;
+      } catch (jsonError) {
+        console.warn("⚠️ FIREBASE_SERVICE_ACCOUNT is not valid JSON. Falling back to other methods...");
+      }
+    }
+
+    if (!initialized) {
       // Fallback to file-based (for local dev)
       const serviceAccountPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "./serviceAccountKey.json";
       try {
@@ -40,7 +49,7 @@ if (!admin?.apps || admin.apps.length === 0) {
       }
     }
   } catch (error) {
-    console.error("❌ Firebase Admin initialization error:", error);
+    console.error("❌ Firebase Admin initialization failed completely:", error);
   }
 }
 const db = admin.firestore();
