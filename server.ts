@@ -61,6 +61,9 @@ app.use(helmet({
 app.use(cors());
 app.use(express.json());
 
+// Trust the reverse proxy to correctly identify IPs for rate limiting
+app.set('trust proxy', 1);
+
 // ── SECURITY & RATE LIMITING ────────────────────────────────
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
