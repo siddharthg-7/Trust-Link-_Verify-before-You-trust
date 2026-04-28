@@ -10,7 +10,10 @@
     "clean": "if exist dist (rd /s /q dist)",
     "lint": "tsc --noEmit",
     "deploy": "npx firebase-tools deploy",
-    "start": "NODE_ENV=production tsx server.ts"
+    "start": "bash start.sh",
+    "start:server": "NODE_ENV=production tsx server.ts",
+    "railway:build": "npm install && npm run build && pip3 install -r backend/app/requirements.txt",
+    "railway:start": "bash start.sh"
   },
   "dependencies": {
     "tsx": "^4.21.0",

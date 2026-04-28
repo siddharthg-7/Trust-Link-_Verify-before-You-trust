@@ -8,7 +8,11 @@ CORS(app)
 email_service = EmailService()
 
 APP_URL = os.getenv("VITE_APP_URL", "https://trust-link-4151a.web.app")
-ADMIN_EMAIL = "siddharthexam21@gmail.com"
+ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "admin@example.com")
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "ok"}), 200
 
 @app.route('/send-email', methods=['POST'])
 def send_email_api():
