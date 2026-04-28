@@ -934,7 +934,7 @@ app.post('/api/complaint/:id/resolve', verifyAdmin, async (req, res) => {
     // Trigger Python Email Service for Resolution
     await triggerEmailService({
       type: "resolution",
-      email: complaintData?.email,
+      email: complaintData?.userEmail || complaintData?.email,  // ✅ Explicit email field
       details: {
         complaintId: id,
         resolution: resolution,

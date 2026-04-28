@@ -7,8 +7,12 @@ class EmailService:
     def __init__(self):
         self.server = "smtp.gmail.com"
         self.port = 587
-        self.sender_email = "siddharthexam21@gmail.com"
-        self.app_password = "vbww bwzq lcyk orfg"
+        # ✅ Load from environment variables
+        self.sender_email = os.getenv("SMTP_EMAIL", "your-email@gmail.com")
+        self.app_password = os.getenv("SMTP_PASSWORD", "")
+        
+        if not self.sender_email or not self.app_password:
+            raise ValueError("❌ SMTP credentials not configured. Set SMTP_EMAIL and SMTP_PASSWORD env vars.")
 
     def send_email(self, to_email, subject, html_content, text_content=""):
         try:
