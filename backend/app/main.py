@@ -36,6 +36,7 @@ def send_email_api():
         
     elif email_type == "resolution":
         subject = f"Complaint Resolved: {complaint_id}"
+        target_email = data.get("email") or details.get("userEmail")
         html_content = get_resolution_template(
             complaint_id, 
             details.get("resolution"), 
