@@ -1,0 +1,5 @@
+providers = ["node", "python"]
+
+[phases.setup]
+aptPkgs = ["...", "lsof"]
+
