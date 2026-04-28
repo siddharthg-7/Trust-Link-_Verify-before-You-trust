@@ -292,7 +292,7 @@ The platform uses a Python-based microservice for high-reliability Gmail SMTP no
 
 ### 1. Prerequisites
 - Python 3.8+
-- Gmail App Password (already configured in `emailing.py`)
+- Gmail App Password (see [Google App Passwords](https://myaccount.google.com/apppasswords))
 
 ### 2. Installation
 ```bash
@@ -305,3 +305,62 @@ pip install -r requirements.txt
 python main.py
 ```
 The service will start on `http://localhost:5000`. The Express server automatically communicates with this service.
+
+---
+
+## 🚀 Unified Deployment on Railway.app (Free Tier)
+
+Railway.app hosts the **backend (Node.js + Express)**, **frontend (React/Vite)**, and **Python email service** all in a single service — no Firebase Blaze tier required.
+
+### Prerequisites
+- [Railway.app](https://railway.app) account (free, no credit card)
+- Firebase project for Auth + Firestore (free Spark tier)
+- Gmail App Password for SMTP emails
+
+### Step 1 — Fork & connect
+1. Fork this repository to your GitHub account.
+2. Go to [railway.app/new](https://railway.app/new) → **Deploy from GitHub repo**.
+3. Select your forked repository.
+
+### Step 2 — Set environment variables
+In the Railway dashboard **Variables** tab, add all variables from [`railway.env.example`](./railway.env.example):
+
+| Variable | Description |
+|---|---|
+| `NODE_ENV` | `production` |
+| `PORT` | `3000` (Railway sets this automatically) |
+| `JWT_SECRET` | Random 32-byte hex string |
+| `SMTP_EMAIL` | Your Gmail address |
+| `SMTP_PASSWORD` | 16-char Gmail App Password |
+| `ADMIN_EMAIL` | Email that receives complaint alerts |
+| `PYTHON_SERVICE_URL` | `http://127.0.0.1:5000/send-email` |
+| `FIREBASE_SERVICE_ACCOUNT` | Firebase service account JSON (single-line) |
+| `VITE_FIREBASE_*` | Firebase client config values |
+| `GEMINI_API_KEY` | Google Gemini API key |
+| `VITE_APP_URL` | Your Railway deployment URL (after first deploy) |
+
+### Step 3 — Deploy
+Click **Deploy** in Railway. The build process will:
+1. `npm install && npm run build` — install Node deps and build the React app
+2. `pip install -r backend/app/requirements.txt` — install Python deps
+3. `bash start.sh` — start the Python email service (port 5000) then the Node.js server
+
+### Step 4 — Update APP_URL
+After the first successful deploy, copy the Railway-provided URL and update the `VITE_APP_URL` / `APP_URL` environment variables.
+
+### Architecture
+```
+Railway (single service)
+├── Node.js Express server  (PORT 3000)
+│   ├── /api/*              — REST API
+│   └── /*                  — React SPA (static files)
+└── Python Flask server     (port 5000, internal only)
+    └── /send-email         — Gmail SMTP microservice
+
+Firebase (external, free Spark tier)
+├── Authentication
+└── Firestore Database
+```
+
+> **No Firebase Cloud Functions needed** — all compute runs on Railway. Firebase is used only for Auth and Firestore.
+
