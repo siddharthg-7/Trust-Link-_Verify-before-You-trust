@@ -1,5 +1,3 @@
-providers = ["node", "python"]
-
 [phases.setup]
 aptPkgs = ["...", "lsof"]
-
+nixPkgs = ["...", "python3", "python3Packages.pip"]

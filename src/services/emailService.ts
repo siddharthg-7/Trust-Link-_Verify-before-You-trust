@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "../lib/api";
 
 export interface AdminEmailData {
   title: string;
@@ -19,7 +20,7 @@ export interface UserEmailData {
 
 export async function verifyToken(token: string, type: 'admin' | 'user') {
   try {
-    const response = await fetch(`/api/auth/verify-token?token=${token}&type=${type}`);
+    const response = await fetch(`${API_BASE_URL}/api/auth/verify-token?token=${token}&type=${type}`);
     return await response.json();
   } catch (e) {
     console.error('Token verification failed:', e);

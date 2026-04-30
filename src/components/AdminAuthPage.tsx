@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Loader2, ShieldAlert, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { API_BASE_URL } from '../lib/api';
 
 export const AdminAuthPage = () => {
   const [searchParams] = useSearchParams();
@@ -19,7 +20,7 @@ export const AdminAuthPage = () => {
       }
 
       try {
-        const res = await fetch(`/api/auth/verify-token?token=${token}&type=admin`);
+        const res = await fetch(`${API_BASE_URL}/api/auth/verify-token?token=${token}&type=admin`);
         const data = await res.json();
         
         if (data.success) {

@@ -21,6 +21,7 @@ import { EnhancedScamDetector } from "../enhanced-detector";
 
 const detector = new EnhancedScamDetector();
 import { logAudit } from "../lib/audit";
+import { API_BASE_URL } from "../lib/api";
 import { ChatSystem } from "./ChatSystem";
 import { motion, AnimatePresence } from "framer-motion";
 import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
@@ -550,17 +551,19 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
         reportId
       );
 
-      // Step 3: Fire-and-forget email via API (won't block or crash if unavailable)
+      // Step 3: Fire-and-forget email via Python API directly
       const sendEmail = async () => {
         try {
-          const idToken = await auth.currentUser?.getIdToken();
-          await fetch(`/api/complaint/${reportId}/resolve`, {
+          await fetch("https://trust-link-email-service.onrender.com/send-email", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${idToken}`,
             },
-            body: JSON.stringify({ resolution: adminFeedback, score: adminScore }),
+            body: JSON.stringify({
+              type: "resolution",
+              email: reviewingReport.userEmail || reviewingReport.email,
+              details: { complaintId: reportId, resolution: adminFeedback, score: adminScore }
+            }),
           });
         } catch {
           // Intentionally silenced — Firestore update already succeeded above

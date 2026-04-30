@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { verifyToken } from '../services/emailService';
 import { Loader2, CheckCircle2, AlertCircle, Clock, Search, ShieldCheck, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { API_BASE_URL } from '../lib/api';
 
 export const TrackingPage = () => {
   const [searchParams] = useSearchParams();
@@ -20,12 +21,12 @@ export const TrackingPage = () => {
       }
 
       try {
-        const res = await fetch(`/api/auth/verify-token?token=${token}&type=user`);
+        const res = await fetch(`${API_BASE_URL}/api/auth/verify-token?token=${token}&type=user`);
         const data = await res.json();
         
         if (data.success) {
           // Now fetch the actual report details
-          const reportRes = await fetch(`/api/reports`);
+          const reportRes = await fetch(`${API_BASE_URL}/api/reports`);
           const reports = await reportRes.json();
           const found = reports.find((r: any) => r.id === data.reportId);
           if (found) {

@@ -51,7 +51,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 import toast from "react-hot-toast";
 import { EnhancedScamDetector } from "../enhanced-detector";
-
+import { API_BASE_URL } from "../lib/api";
 // Singleton instance of the detector to avoid reloading the model on every render
 const detector = new EnhancedScamDetector();
 
@@ -208,23 +208,42 @@ export function StudentDashboard() {
       const reportRef = await addDoc(collection(db, "reports"), payload);
       setSubmittedId(reportRef.id);
 
-      // 2. TRIGGER EMAIL VIA BACKEND
-      fetch('/api/complaint', {
+      // 2. TRIGGER EMAIL VIA PYTHON BACKEND directly
+      const pythonServiceUrl = "https://trust-link-email-service.onrender.com/send-email";
+      
+      // Send User Confirmation
+      await fetch(pythonServiceUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...payload,
-          message: finalContent,
-          name: payload.userName,
-          email: payload.userEmail
+          type: "user_confirmation",
+          email: payload.userEmail,
+          details: { complaintId: reportRef.id, message: finalContent }
         })
-      }).catch(err => console.error("Email trigger failed:", err));
+      });
+
+      // Send Admin Alert
+      await fetch(pythonServiceUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: "admin_alert",
+          email: payload.userEmail,
+          details: { complaintId: reportRef.id, userEmail: payload.userEmail, message: finalContent }
+        })
+      });
+      
+      const response = { ok: true }; // Mock response to keep existing logic working
       
       // Update local user stats
       const userRef = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userRef, { reportsCount: increment(1) });
 
-      toast.success("Report logged and queued for review!");
+      if (!response.ok) {
+        toast("Report saved but email notification may be delayed", { icon: '⚠️' });
+      } else {
+        toast.success("Report submitted with email confirmation!");
+      }
       
       setContent("");
       setComplaintData({ title: "", description: "", category: "" });

@@ -1,5 +1,5 @@
 import { BertEmbeddings } from './nlp-models/bert-embeddings';
-
+import { API_BASE_URL } from './lib/api';
 // ── TEMPORAL ANALYZER ──────────────────────────────────────────
 export class TemporalAnalyzer {
   private messageHistory: Map<string, number[]> = new Map(); // senderId -> timestamps
@@ -91,7 +91,7 @@ export class EnhancedScamDetector {
     } else {
       // Fallback: Call backend analysis if frontend BERT is not available
       try {
-        const response = await fetch('/api/analyze', {
+        const response = await fetch(`${API_BASE_URL}/api/analyze`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ content })
