@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { sendEmailJS } from "../lib/emailjs";
 import {
   LayoutDashboard, Shield, Users, BarChart3, Settings, ClipboardList,
   Bell, Search, RefreshCw, LogOut, AlertTriangle, CheckCircle, Clock,
@@ -551,23 +552,19 @@ function ModerationTab({ reports, user }: { reports: any[]; user: any }) {
         reportId
       );
 
-      // Step 3: Fire-and-forget email via Python API directly
+      // Step 3: Fire-and-forget email via EmailJS directly
       const sendEmail = async () => {
         try {
-          await fetch("https://trust-link-email-service.onrender.com/send-email", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              type: "resolution",
-              email: reviewingReport.userEmail || reviewingReport.email,
-              details: { complaintId: reportId, resolution: adminFeedback, score: adminScore }
-            }),
+          await sendEmailJS('resolution', {
+            to_email: reviewingReport.userEmail || reviewingReport.email,
+            complaint_id: reportId,
+            resolution: adminFeedback,
+            score: adminScore,
+            app_url: window.location.origin
           });
         } catch {
           // Intentionally silenced — Firestore update already succeeded above
-          console.warn("Email notification could not be sent (API unavailable). Firestore updated successfully.");
+          console.warn("Email notification could not be sent (EmailJS unavailable). Firestore updated successfully.");
         }
       };
       sendEmail();

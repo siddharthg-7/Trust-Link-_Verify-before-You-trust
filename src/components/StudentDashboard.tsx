@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { sendEmailJS } from "../lib/emailjs";
 import {
   AiOutlineScan as AiOutlineScanRaw,
   AiOutlineInfoCircle as AiOutlineInfoCircleRaw
@@ -208,34 +209,27 @@ export function StudentDashboard() {
       const reportRef = await addDoc(collection(db, "reports"), payload);
       setSubmittedId(reportRef.id);
 
-      // 2. TRIGGER EMAIL VIA PYTHON BACKEND directly
-      const pythonServiceUrl = "https://trust-link-email-service.onrender.com/send-email";
-      
+      // 2. TRIGGER EMAIL VIA EMAILJS directly from frontend
       // Send User Confirmation
-      await fetch(pythonServiceUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: "user_confirmation",
-          email: payload.userEmail,
-          details: { complaintId: reportRef.id, message: finalContent }
-        })
+      await sendEmailJS('user_confirmation', {
+        to_email: payload.userEmail,
+        complaint_id: reportRef.id,
+        message: finalContent,
+        user_email: payload.userEmail,
+        app_url: window.location.origin
       });
 
       // Send Admin Alert
-      await fetch(pythonServiceUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: "admin_alert",
-          email: payload.userEmail,
-          details: { complaintId: reportRef.id, userEmail: payload.userEmail, message: finalContent }
-        })
+      await sendEmailJS('admin_alert', {
+        to_email: "siddharthexam21@gmail.com", // Admin Email
+        complaint_id: reportRef.id,
+        user_email: payload.userEmail,
+        message: finalContent,
+        app_url: window.location.origin
       });
       
-      const response = { ok: true }; // Mock response to keep existing logic working
-      
       // Update local user stats
+      const response = { ok: true }; // Keep mock response if still needed in this block
       const userRef = doc(db, "users", auth.currentUser.uid);
       await updateDoc(userRef, { reportsCount: increment(1) });
 
